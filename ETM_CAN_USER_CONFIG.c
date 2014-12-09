@@ -1,12 +1,12 @@
 #include "ETM_CAN.h"
 
 #ifdef __A36224_500
-#include "../P1395_A36224_500/A36224_500.X/A36224_500.h"
+#include "A36224_500.h"
 #endif
 
 
 #ifdef __A36444
-#include "../P1395_A36444/A36444.X/A36444.h"
+#include "A36444.h"
 #endif
 
 

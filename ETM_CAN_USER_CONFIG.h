@@ -1,8 +1,7 @@
 #ifndef __ETM_CAN_USER_CONFIG_H
 #define __ETM_CAN_USER_CONFIG_H
 
-
-#define __A36444
+#include "ETM_CAN_BOARD_SELECT.h"
 
 #ifdef __A36444
 #define __USE_CAN_1
