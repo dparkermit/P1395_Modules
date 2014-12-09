@@ -2,7 +2,7 @@
 #define __ETM_CAN_USER_CONFIG_H
 
 
-#define __A36507
+#define __A36444
 
 #ifdef __A36444
 #define __USE_CAN_1
