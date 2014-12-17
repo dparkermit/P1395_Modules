@@ -33,6 +33,19 @@
 #define ETM_CAN_SERIAL_NUMBER               100 // DPARKER need to figure out how to set this in FLASH when programming
 #endif
 
+#ifdef __A36224
+#define __USE_CAN_2
+#define FCY_CLK                             10000000      // 10 MHz
+#define FCY_CLK_MHZ                         10.000        // 10 MHz
+#define ETM_CAN_MY_ADDRESS                  ETM_CAN_ADDR_COOLING_INTERFACE_BOARD
+#define PIN_CAN_OPERATION_LED               _LATC4
+#define ETM_CAN_INTERRUPT_PRIORITY          4
+#define ETM_CAN_AGILE_ID_HIGH               0
+#define ETM_CAN_AGILE_ID_LOW                36224
+#define ETM_CAN_AGILE_DASH                  000
+#define ETM_CAN_AGILE_REV                   'C'
+#define ETM_CAN_SERIAL_NUMBER               100 // DPARKER need to figure out how to set this in FLASH when programming
+#endif
 
 
 #ifdef __A36507

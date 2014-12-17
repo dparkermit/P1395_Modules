@@ -138,7 +138,8 @@ void ETMAnalogScaleCalibrateADCReading(AnalogInput* ptr_analog_input) {
   // Calibrate the adc reading based on the known gain/offset errors of this board
   temp = ETMScaleFactor2(temp, ptr_analog_input->calibration_internal_scale, ptr_analog_input->calibration_internal_offset);
   
-  // Scale the analog input to engineering units based on the fixed scale (and offset but normally not required) for this application
+  // Scale the analog input to engineering units based on the fixed scale and offsetfor this application.
+  //If the input is below the offset, this function returns zero. Great.
   temp = ETMScaleFactor16(temp, ptr_analog_input->fixed_scale, ptr_analog_input->fixed_offset);
 
   ptr_analog_input->reading_scaled_and_calibrated = temp;
