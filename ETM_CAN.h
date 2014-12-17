@@ -627,6 +627,9 @@ typedef struct {
   unsigned int hvlambda_readback_imon;
   unsigned int hvlambda_readback_base_plate_temp;
 
+  // Additional Control/Interface data
+  unsigned int hvlambda_enabled;
+
 } ETMCanRamMirrorHVLambda;
 
 
@@ -722,6 +725,10 @@ typedef struct {
   unsigned int htrmag_readback_magnet_current_set_point;
   unsigned int htrmag_readback_magnet_voltage_set_point;
 
+  // Additional Control/Interface data
+  unsigned int htrmag_heater_enable;
+  unsigned int htrmag_magnet_enable;
+
 } ETMCanRamMirrorHeaterMagnet;
 
 
@@ -753,6 +760,9 @@ typedef struct {
   unsigned int gun_readback_low_energy_pulse_top_set_point;
   unsigned int gun_readback_heater_voltage_set_point;
   unsigned int gun_readback_cathode_voltage_set_point;
+
+  // Additional Control/Interface data
+  unsigned int gun_high_voltage_enable;
 
 } ETMCanRamMirrorGunDriver;
 
@@ -822,6 +832,7 @@ typedef struct {
 
   // "SLOW" Data that the Ethernet control board reads back
   // NONE!!!!!!
+
 } ETMCanRamMirrorPulseSync;
 
 
