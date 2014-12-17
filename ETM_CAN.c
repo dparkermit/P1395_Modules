@@ -26,6 +26,7 @@ ETMCanSystemDebugData etm_can_system_debug_data;
 ETMCanStatusRegister  etm_can_status_register;
 ETMCanAgileConfig     etm_can_my_configuration;
 ETMCanCanStatus       etm_can_can_status;
+ETMCanSyncMessage     etm_can_sync_message;
 
 // Private Functions
 void ETMCanProcessMessage(void);
@@ -447,11 +448,11 @@ void ETMCanExecuteCMDDefault(ETMCanMessage* message_ptr) {
     break;
  
   case ETM_CAN_REGISTER_DEFAULT_CMD_DISABLE_HIGH_SPEED_DATA_LOGGING:
-    etm_can_status_register.status_word_0 &= ~STATUS_BIT_HIGH_SPEED_LOGGING_ENABLED;  // Clear the bit
+    ETMCanClearBit(&etm_can_status_register.status_word_0, STATUS_BIT_HIGH_SPEED_LOGGING_ENABLED);
     break;
 
   case ETM_CAN_REGISTER_DEFAULT_CMD_ENABLE_HIGH_SPEED_DATA_LOGGING:
-    etm_can_status_register.status_word_0 |= STATUS_BIT_HIGH_SPEED_LOGGING_ENABLED;  // Set the bit
+    ETMCanSetBit(&etm_can_status_register.status_word_0, STATUS_BIT_HIGH_SPEED_LOGGING_ENABLED);
     break;
    
   default:
@@ -516,6 +517,12 @@ void ETMCanDoSlaveSync(ETMCanMessage* message_ptr) {
   // Sync data is available in CXRX0B1->CXRX0B4
   // At this time all that happens is that the chip watchdog is reset
   // DPARKER move to assembly and issure W0-W3, SR usage
+
+  etm_can_sync_message.sync_0 = message_ptr->word0;
+  etm_can_sync_message.sync_1 = message_ptr->word1;
+  etm_can_sync_message.sync_2 = message_ptr->word2;
+  etm_can_sync_message.sync_3 = message_ptr->word3;
+  
   ClrWdt();
   TMR3 = 0;
 }

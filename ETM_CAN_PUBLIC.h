@@ -25,7 +25,7 @@ typedef struct {
   unsigned int reset_count;
   unsigned int self_test_result_register;
   unsigned int reserved_0;
-  unsigned int reserved_1;
+  unsigned int reserved_1;           // This is reserved by the ECB to Indicate if the board is connected so it can be displayed on the GUI.  If the board is NOT CONNECTED this will be 1 (Zero if connected)
 
   unsigned int debug_0;
   unsigned int debug_1;
@@ -67,6 +67,14 @@ typedef struct {
 } ETMCanAgileConfig;
 
 
+typedef struct {
+  unsigned int sync_0;
+  unsigned int sync_1;
+  unsigned int sync_2;
+  unsigned int sync_3;
+
+} ETMCanSyncMessage;
+
 
 
 #define ETM_CAN_HIGH_ENERGY           1
@@ -80,7 +88,7 @@ extern unsigned int etm_can_next_pulse_count;  // This value will get updated in
 extern ETMCanSystemDebugData etm_can_system_debug_data;  
 extern ETMCanStatusRegister  etm_can_status_register;  
 extern ETMCanAgileConfig     etm_can_my_configuration;
-
+extern ETMCanSyncMessage     etm_can_sync_message;
 /*
   DPARKER provide more description here.  How is it used.  What bits to set and what affect will setting them have
   This is the status register for this board.  Word0 bits (0,1) and Word1 bits (0) are mangaged by the Can module
