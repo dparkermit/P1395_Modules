@@ -9,6 +9,10 @@
 #include "A36444.h"
 #endif
 
+#ifdef __A36224
+#include "A36224_000.h"
+#endif
+
 
 unsigned int global_reset_faults;
 
@@ -67,6 +71,16 @@ void ETMCanExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
       ETMCanSetBit(&etm_can_status_register.status_word_0, STATUS_BIT_SOFTWARE_DISABLE);
     break;
 #endif
+
+#ifdef __A36224
+      case ETM_CAN_REGISTER_COOLING_CMD_OPEN_SF6_SOLENOID_RELAY:
+          ETMCanClearBit(&etm_can_status_register.status_word_0,STATUS_BIT_SF6_SOLENOID_RELAY_STATE);
+    break;
+
+      case ETM_CAN_REGISTER_COOLING_CMD_CLOSE_SF6_SOLENOID_RELAY:
+          ETMCanSetBit(&etm_can_status_register.status_word_0,STATUS_BIT_SF6_SOLENOID_RELAY_STATE);
+    break;
+#endif
     
     
     
@@ -120,6 +134,15 @@ void ETMCanLogCustomPacketC(void) {
      Use this to log Board specific data packet
      This will get executed once per update cycle (1.6 seconds) and will be spaced out in time from the other log data
   */
+
+#ifdef __A36224
+    ETMCanLogData(ETM_CAN_DATA_LOG_REGISTER_COOLING_SLOW_FLOW_0,
+            global_data_A36224_000.analog_input_flow_1.reading_scaled_and_calibrated,     //HVPS flow
+            global_data_A36224_000.analog_input_flow_0.reading_scaled_and_calibrated,     //Magnetron flow
+            0,                                              //Linac flow
+            global_data_A36224_000.analog_input_flow_2.reading_scaled_and_calibrated     //Circulator
+            );
+#endif
 #ifdef __A36224_500
   ETMCanLogData(
 		ETM_CAN_DATA_LOG_REGISTER_HEATER_MAGNET_SLOW_READINGS, 
@@ -149,6 +172,16 @@ void ETMCanLogCustomPacketD(void) {
      Use this to log Board specific data packet
      This will get executed once per update cycle (1.6 seconds) and will be spaced out in time from the other log data
   */
+
+#ifdef __A36224
+    ETMCanLogData(ETM_CAN_DATA_LOG_REGISTER_COOLING_SLOW_FLOW_1,
+            0,   //Coolant spare word 1
+            0,      //Coolant spare word 0
+            0,  //HX coolant flow
+            0  //coolant Flow (unused)
+            );
+#endif
+
 #ifdef __A36224_500
   ETMCanLogData(
 		ETM_CAN_DATA_LOG_REGISTER_HEATER_MAGNET_SLOW_SET_POINTS, 
@@ -177,7 +210,15 @@ void ETMCanLogCustomPacketE(void) {
      Use this to log Board specific data packet
      This will get executed once per update cycle (1.6 seconds) and will be spaced out in time from the other log data
   */
-
+#ifdef __A36224
+    ETMCanLogData(
+    ETM_CAN_DATA_LOG_REGISTER_COOLING_SLOW_ANALOG_READINGS,
+            global_data_A36224_000.analog_input_coolant_temp.reading_scaled_and_calibrated,
+            global_data_A36224_000.analog_input_SF6_pressure.reading_scaled_and_calibrated,
+            global_data_A36224_000.analog_input_cabinet_temp.reading_scaled_and_calibrated,
+            0       //linac temp
+    );
+#endif
   // There is no E packet for HV Lamdba, leave blank
 
 }
