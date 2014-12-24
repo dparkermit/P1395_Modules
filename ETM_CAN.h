@@ -211,28 +211,28 @@ unsigned int ETMCanBufferNotEmpty(ETMCanMessageBuffer* buffer_ptr);
 
 typedef struct {
   // Can data log 0
-  unsigned int can_status_CXEC_reg;
-  unsigned int can_status_error_flag;
-  unsigned int can_status_tx_1;
-  unsigned int can_status_tx_2;
+  unsigned int CXEC_reg;
+  unsigned int error_flag;
+  unsigned int tx_1;
+  unsigned int tx_2;
   
   // Can data log 1
-  unsigned int can_status_rx_0_filt_0;
-  unsigned int can_status_rx_0_filt_1;
-  unsigned int can_status_rx_1_filt_2;
-  unsigned int can_status_isr_entered;
+  unsigned int rx_0_filt_0;
+  unsigned int rx_0_filt_1;
+  unsigned int rx_1_filt_2;
+  unsigned int isr_entered;
 
   // Can data log 2
-  unsigned int can_status_unknown_message_identifier;
-  unsigned int can_status_invalid_index; 
-  unsigned int can_status_address_error;
-  unsigned int can_status_tx_0;
+  unsigned int unknown_message_identifier;
+  unsigned int invalid_index; 
+  unsigned int address_error;
+  unsigned int tx_0;
   
   // Can data log 3
-  unsigned int can_status_message_tx_buffer_overflow;
-  unsigned int can_status_message_rx_buffer_overflow;
-  unsigned int can_status_data_log_rx_buffer_overflow;
-  unsigned int can_status_timeout;
+  unsigned int message_tx_buffer_overflow;
+  unsigned int message_rx_buffer_overflow;
+  unsigned int data_log_rx_buffer_overflow;
+  unsigned int timeout;
 
 } ETMCanCanStatus;
 
@@ -244,7 +244,7 @@ extern ETMCanMessageBuffer etm_can_tx_message_buffer;
 
 
 // Can Module Debug and Status registers
-extern ETMCanCanStatus       etm_can_can_status;
+extern ETMCanCanStatus       local_can_errors;
 
 // Can Module Functions
 void ETMCanSetValueBoardSpecific(ETMCanMessage* message_ptr);
@@ -867,8 +867,6 @@ unsigned int ETMCanMasterReadyToPulse(void);
 
 
 #endif  // #ifdef __ETM_CAN_MASTER_MODULE
-
-
 
 
 

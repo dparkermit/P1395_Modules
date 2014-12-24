@@ -4,6 +4,57 @@
 #include "ETM_CAN_USER_CONFIG.h"
 
 
+
+typedef struct {
+  unsigned status_0_not_ready:1;
+  unsigned status_1_local_can_fault:1;
+  unsigned status_2_not_configured:1;
+  unsigned status_3_starting_up:1;
+  unsigned status_4_unused:1;
+  unsigned status_5_self_check_error:1;
+  unsigned status_6_pulse_logging:1;
+  unsigned status_7_ecb_can_fault:1;
+
+  unsigned status_8:1;
+  unsigned status_9:1;
+  unsigned status_A:1;
+  unsigned status_B:1;
+  unsigned status_C:1;
+  unsigned status_D:1;
+  unsigned status_E:1;
+  unsigned status_F:1;
+
+
+  unsigned fault_0:1;
+  unsigned fault_1:1;
+  unsigned fault_2:1;
+  unsigned fault_3:1;
+  unsigned fault_4:1;
+  unsigned fault_5:1;
+  unsigned fault_6:1;
+  unsigned fault_7:1;
+  unsigned fault_8:1;
+  unsigned fault_9:1;
+  unsigned fault_A:1;
+  unsigned fault_B:1;
+  unsigned fault_C:1;
+  unsigned fault_D:1;
+  unsigned fault_E:1;
+  unsigned fault_F:1;
+
+  unsigned int            data_word_A;
+  unsigned int            data_word_B;
+
+} ETMCanStatusRegisterNew;
+
+
+
+extern ETMCanStatusRegisterNew test_status_register;
+
+
+
+
+
 typedef struct {
   unsigned int status_word_0;
   unsigned int status_word_1;
@@ -77,6 +128,28 @@ typedef struct {
 
 
 
+
+typedef struct {
+  unsigned sync_0_logging_enable:1;
+  unsigned sync_1_reset_faults:1;
+  unsigned sync_2_pulse_sync_disable_HV:1;
+  unsigned sync_3_pulse_sync_disable_XRAY:1;
+  unsigned sync_4_cooling_fault:1;
+  unsigned sync_5_can_timeout_sum:1;
+  unsigned sync_6_operate_sum:1;
+  unsigned sync_7_gun_HV_disable:1;
+  unsigned sync_8_lambda_disable:1;
+  unsigned sync_9_unused:1;
+  unsigned sync_A_unused:1;
+  unsigned sync_B_unused:1;
+  unsigned sync_C_unused:1;
+  unsigned sync_D_unused:1;
+  unsigned sync_E_unused:1;
+  unsigned sync_F_unused:1;
+} ETMCanSyncMessageNew;
+
+
+
 #define ETM_CAN_HIGH_ENERGY           1
 #define ETM_CAN_LOW_ENERGY            0
 
@@ -85,7 +158,7 @@ extern unsigned int etm_can_next_pulse_level;  // This value will get updated in
 extern unsigned int etm_can_next_pulse_count;  // This value will get updated in RAM as when a next pulse level command is received
 
 // Public Debug and Status registers
-extern ETMCanSystemDebugData etm_can_system_debug_data;  
+extern ETMCanSystemDebugData local_debug_data;  
 extern ETMCanStatusRegister  etm_can_status_register;  
 extern ETMCanAgileConfig     etm_can_my_configuration;
 extern ETMCanSyncMessage     etm_can_sync_message;

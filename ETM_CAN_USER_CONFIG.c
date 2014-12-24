@@ -40,7 +40,7 @@ void ETMCanSetValueBoardSpecific(ETMCanMessage* message_ptr) {
 
 
   default:
-    etm_can_can_status.can_status_invalid_index++;
+    local_can_errors.invalid_index++;
     break;
   }
 }
@@ -87,7 +87,7 @@ void ETMCanExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
       
       
     default:
-      etm_can_can_status.can_status_invalid_index++;
+      local_can_errors.invalid_index++;
       break;
     }
 }
@@ -103,7 +103,7 @@ void ETMCanReturnValueBoardSpecific(ETMCanMessage* message_ptr) {
       Place all board specific return value commands here
     */
   default:
-    etm_can_can_status.can_status_invalid_index++;
+    local_can_errors.invalid_index++;
     break;
   }
 }
