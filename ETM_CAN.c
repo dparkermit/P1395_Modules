@@ -98,6 +98,21 @@ void ETMCanCheckForTimeOut(void) {
     etm_can_can_status.can_status_timeout++;
     etm_can_persistent_data.can_timeout_count = etm_can_can_status.can_status_timeout; 
     ETMCanSetBit(&etm_can_status_register.status_word_1,FAULT_BIT_CAN_BUS_TIMEOUT);
+
+#ifdef __ETM_CAN_MASTER_MODULE
+    etm_can_ethernet_board_data.status_connected_boards = etm_can_ethernet_board_data.status_received_register;
+    etm_can_ion_pump_mirror.debug_data.reserved_1 = ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_ION_PUMP_BOARD);
+    etm_can_magnetron_current_mirror.debug_data.reserved_1 = ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_MAGNETRON_CURRENT_BOARD);
+    etm_can_pulse_sync_mirror.debug_data.reserved_1 = ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_PULSE_SYNC_BOARD);
+    etm_can_hv_lamdba_mirror.debug_data.reserved_1 = ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_HV_LAMBDA_BOARD);
+    etm_can_afc_mirror.debug_data.reserved_1 = ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_AFC_CONTROL_BOARD);
+    etm_can_cooling_mirror.debug_data.reserved_1 = ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_COOLING_INTERFACE_BOARD);
+    etm_can_heater_magnet_mirror.debug_data.reserved_1 = ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_HEATER_MAGNET_BOARD);
+    etm_can_gun_driver_mirror.debug_data.reserved_1 = ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_GUN_DRIVER_BOARD);
+
+    etm_can_ethernet_board_data.status_received_register = 0x0000;
+#endif
+    
   }
 }
 
@@ -205,172 +220,6 @@ void ETMCanSetValue(ETMCanMessage* message_ptr) {
 
 
 #ifdef __ETM_CAN_MASTER_MODULE
-// DPARKER move these commands to ETM_CAN_MASTER
-// DPARKER create a master C and H file and move configuration there
-
-
-void ETMCanSetValueCalibrationUpload(ETMCanMessage* message_ptr) {
-  // Dparker impliment this
-}
-
-void ETMCanSendSync(unsigned int sync_3, unsigned int sync_2, unsigned int sync_1, unsigned int sync_0) {
-  ETMCanMessage sync_message;
-  sync_message.identifier = ETM_CAN_MSG_SYNC_TX;
-  sync_message.word0 = sync_0;
-  sync_message.word1 = sync_1;
-  sync_message.word2 = sync_2;
-  sync_message.word3 = sync_3;
-  
-  ETMCanTXMessage(&sync_message, &CXTX1CON);
-  etm_can_can_status.can_status_tx_1++;
-}
-
-
-void ETMCanMasterStandardCommunication(void) {
-  /*
-    One command is schedule to be sent every 25ms
-    This loops through 8 times so each command is sent once every 200mS (5Hz)
-    The sync command and Pulse Sync enable command are each sent twice for an effecive rate of 100ms (10Hz)
-  */
-
-  ETMCanMessage master_message;
-  
-  if (_T2IF) {
-    // should be true once every 25mS
-    // ecah of the 8 cases will be true once every 200mS
-    _T2IF = 0;
-    
-    etm_can_default_transmit_counter++;
-    etm_can_default_transmit_counter &= 0x7;
-
-    
-    switch (etm_can_default_transmit_counter) 
-      {
-      case 0x0:
-	// Send Sync Command (this is on TX1)
-	ETMCanSendSync(0,0,0,0);
-	break;
-
-      case 0x1:
-	// Send Enable/Disable command to Pulse Sync Board  (this is on TX2)
-	if (ETMCanMasterReadyToPulse()) {
-	  // Send out message to enable Pulse Sync Board
-	  master_message.identifier = (ETM_CAN_MSG_CMD_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
-	  master_message.word3 = ETM_CAN_REGISTER_PULSE_SYNC_CMD_ENABLE_PULSES;
-	  master_message.word2 = 0;
-	  master_message.word1 = 0;
-	  master_message.word0 = 0;
-	  ETMCanTXMessage(&master_message, &CXTX2CON);
-	} else {
-	  ETMCanMasterPulseSyncDisable();
-	}
-	break;
-	
-      case 0x2:
-	// Send High/Low Energy Program voltage to Lambda Board
-	ETMCanMasterHVLambdaUpdateOutput();
-	break;
-	
-      case 0x3:
-	// Send Heater/Magnet Current to Heater Magnet Board
-	master_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_HEATER_MAGNET_BOARD << 3));
-	master_message.word3 = ETM_CAN_REGISTER_HEATER_MAGNET_SET_1_CURRENT_SET_POINT;
-	master_message.word2 = 0;
-	master_message.word1 = etm_can_heater_magnet_mirror.htrmag_heater_current_set_point;
-	master_message.word0 = etm_can_heater_magnet_mirror.htrmag_magnet_current_set_point;
-	ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &master_message);
-	MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
-	break;
-	
-      case 0x4:
-	// Send Sync Command (this is on TX1)
-	ETMCanSendSync(0,0,0,0);
-	break;
-	
-      case 0x5:
-	// Send Enable/Disable command to Pulse Sync Board  (this is on TX2)
-	if (ETMCanMasterReadyToPulse()) {
-	  // Send out message to enable Pulse Sync Board
-	  master_message.identifier = (ETM_CAN_MSG_CMD_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
-	  master_message.word3 = ETM_CAN_REGISTER_PULSE_SYNC_CMD_ENABLE_PULSES;
-	  master_message.word2 = 0;
-	  master_message.word1 = 0;
-	  master_message.word0 = 0;
-	  ETMCanTXMessage(&master_message, &CXTX2CON);
-	} else {
-	  ETMCanMasterPulseSyncDisable();
-	}
-	break;
-	
-      case 0x6:
-	// Send High/Low Energy Pulse top voltage to Gun Driver
-	ETMCanMasterGunDriverUpdatePulseTop();
-	break;
-	
-      case 0x7:
-	// Send Heater/Cathode set points to Gun Driver
-	master_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_GUN_DRIVER_BOARD << 3));
-	master_message.word3 = ETM_CAN_REGISTER_GUN_DRIVER_SET_1_HEATER_CATHODE_SET_POINT;
-	master_message.word2 = 0;
-	master_message.word1 = etm_can_gun_driver_mirror.gun_cathode_voltage_set_point;
-	master_message.word0 = etm_can_gun_driver_mirror.gun_heater_voltage_set_point;
-	ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &master_message);
-	MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
-	break;
-      }
-  }
-}
-
-unsigned int ETMCanMasterReadyToPulse(void) {
-  unsigned int ready_to_pulse;
-  
-  ready_to_pulse = etm_can_ethernet_board_data.software_pulse_enable;
-
-  if ((etm_can_ethernet_board_data.fault_status_bits) & ETM_CAN_BIT_ALL_ACTIVE_BOARDS) {
-    // There was a fault on one of the boards
-    ready_to_pulse = 0;
-  } 
-  if ((etm_can_ethernet_board_data.pulse_inhibit_status_bits) & ETM_CAN_BIT_ALL_ACTIVE_BOARDS) {
-    // One of the boards is not ready to pulse
-    ready_to_pulse = 0;
-  }
-  return ready_to_pulse;
-}
-
-void ETMCanMasterPulseSyncDisable(void) {
-  ETMCanMessage can_message;
-  
-  can_message.identifier = (ETM_CAN_MSG_CMD_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
-  can_message.word3 = ETM_CAN_REGISTER_PULSE_SYNC_CMD_DISABLE_PULSES;
-  can_message.word2 = 0;
-  can_message.word1 = 0;
-  can_message.word0 = 0;
-  ETMCanTXMessage(&can_message, &CXTX2CON);
-}
-
-void ETMCanMasterHVLambdaUpdateOutput(void) {
-  ETMCanMessage can_message;
-  
-  can_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_HV_LAMBDA_BOARD << 3));
-  can_message.word3 = ETM_CAN_REGISTER_HV_LAMBDA_SET_1_LAMBDA_SET_POINT;
-  can_message.word2 = etm_can_hv_lamdba_mirror.hvlambda_low_energy_set_point;
-  can_message.word1 = etm_can_hv_lamdba_mirror.hvlambda_high_energy_set_point;
-  can_message.word0 = 0;
-  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &can_message);
-  MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
-}
-
-void ETMCanMasterGunDriverUpdatePulseTop(void) {
-  ETMCanMessage can_message;
-  
-  can_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_GUN_DRIVER_BOARD << 3));
-  can_message.word3 = ETM_CAN_REGISTER_GUN_DRIVER_SET_1_GRID_TOP_SET_POINT;
-  can_message.word2 = 0;
-  can_message.word1 = etm_can_gun_driver_mirror.gun_high_energy_pulse_top_voltage_set_point;
-  can_message.word0 = etm_can_gun_driver_mirror.gun_low_energy_pulse_top_voltage_set_point;
-  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &can_message);
-  MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
-}
 
 #else
 // ------------------------- These are all slave board functions -------------------------- //
@@ -782,6 +631,8 @@ void ETMCanInitialize(void) {
   etm_can_ethernet_board_data.debug_data    = &etm_can_system_debug_data;
   etm_can_ethernet_board_data.configuration = &etm_can_my_configuration;
   etm_can_ethernet_board_data.status_data   = &etm_can_status_register;
+
+  etm_can_ethernet_board_data.status_received_register = 0x0000;
 #endif
 
 
@@ -942,6 +793,9 @@ void __attribute__((interrupt, no_auto_psv)) _CXInterrupt(void) {
 
 
 #ifdef __ETM_CAN_MASTER_MODULE
+
+
+
 ETMCanRamMirrorHVLambda          etm_can_hv_lamdba_mirror;
 ETMCanRamMirrorIonPump           etm_can_ion_pump_mirror;
 ETMCanRamMirrorAFC               etm_can_afc_mirror;
@@ -953,6 +807,178 @@ ETMCanRamMirrorPulseSync         etm_can_pulse_sync_mirror;
 
 ETMCanHighSpeedData              etm_can_high_speed_data_test;
 
+
+
+
+
+
+
+// DPARKER move these commands to ETM_CAN_MASTER
+// DPARKER create a master C and H file and move configuration there
+
+
+void ETMCanSetValueCalibrationUpload(ETMCanMessage* message_ptr) {
+  // Dparker impliment this
+}
+
+void ETMCanSendSync(unsigned int sync_3, unsigned int sync_2, unsigned int sync_1, unsigned int sync_0) {
+  ETMCanMessage sync_message;
+  sync_message.identifier = ETM_CAN_MSG_SYNC_TX;
+  sync_message.word0 = sync_0;
+  sync_message.word1 = sync_1;
+  sync_message.word2 = sync_2;
+  sync_message.word3 = sync_3;
+  
+  ETMCanTXMessage(&sync_message, &CXTX1CON);
+  etm_can_can_status.can_status_tx_1++;
+}
+
+
+void ETMCanMasterStandardCommunication(void) {
+  /*
+    One command is schedule to be sent every 25ms
+    This loops through 8 times so each command is sent once every 200mS (5Hz)
+    The sync command and Pulse Sync enable command are each sent twice for an effecive rate of 100ms (10Hz)
+  */
+
+  ETMCanMessage master_message;
+  
+  if (_T2IF) {
+    // should be true once every 25mS
+    // ecah of the 8 cases will be true once every 200mS
+    _T2IF = 0;
+    
+    etm_can_default_transmit_counter++;
+    etm_can_default_transmit_counter &= 0x7;
+
+    
+    switch (etm_can_default_transmit_counter) 
+      {
+      case 0x0:
+	// Send Sync Command (this is on TX1)
+	ETMCanSendSync(0,0,0,0);
+	break;
+
+      case 0x1:
+	// Send Enable/Disable command to Pulse Sync Board  (this is on TX2)
+	if (ETMCanMasterReadyToPulse()) {
+	  // Send out message to enable Pulse Sync Board
+	  master_message.identifier = (ETM_CAN_MSG_CMD_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
+	  master_message.word3 = ETM_CAN_REGISTER_PULSE_SYNC_CMD_ENABLE_PULSES;
+	  master_message.word2 = 0;
+	  master_message.word1 = 0;
+	  master_message.word0 = 0;
+	  ETMCanTXMessage(&master_message, &CXTX2CON);
+	} else {
+	  ETMCanMasterPulseSyncDisable();
+	}
+	break;
+	
+      case 0x2:
+	// Send High/Low Energy Program voltage to Lambda Board
+	ETMCanMasterHVLambdaUpdateOutput();
+	break;
+	
+      case 0x3:
+	// Send Heater/Magnet Current to Heater Magnet Board
+	master_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_HEATER_MAGNET_BOARD << 3));
+	master_message.word3 = ETM_CAN_REGISTER_HEATER_MAGNET_SET_1_CURRENT_SET_POINT;
+	master_message.word2 = 0;
+	master_message.word1 = etm_can_heater_magnet_mirror.htrmag_heater_current_set_point;
+	master_message.word0 = etm_can_heater_magnet_mirror.htrmag_magnet_current_set_point;
+	ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &master_message);
+	MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
+	break;
+	
+      case 0x4:
+	// Send Sync Command (this is on TX1)
+	ETMCanSendSync(0,0,0,0);
+	break;
+	
+      case 0x5:
+	// Send Enable/Disable command to Pulse Sync Board  (this is on TX2)
+	if (ETMCanMasterReadyToPulse()) {
+	  // Send out message to enable Pulse Sync Board
+	  master_message.identifier = (ETM_CAN_MSG_CMD_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
+	  master_message.word3 = ETM_CAN_REGISTER_PULSE_SYNC_CMD_ENABLE_PULSES;
+	  master_message.word2 = 0;
+	  master_message.word1 = 0;
+	  master_message.word0 = 0;
+	  ETMCanTXMessage(&master_message, &CXTX2CON);
+	} else {
+	  ETMCanMasterPulseSyncDisable();
+	}
+	break;
+	
+      case 0x6:
+	// Send High/Low Energy Pulse top voltage to Gun Driver
+	ETMCanMasterGunDriverUpdatePulseTop();
+	break;
+	
+      case 0x7:
+	// Send Heater/Cathode set points to Gun Driver
+	master_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_GUN_DRIVER_BOARD << 3));
+	master_message.word3 = ETM_CAN_REGISTER_GUN_DRIVER_SET_1_HEATER_CATHODE_SET_POINT;
+	master_message.word2 = 0;
+	master_message.word1 = etm_can_gun_driver_mirror.gun_cathode_voltage_set_point;
+	master_message.word0 = etm_can_gun_driver_mirror.gun_heater_voltage_set_point;
+	ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &master_message);
+	MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
+	break;
+      }
+  }
+}
+
+unsigned int ETMCanMasterReadyToPulse(void) {
+  unsigned int ready_to_pulse;
+  
+  ready_to_pulse = etm_can_ethernet_board_data.software_pulse_enable;
+
+  if ((etm_can_ethernet_board_data.fault_status_bits) & ETM_CAN_BIT_ALL_ACTIVE_BOARDS) {
+    // There was a fault on one of the boards
+    ready_to_pulse = 0;
+  } 
+  if ((etm_can_ethernet_board_data.pulse_inhibit_status_bits) & ETM_CAN_BIT_ALL_ACTIVE_BOARDS) {
+    // One of the boards is not ready to pulse
+    ready_to_pulse = 0;
+  }
+  return ready_to_pulse;
+}
+
+void ETMCanMasterPulseSyncDisable(void) {
+  ETMCanMessage can_message;
+  
+  can_message.identifier = (ETM_CAN_MSG_CMD_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
+  can_message.word3 = ETM_CAN_REGISTER_PULSE_SYNC_CMD_DISABLE_PULSES;
+  can_message.word2 = 0;
+  can_message.word1 = 0;
+  can_message.word0 = 0;
+  ETMCanTXMessage(&can_message, &CXTX2CON);
+}
+
+void ETMCanMasterHVLambdaUpdateOutput(void) {
+  ETMCanMessage can_message;
+  
+  can_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_HV_LAMBDA_BOARD << 3));
+  can_message.word3 = ETM_CAN_REGISTER_HV_LAMBDA_SET_1_LAMBDA_SET_POINT;
+  can_message.word2 = etm_can_hv_lamdba_mirror.hvlambda_low_energy_set_point;
+  can_message.word1 = etm_can_hv_lamdba_mirror.hvlambda_high_energy_set_point;
+  can_message.word0 = 0;
+  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &can_message);
+  MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
+}
+
+void ETMCanMasterGunDriverUpdatePulseTop(void) {
+  ETMCanMessage can_message;
+  
+  can_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_GUN_DRIVER_BOARD << 3));
+  can_message.word3 = ETM_CAN_REGISTER_GUN_DRIVER_SET_1_GRID_TOP_SET_POINT;
+  can_message.word2 = 0;
+  can_message.word1 = etm_can_gun_driver_mirror.gun_high_energy_pulse_top_voltage_set_point;
+  can_message.word0 = etm_can_gun_driver_mirror.gun_low_energy_pulse_top_voltage_set_point;
+  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &can_message);
+  MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
+}
 
 
 void ETMCanProcessLogData(void) {
@@ -1043,7 +1069,7 @@ void ETMCanProcessLogData(void) {
 	  debug_data_ptr->reset_count                = next_message.word3;
 	  debug_data_ptr->self_test_result_register  = next_message.word2;
 	  debug_data_ptr->reserved_0                 = next_message.word1;
-	  debug_data_ptr->reserved_1                 = next_message.word0;
+	  //debug_data_ptr->reserved_1                 = next_message.word0;  // This is now overwritten by the ECB to indicate if there is a connection
 	  break;
 
 	case ETM_CAN_DATA_LOG_REGISTER_DEFAULT_DEBUG_0:
@@ -1293,7 +1319,7 @@ void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr) {
     etm_can_ion_pump_mirror.status_data.status_word_1 = message_ptr->word1;
     etm_can_ion_pump_mirror.status_data.data_word_A   = message_ptr->word2;
     etm_can_ion_pump_mirror.status_data.data_word_B   = message_ptr->word3;
-    etm_can_ethernet_board_data.status_received_register |= ETM_CAN_BIT_ION_PUMP_BOARD;
+    ETMCanSetBit(&etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_ION_PUMP_BOARD);
     ClrWdt();
     break;
 
@@ -1302,7 +1328,7 @@ void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr) {
     etm_can_magnetron_current_mirror.status_data.status_word_1 = message_ptr->word1;
     etm_can_magnetron_current_mirror.status_data.data_word_A   = message_ptr->word2;
     etm_can_magnetron_current_mirror.status_data.data_word_B   = message_ptr->word3;
-    etm_can_ethernet_board_data.status_received_register |= ETM_CAN_BIT_MAGNETRON_CURRENT_BOARD;
+    ETMCanSetBit(&etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_MAGNETRON_CURRENT_BOARD);
     ClrWdt();
     break;
 
@@ -1311,7 +1337,7 @@ void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr) {
     etm_can_pulse_sync_mirror.status_data.status_word_1 = message_ptr->word1;
     etm_can_pulse_sync_mirror.status_data.data_word_A   = message_ptr->word2;
     etm_can_pulse_sync_mirror.status_data.data_word_B   = message_ptr->word3;
-    etm_can_ethernet_board_data.status_received_register |= ETM_CAN_BIT_PULSE_SYNC_BOARD;
+    ETMCanSetBit(&etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_PULSE_SYNC_BOARD);
     ClrWdt();
     break;
 
@@ -1320,7 +1346,7 @@ void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr) {
     etm_can_hv_lamdba_mirror.status_data.status_word_1 = message_ptr->word1;
     etm_can_hv_lamdba_mirror.status_data.data_word_A   = message_ptr->word2;
     etm_can_hv_lamdba_mirror.status_data.data_word_B   = message_ptr->word3;
-    etm_can_ethernet_board_data.status_received_register |= ETM_CAN_BIT_HV_LAMBDA_BOARD;
+    ETMCanSetBit(&etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_HV_LAMBDA_BOARD);
     ClrWdt();
     break;
 
@@ -1329,7 +1355,7 @@ void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr) {
     etm_can_afc_mirror.status_data.status_word_1 = message_ptr->word1;
     etm_can_afc_mirror.status_data.data_word_A   = message_ptr->word2;
     etm_can_afc_mirror.status_data.data_word_B   = message_ptr->word3;
-    etm_can_ethernet_board_data.status_received_register |= ETM_CAN_BIT_AFC_CONTROL_BOARD;
+    ETMCanSetBit(&etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_AFC_CONTROL_BOARD);
     ClrWdt();
     break;
     
@@ -1338,7 +1364,7 @@ void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr) {
     etm_can_cooling_mirror.status_data.status_word_1 = message_ptr->word1;
     etm_can_cooling_mirror.status_data.data_word_A   = message_ptr->word2;
     etm_can_cooling_mirror.status_data.data_word_B   = message_ptr->word3;
-    etm_can_ethernet_board_data.status_received_register |= ETM_CAN_BIT_COOLING_INTERFACE_BOARD;
+    ETMCanSetBit(&etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_COOLING_INTERFACE_BOARD);
     ClrWdt();
     break;
 
@@ -1347,7 +1373,7 @@ void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr) {
     etm_can_heater_magnet_mirror.status_data.status_word_1 = message_ptr->word1;
     etm_can_heater_magnet_mirror.status_data.data_word_A   = message_ptr->word2;
     etm_can_heater_magnet_mirror.status_data.data_word_B   = message_ptr->word3;
-    etm_can_ethernet_board_data.status_received_register |= ETM_CAN_BIT_HEATER_MAGNET_BOARD;
+    ETMCanSetBit(&etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_HEATER_MAGNET_BOARD);
     ClrWdt();
     break;
 
@@ -1356,7 +1382,7 @@ void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr) {
     etm_can_gun_driver_mirror.status_data.status_word_1 = message_ptr->word1;
     etm_can_gun_driver_mirror.status_data.data_word_A   = message_ptr->word2;
     etm_can_gun_driver_mirror.status_data.data_word_B   = message_ptr->word3;
-    etm_can_ethernet_board_data.status_received_register |= ETM_CAN_BIT_GUN_DRIVER_BOARD;
+    ETMCanSetBit(&etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_GUN_DRIVER_BOARD);
     ClrWdt();
     break;
 
@@ -1368,6 +1394,16 @@ void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr) {
   if ((etm_can_ethernet_board_data.status_received_register & ETM_CAN_BIT_ALL_ACTIVE_SLAVE_BOARDS) == ETM_CAN_BIT_ALL_ACTIVE_SLAVE_BOARDS) {
     // A status update has been received from all boards
     TMR3 = 0;
+    
+    etm_can_ethernet_board_data.status_connected_boards = etm_can_ethernet_board_data.status_received_register;
+    etm_can_ion_pump_mirror.debug_data.reserved_1 = ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_ION_PUMP_BOARD);
+    etm_can_magnetron_current_mirror.debug_data.reserved_1 = ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_MAGNETRON_CURRENT_BOARD);
+    etm_can_pulse_sync_mirror.debug_data.reserved_1 = ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_PULSE_SYNC_BOARD);
+    etm_can_hv_lamdba_mirror.debug_data.reserved_1 = ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_HV_LAMBDA_BOARD);
+    etm_can_afc_mirror.debug_data.reserved_1 = ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_AFC_CONTROL_BOARD);
+    etm_can_cooling_mirror.debug_data.reserved_1 = ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_COOLING_INTERFACE_BOARD);
+    etm_can_heater_magnet_mirror.debug_data.reserved_1 = ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_HEATER_MAGNET_BOARD);
+    etm_can_gun_driver_mirror.debug_data.reserved_1 = ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_GUN_DRIVER_BOARD);
     etm_can_ethernet_board_data.status_received_register = 0x0000;
   } 
 

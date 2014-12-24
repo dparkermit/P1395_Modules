@@ -279,8 +279,10 @@ void ETMCanReturnValueBoardSpecific(ETMCanMessage* message_ptr);
 #define ETM_CAN_BIT_COOLING_INTERFACE_BOARD                             0b0000000001000000
 #define ETM_CAN_BIT_HEATER_MAGNET_BOARD                                 0b0000000010000000
 #define ETM_CAN_BIT_GUN_DRIVER_BOARD                                    0b0000000100000000
-#define ETM_CAN_BIT_ALL_ACTIVE_BOARDS                                   0b0100000111111110
-#define ETM_CAN_BIT_ALL_ACTIVE_SLAVE_BOARDS                             0b0000000111111110
+//#define ETM_CAN_BIT_ALL_ACTIVE_BOARDS                                   0b0100000111111110
+//#define ETM_CAN_BIT_ALL_ACTIVE_SLAVE_BOARDS                             0b0000000111111110
+#define ETM_CAN_BIT_ALL_ACTIVE_BOARDS                                   0b0100000000011000  // Pulse Sync, HV Lambda, ECB
+#define ETM_CAN_BIT_ALL_ACTIVE_SLAVE_BOARDS                             0b0000000000011000  // HV Lambda, ECB
 
 
 // Default Register Locations
@@ -605,6 +607,7 @@ typedef struct {
   unsigned int           pulse_sync_disable_requested;
 
   unsigned int           status_received_register;
+  unsigned int           status_connected_boards;
 
 } ETMCanRamMirrorEthernetBoard;
 
