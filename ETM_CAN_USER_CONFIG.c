@@ -24,7 +24,7 @@ void ETMCanSetValueBoardSpecific(ETMCanMessage* message_ptr) {
   case ETM_CAN_REGISTER_HEATER_MAGNET_SET_1_CURRENT_SET_POINT:
     ETMAnalogSetOutput(&global_data_A36224_500.analog_output_heater_current, message_ptr->word1);
     ETMAnalogSetOutput(&global_data_A36224_500.analog_output_electromagnet_current, message_ptr->word0);
-    ETMCanClearBit(&etm_can_status_register.status_word_0, STATUS_BIT_BOARD_WAITING_INITIAL_CONFIG);
+    _STATUS_BIT_NOT_CONFIGURED = 0;
     break;
 
 #endif
@@ -34,7 +34,7 @@ void ETMCanSetValueBoardSpecific(ETMCanMessage* message_ptr) {
   case ETM_CAN_REGISTER_HV_LAMBDA_SET_1_LAMBDA_SET_POINT:
     ETMAnalogSetOutput(&global_data_A36444.analog_output_high_energy_vprog, message_ptr->word1); 
     ETMAnalogSetOutput(&global_data_A36444.analog_output_low_energy_vprog,message_ptr->word2);
-    ETMCanClearBit(&etm_can_status_register.status_word_0, STATUS_BIT_BOARD_WAITING_INITIAL_CONFIG);
+    _STATUS_BIT_NOT_CONFIGURED = 0;
     break;
 #endif
 
@@ -60,12 +60,12 @@ void ETMCanExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
       */
 #ifdef __A36224_500
     case ETM_CAN_REGISTER_HEATER_MAGNET_CMD_OUTPUT_ENABLE:
-      ETMCanClearBit(&etm_can_status_register.status_word_0, STATUS_BIT_SOFTWARE_DISABLE); 
-    break;
-    
+      ETMCanClearBit(&etm_can_status_register.status_word_0, STATUS_BIT_SOFTWARE_DISABLE);
+      break;
+      
     case ETM_CAN_REGISTER_HEATER_MAGNET_CMD_OUTPUT_DISABLE:
       ETMCanSetBit(&etm_can_status_register.status_word_0, STATUS_BIT_SOFTWARE_DISABLE);
-    break;
+      break;
 #endif
     
     

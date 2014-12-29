@@ -2,12 +2,6 @@
 #include "p30fxxxx.h"
 
 
-ETMCanStatusRegisterNew test_status_register;
-
-ETMCanSyncMessageNew *ptr_test_sync_message;
-ETMCanSyncMessageNew test_sync_message;
-
-
 void ETMCanCheckForStatusChange(void);
 
 
@@ -34,6 +28,12 @@ ETMCanStatusRegister  etm_can_status_register;
 ETMCanAgileConfig     etm_can_my_configuration;
 ETMCanCanStatus       local_can_errors;
 ETMCanSyncMessage     etm_can_sync_message;
+
+
+unsigned int* ptr_can_status_status_bits = (unsigned int*)&etm_can_status_register.status_bits;
+unsigned int* ptr_can_status_flt_bits = (unsigned int*)&etm_can_status_register.fault_bits;
+
+
 
 // Private Functions
 void ETMCanProcessMessage(void);
@@ -103,8 +103,9 @@ void ETMCanCheckForTimeOut(void) {
   if (_T3IF) {
     _T3IF = 0;
     local_can_errors.timeout++;
-    etm_can_persistent_data.can_timeout_count = local_can_errors.timeout; 
-    ETMCanSetBit(&etm_can_status_register.status_word_1,FAULT_BIT_CAN_BUS_TIMEOUT);
+    etm_can_persistent_data.can_timeout_count = local_can_errors.timeout;
+    _STATUS_BIT_CAN_FAULT_LOCAL = 1;
+    //ETMCanSetBit(&etm_can_status_register.status_word_1,FAULT_BIT_CAN_BUS_TIMEOUT);
 
 #ifdef __ETM_CAN_MASTER_MODULE
     etm_can_ethernet_board_data.status_connected_boards = etm_can_ethernet_board_data.status_received_register;
@@ -235,11 +236,11 @@ void ETMCanSetValue(ETMCanMessage* message_ptr) {
 void ETMCanCheckForStatusChange(void) {
   unsigned int previous_status;
   
-  previous_status = (etm_can_status_register.status_word_0 & 0x0003);
+  previous_status = _STATUS_BIT_NOT_READY;
   
   ETMCanUpdateFaultAndInhibitBits();
   
-  if ((previous_status == 0) && ((etm_can_status_register.status_word_0 & 0x0003) != 0)) {
+  if ((previous_status == 0) && (_STATUS_BIT_NOT_READY)) {
     // There is new condition that is causing this board to inhibit operation.
     // Send a status update upstream to Master
     ETMCanSendStatus();
@@ -250,17 +251,10 @@ void ETMCanCheckForStatusChange(void) {
 void ETMCanUpdateFaultAndInhibitBits(void) {
   // Update the Fault bit
   // The individual Fault bits are latched but not the Sum Fault bit
-  if (etm_can_status_register.status_word_1 & etm_can_status_register.status_word_1_fault_mask) {
-    etm_can_status_register.status_word_0 |= STATUS_BIT_SUM_FAULT;  // Set the Fault Bit
+  if ((*ptr_can_status_flt_bits) || _STATUS_BIT_CAN_FAULT_LOCAL || _STATUS_BIT_NOT_CONFIGURED || _STATUS_BIT_STARTING_UP) {
+    _STATUS_BIT_NOT_READY = 1;
   } else {
-    etm_can_status_register.status_word_0 &= ~STATUS_BIT_SUM_FAULT;  // Clear the Fault Bit
-  }
-  
-  // Update the Inhibit bit
-  if (etm_can_status_register.status_word_0 & etm_can_status_register.status_word_0_inhbit_mask) {
-    etm_can_status_register.status_word_0 |= STATUS_BIT_PULSE_INHIBITED;  // Set the Inhibit Bit
-  } else {
-    etm_can_status_register.status_word_0 &= ~STATUS_BIT_PULSE_INHIBITED;  // Clear the Inhibit Bit
+    _STATUS_BIT_NOT_READY = 0;
   }
 }
 
@@ -304,11 +298,11 @@ void ETMCanExecuteCMDDefault(ETMCanMessage* message_ptr) {
     break;
  
   case ETM_CAN_REGISTER_DEFAULT_CMD_DISABLE_HIGH_SPEED_DATA_LOGGING:
-    ETMCanClearBit(&etm_can_status_register.status_word_0, STATUS_BIT_HIGH_SPEED_LOGGING_ENABLED);
+    _STATUS_BIT_PULSE_LOGGING = 0;
     break;
 
   case ETM_CAN_REGISTER_DEFAULT_CMD_ENABLE_HIGH_SPEED_DATA_LOGGING:
-    ETMCanSetBit(&etm_can_status_register.status_word_0, STATUS_BIT_HIGH_SPEED_LOGGING_ENABLED);
+    _STATUS_BIT_PULSE_LOGGING = 1;
     break;
    
   default:
@@ -354,17 +348,17 @@ void ETMCanReturnValueCalibration(ETMCanMessage* message_ptr) {
 }
 
 void ETMCanSendStatus(void) {
-  ETMCanMessage status_message;
+  ETMCanMessage message;
   status_message.identifier = ETM_CAN_MSG_STATUS_TX | (ETM_CAN_MY_ADDRESS << 3);
 
   ETMCanUpdateFaultAndInhibitBits();
 
-  status_message.word0 = etm_can_status_register.status_word_0;
-  status_message.word1 = etm_can_status_register.status_word_1;
-  status_message.word2 = etm_can_status_register.data_word_A;
-  status_message.word3 = etm_can_status_register.data_word_B;
+  message.word0 = *ptr_can_status_status_bits;
+  message.word1 = *ptr_can_status_flt_bits;
+  message.word2 = etm_can_status_register.data_word_A;
+  message.word3 = etm_can_status_register.data_word_B;
   
-  ETMCanTXMessage(&status_message, &CXTX1CON);
+  ETMCanTXMessage(&message, &CXTX1CON);
   local_can_errors.tx_1++;
 }
 
@@ -546,7 +540,8 @@ void ETMCanIonPumpSendTargetCurrentReading(unsigned int target_current_reading, 
 
 void ETMCanInitialize(void) {
   unsigned int dan_test = 0x8021;
-
+  unsigned int fault_register;
+  unsigned int* ptr_fault_register;
 
   if (_POR || _BOR) {
     // This was a power cycle;
@@ -681,14 +676,31 @@ void ETMCanInitialize(void) {
   etm_can_my_configuration.agile_rev_ascii        = ETM_CAN_AGILE_REV;
   etm_can_my_configuration.serial_number          = ETM_CAN_SERIAL_NUMBER;
 
-
+  /*
   ptr_test_sync_message = (ETMCanSyncMessageNew*)&dan_test;
   //if (ptr_test_sync_message.sync_0_logging_enable) {
   //  test_sync_message.sync_0_logging_enable = 1;
   //}
-  test_sync_message = *ptr_test_sync_message;
+  //test_sync_message = *ptr_test_sync_message;
+  test_sync_message = *(ETMCanSyncMessageNew*)&dan_test;
+
+
+  ptr_fault_register = (unsigned int*)&test_status_register.fault_bits;
+  *ptr_fault_register = 0b0101000000000001;
+  
+  //test_status_register.fault_bits.fault_0 = 1;
+  //test_status_register.fault_bits.fault_7 = 1;
+  //test_status_register.fault_bits.fault_E = 1;
+
+
+  //fault_register = *(unsigned int*)&test_status_register.fault_bits;
+  fault_register = *ptr_fault_register;
+
+
   Nop();
   Nop();
+
+  */
   
 }
 
@@ -1340,8 +1352,8 @@ void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr) {
     */
 
   case ETM_CAN_ADDR_ION_PUMP_BOARD:
-    etm_can_ion_pump_mirror.status_data.status_word_0 = message_ptr->word0;
-    etm_can_ion_pump_mirror.status_data.status_word_1 = message_ptr->word1;
+    //etm_can_ion_pump_mirror.status_data.status_word_0 = message_ptr->word0;
+    //etm_can_ion_pump_mirror.status_data.status_word_1 = message_ptr->word1;
     etm_can_ion_pump_mirror.status_data.data_word_A   = message_ptr->word2;
     etm_can_ion_pump_mirror.status_data.data_word_B   = message_ptr->word3;
     ETMCanSetBit(&etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_ION_PUMP_BOARD);
@@ -1349,8 +1361,8 @@ void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr) {
     break;
 
   case ETM_CAN_ADDR_MAGNETRON_CURRENT_BOARD:
-    etm_can_magnetron_current_mirror.status_data.status_word_0 = message_ptr->word0;
-    etm_can_magnetron_current_mirror.status_data.status_word_1 = message_ptr->word1;
+    //etm_can_magnetron_current_mirror.status_data.status_word_0 = message_ptr->word0;
+    //etm_can_magnetron_current_mirror.status_data.status_word_1 = message_ptr->word1;
     etm_can_magnetron_current_mirror.status_data.data_word_A   = message_ptr->word2;
     etm_can_magnetron_current_mirror.status_data.data_word_B   = message_ptr->word3;
     ETMCanSetBit(&etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_MAGNETRON_CURRENT_BOARD);
@@ -1358,8 +1370,8 @@ void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr) {
     break;
 
   case ETM_CAN_ADDR_PULSE_SYNC_BOARD:
-    etm_can_pulse_sync_mirror.status_data.status_word_0 = message_ptr->word0;
-    etm_can_pulse_sync_mirror.status_data.status_word_1 = message_ptr->word1;
+    //etm_can_pulse_sync_mirror.status_data.status_word_0 = message_ptr->word0;
+    //etm_can_pulse_sync_mirror.status_data.status_word_1 = message_ptr->word1;
     etm_can_pulse_sync_mirror.status_data.data_word_A   = message_ptr->word2;
     etm_can_pulse_sync_mirror.status_data.data_word_B   = message_ptr->word3;
     ETMCanSetBit(&etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_PULSE_SYNC_BOARD);
@@ -1367,8 +1379,8 @@ void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr) {
     break;
 
   case ETM_CAN_ADDR_HV_LAMBDA_BOARD:
-    etm_can_hv_lamdba_mirror.status_data.status_word_0 = message_ptr->word0;
-    etm_can_hv_lamdba_mirror.status_data.status_word_1 = message_ptr->word1;
+    //etm_can_hv_lamdba_mirror.status_data.status_word_0 = message_ptr->word0;
+    //etm_can_hv_lamdba_mirror.status_data.status_word_1 = message_ptr->word1;
     etm_can_hv_lamdba_mirror.status_data.data_word_A   = message_ptr->word2;
     etm_can_hv_lamdba_mirror.status_data.data_word_B   = message_ptr->word3;
     ETMCanSetBit(&etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_HV_LAMBDA_BOARD);
@@ -1376,8 +1388,8 @@ void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr) {
     break;
 
   case ETM_CAN_ADDR_AFC_CONTROL_BOARD:
-    etm_can_afc_mirror.status_data.status_word_0 = message_ptr->word0;
-    etm_can_afc_mirror.status_data.status_word_1 = message_ptr->word1;
+    //etm_can_afc_mirror.status_data.status_word_0 = message_ptr->word0;
+    //etm_can_afc_mirror.status_data.status_word_1 = message_ptr->word1;
     etm_can_afc_mirror.status_data.data_word_A   = message_ptr->word2;
     etm_can_afc_mirror.status_data.data_word_B   = message_ptr->word3;
     ETMCanSetBit(&etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_AFC_CONTROL_BOARD);
@@ -1385,8 +1397,8 @@ void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr) {
     break;
     
   case ETM_CAN_ADDR_COOLING_INTERFACE_BOARD:
-    etm_can_cooling_mirror.status_data.status_word_0 = message_ptr->word0;
-    etm_can_cooling_mirror.status_data.status_word_1 = message_ptr->word1;
+    //etm_can_cooling_mirror.status_data.status_word_0 = message_ptr->word0;
+    //etm_can_cooling_mirror.status_data.status_word_1 = message_ptr->word1;
     etm_can_cooling_mirror.status_data.data_word_A   = message_ptr->word2;
     etm_can_cooling_mirror.status_data.data_word_B   = message_ptr->word3;
     ETMCanSetBit(&etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_COOLING_INTERFACE_BOARD);
@@ -1394,8 +1406,8 @@ void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr) {
     break;
 
   case ETM_CAN_ADDR_HEATER_MAGNET_BOARD:
-    etm_can_heater_magnet_mirror.status_data.status_word_0 = message_ptr->word0;
-    etm_can_heater_magnet_mirror.status_data.status_word_1 = message_ptr->word1;
+    //etm_can_heater_magnet_mirror.status_data.status_word_0 = message_ptr->word0;
+    //etm_can_heater_magnet_mirror.status_data.status_word_1 = message_ptr->word1;
     etm_can_heater_magnet_mirror.status_data.data_word_A   = message_ptr->word2;
     etm_can_heater_magnet_mirror.status_data.data_word_B   = message_ptr->word3;
     ETMCanSetBit(&etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_HEATER_MAGNET_BOARD);
@@ -1403,8 +1415,8 @@ void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr) {
     break;
 
   case ETM_CAN_ADDR_GUN_DRIVER_BOARD:
-    etm_can_gun_driver_mirror.status_data.status_word_0 = message_ptr->word0;
-    etm_can_gun_driver_mirror.status_data.status_word_1 = message_ptr->word1;
+    //etm_can_gun_driver_mirror.status_data.status_word_0 = message_ptr->word0;
+    //etm_can_gun_driver_mirror.status_data.status_word_1 = message_ptr->word1;
     etm_can_gun_driver_mirror.status_data.data_word_A   = message_ptr->word2;
     etm_can_gun_driver_mirror.status_data.data_word_B   = message_ptr->word3;
     ETMCanSetBit(&etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_GUN_DRIVER_BOARD);

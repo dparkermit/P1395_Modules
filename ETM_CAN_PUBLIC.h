@@ -5,6 +5,7 @@
 
 
 
+
 typedef struct {
   unsigned status_0_not_ready:1;
   unsigned status_1_local_can_fault:1;
@@ -14,7 +15,7 @@ typedef struct {
   unsigned status_5_self_check_error:1;
   unsigned status_6_pulse_logging:1;
   unsigned status_7_ecb_can_fault:1;
-
+  
   unsigned status_8:1;
   unsigned status_9:1;
   unsigned status_A:1;
@@ -23,8 +24,18 @@ typedef struct {
   unsigned status_D:1;
   unsigned status_E:1;
   unsigned status_F:1;
+} ETMCanStatusRegisterStatusBits;
 
 
+#define _STATUS_BIT_NOT_READY         etm_can_status_register.status_bits.status_0_not_ready
+#define _STATUS_BIT_CAN_FAULT_LOCAL   etm_can_status_register.status_bits.status_1_local_can_fault
+#define _STATUS_BIT_NOT_CONFIGURED    etm_can_status_register.status_bits.status_2_not_configured
+#define _STATUS_BIT_STARTING_UP       etm_can_status_register.status_bits.status_3_starting_up
+
+#define _STATUS_BIT_SELF_CHECK_ERROR  etm_can_status_register.status_bits.status_5_self_check_error
+#define _STATUS_BIT_PULSE_LOGGING     etm_can_status_register.status_bits.status_6_pulse_logging
+
+typedef struct {
   unsigned fault_0:1;
   unsigned fault_1:1;
   unsigned fault_2:1;
@@ -41,20 +52,26 @@ typedef struct {
   unsigned fault_D:1;
   unsigned fault_E:1;
   unsigned fault_F:1;
-
-  unsigned int            data_word_A;
-  unsigned int            data_word_B;
-
-} ETMCanStatusRegisterNew;
+} ETMCanStatusRegisterFaultBits;
 
 
+typedef struct {
+  ETMCanStatusRegisterStatusBits status_bits;
+  ETMCanStatusRegisterFaultBits  fault_bits;
+  unsigned int data_word_A;
+  unsigned int data_word_B;
 
-extern ETMCanStatusRegisterNew test_status_register;
+  unsigned int unused_A;
+  unsigned int unused_B;
+} ETMCanStatusRegister;
 
 
 
 
 
+
+
+/*
 typedef struct {
   unsigned int status_word_0;
   unsigned int status_word_1;
@@ -65,6 +82,8 @@ typedef struct {
   unsigned int status_word_1_fault_mask;
 
 } ETMCanStatusRegister;
+*/
+
 
 
 typedef struct {
