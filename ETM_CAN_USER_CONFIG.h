@@ -15,12 +15,6 @@
 #define ETM_CAN_AGILE_DASH                  0
 #define ETM_CAN_AGILE_REV                   'A' 
 #define ETM_CAN_SERIAL_NUMBER               100 // DPARKER need to figure out how to set this in FLASH when programming
-
-
-
-#define _STATUS_LAMBDA_AT_EOC               test_status_register.status_8_user
-#define _STATUS_LAMBDA_HIGH_ENERGY          test_status_register.status_9_user
-
 #endif
 
 

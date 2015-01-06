@@ -7,33 +7,26 @@
 
 
 typedef struct {
-  unsigned status_0_not_ready:1;
-  unsigned status_1_local_can_fault:1;
-  unsigned status_2_not_configured:1;
-  unsigned status_3_starting_up:1;
-  unsigned status_4_unused:1;
-  unsigned status_5_self_check_error:1;
-  unsigned status_6_pulse_logging:1;
-  unsigned status_7_ecb_can_fault:1;
+  unsigned control_0_not_ready:1;
+  unsigned control_1_can_fault:1;
+  unsigned control_2_not_configured:1;
+  unsigned control_3_self_check_error:1;
+  unsigned control_4_unused:1;
+  unsigned control_5_unused:1;
+  unsigned control_6_unused:1;
+  unsigned control_7_ecb_can_not_active:1;
   
-  unsigned status_8:1;
-  unsigned status_9:1;
-  unsigned status_A:1;
-  unsigned status_B:1;
-  unsigned status_C:1;
-  unsigned status_D:1;
-  unsigned status_E:1;
-  unsigned status_F:1;
+  unsigned status_0:1;
+  unsigned status_1:1;
+  unsigned status_2:1;
+  unsigned status_3:1;
+  unsigned status_4:1;
+  unsigned status_5:1;
+  unsigned status_6:1;
+  unsigned status_7:1;
 } ETMCanStatusRegisterStatusBits;
 
 
-#define _STATUS_BIT_NOT_READY         etm_can_status_register.status_bits.status_0_not_ready
-#define _STATUS_BIT_CAN_FAULT_LOCAL   etm_can_status_register.status_bits.status_1_local_can_fault
-#define _STATUS_BIT_NOT_CONFIGURED    etm_can_status_register.status_bits.status_2_not_configured
-#define _STATUS_BIT_STARTING_UP       etm_can_status_register.status_bits.status_3_starting_up
-
-#define _STATUS_BIT_SELF_CHECK_ERROR  etm_can_status_register.status_bits.status_5_self_check_error
-#define _STATUS_BIT_PULSE_LOGGING     etm_can_status_register.status_bits.status_6_pulse_logging
 
 typedef struct {
   unsigned fault_0:1;
@@ -55,34 +48,54 @@ typedef struct {
 } ETMCanStatusRegisterFaultBits;
 
 
+
 typedef struct {
-  ETMCanStatusRegisterStatusBits status_bits;
-  ETMCanStatusRegisterFaultBits  fault_bits;
+  ETMCanStatusRegisterStatusBits status_bits;  // 16 bits
+  ETMCanStatusRegisterFaultBits  fault_bits;   // 16 bits
   unsigned int data_word_A;
   unsigned int data_word_B;
 
-  unsigned int unused_A;
-  unsigned int unused_B;
+  unsigned int unused_A;                       // DPARKER Remove this when you figure out how
+  unsigned int unused_B;                       // DPARKER Remove this when you figure out how
 } ETMCanStatusRegister;
 
+extern ETMCanStatusRegister  etm_can_status_register;
 
 
+#define _CONTROL_NOT_READY            etm_can_status_register.status_bits.control_0_not_ready
+#define _CONTROL_CAN_FAULT            etm_can_status_register.status_bits.control_1_can_fault
+#define _CONTROL_NOT_CONFIGURED       etm_can_status_register.status_bits.control_2_not_configured
+#define _CONTROL_SELF_CHECK_ERROR     etm_can_status_register.status_bits.control_3_self_check_error
+
+#define _STATUS_0                     etm_can_status_register.status_bits.status_0
+#define _STATUS_1                     etm_can_status_register.status_bits.status_1
+#define _STATUS_2                     etm_can_status_register.status_bits.status_2
+#define _STATUS_3                     etm_can_status_register.status_bits.status_3
+#define _STATUS_4                     etm_can_status_register.status_bits.status_4
+#define _STATUS_5                     etm_can_status_register.status_bits.status_5
+#define _STATUS_6                     etm_can_status_register.status_bits.status_6
+#define _STATUS_7                     etm_can_status_register.status_bits.status_7
+
+#define _FAULT_0                      etm_can_status_register.fault_bits.fault_0
+#define _FAULT_1                      etm_can_status_register.fault_bits.fault_1
+#define _FAULT_2                      etm_can_status_register.fault_bits.fault_2
+#define _FAULT_3                      etm_can_status_register.fault_bits.fault_3
+#define _FAULT_4                      etm_can_status_register.fault_bits.fault_4
+#define _FAULT_5                      etm_can_status_register.fault_bits.fault_5
+#define _FAULT_6                      etm_can_status_register.fault_bits.fault_6
+#define _FAULT_7                      etm_can_status_register.fault_bits.fault_7
+#define _FAULT_8                      etm_can_status_register.fault_bits.fault_8
+#define _FAULT_9                      etm_can_status_register.fault_bits.fault_9
+#define _FAULT_A                      etm_can_status_register.fault_bits.fault_A
+#define _FAULT_B                      etm_can_status_register.fault_bits.fault_B
+#define _FAULT_C                      etm_can_status_register.fault_bits.fault_C
+#define _FAULT_D                      etm_can_status_register.fault_bits.fault_D
+#define _FAULT_E                      etm_can_status_register.fault_bits.fault_E
+#define _FAULT_F                      etm_can_status_register.fault_bits.fault_F
 
 
-
-
-/*
-typedef struct {
-  unsigned int status_word_0;
-  unsigned int status_word_1;
-  unsigned int data_word_A;
-  unsigned int data_word_B;
-  
-  unsigned int status_word_0_inhbit_mask;
-  unsigned int status_word_1_fault_mask;
-
-} ETMCanStatusRegister;
-*/
+#define _FAULT_REGISTER               *(unsigned int*)&etm_can_status_register.fault_bits
+#define _CONTROL_REGISTER             *(unsigned int*)&etm_can_status_register.status_bits
 
 
 
@@ -178,7 +191,6 @@ extern unsigned int etm_can_next_pulse_count;  // This value will get updated in
 
 // Public Debug and Status registers
 extern ETMCanSystemDebugData local_debug_data;  
-extern ETMCanStatusRegister  etm_can_status_register;  
 extern ETMCanAgileConfig     etm_can_my_configuration;
 extern ETMCanSyncMessage     etm_can_sync_message;
 /*
@@ -228,7 +240,7 @@ void ETMCanIonPumpSendTargetCurrentReading(unsigned int target_current_reading, 
 
 
 
-
+/*
 // ------------------- STATUS/INHBIT REGISTER --------------------------//
 
 #define STATUS_BIT_SUM_FAULT                       0b0000000000000001
@@ -271,6 +283,7 @@ void ETMCanIonPumpSendTargetCurrentReading(unsigned int target_current_reading, 
 #define FAULT_BIT_USER_DEFINED_14                  0b0100000000000000
 #define FAULT_BIT_USER_DEFINED_15                  0b1000000000000000
 
+*/
 
 extern unsigned int global_reset_faults;
 
