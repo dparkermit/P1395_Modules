@@ -8,7 +8,7 @@
 
 typedef struct {
   unsigned control_0_not_ready:1;
-  unsigned control_1_can_fault:1;
+  unsigned control_1_can_status:1;
   unsigned control_2_not_configured:1;
   unsigned control_3_self_check_error:1;
   unsigned control_4_unused:1;
@@ -63,7 +63,7 @@ extern ETMCanStatusRegister  etm_can_status_register;
 
 
 #define _CONTROL_NOT_READY            etm_can_status_register.status_bits.control_0_not_ready
-#define _CONTROL_CAN_FAULT            etm_can_status_register.status_bits.control_1_can_fault
+#define _CONTROL_CAN_COM_LOSS         etm_can_status_register.status_bits.control_1_can_status
 #define _CONTROL_NOT_CONFIGURED       etm_can_status_register.status_bits.control_2_not_configured
 #define _CONTROL_SELF_CHECK_ERROR     etm_can_status_register.status_bits.control_3_self_check_error
 
@@ -151,13 +151,44 @@ typedef struct {
 
 
 typedef struct {
-  unsigned int sync_0;
+  unsigned sync_0_reset_enable:1;
+  unsigned sync_1_high_speed_logging_enabled:1;
+  unsigned sync_2_pulse_sync_disable_hv:1;
+  unsigned sync_3_pulse_sync_disable_xray:1;
+  unsigned sync_4_cooling_fault:1;
+  unsigned sync_5_unused:1;
+  unsigned sync_6_unused:1;
+  unsigned sync_7_unused:1;
+
+  unsigned sync_8_unused:1;
+  unsigned sync_9_unused:1;
+  unsigned sync_A_unused:1;
+  unsigned sync_B_unused:1;
+  unsigned sync_C_unused:1;
+  unsigned sync_D_unused:1;
+  unsigned sync_E_unused:1;
+  unsigned sync_F_unused:1;
+} ETMCanSyncControlWord;
+
+
+typedef struct {
+  ETMCanSyncControlWord sync_0_control_word;
   unsigned int sync_1;
   unsigned int sync_2;
   unsigned int sync_3;
 
 } ETMCanSyncMessage;
 
+extern ETMCanSyncMessage     etm_can_sync_message;
+
+
+#define _SYNC_CONTROL_RESET_ENABLE            etm_can_sync_message.sync_0_control_word.sync_0_reset_enable
+#define _SYNC_CONTROL_HIGH_SPEED_LOGGING      etm_can_sync_message.sync_0_control_word.sync_1_high_speed_logging_enabled
+#define _SYNC_CONTROL_PULSE_SYNC_DISABLE_HV   etm_can_sync_message.sync_0_control_word.sync_2_pulse_sync_disable_hv
+#define _SYNC_CONTROL_PULSE_SYNC_DISABLE_XRAY etm_can_sync_message.sync_0_control_word.sync_3_pulse_sync_disable_xray
+#define _SYNC_CONTROL_COOLING_FAULT           etm_can_sync_message.sync_0_control_word.sync_4_cooling_fault
+
+#define _SYNC_CONTROL_WORD                 *(unsigned int*)&etm_can_sync_message.sync_0_control_word
 
 
 
@@ -192,7 +223,6 @@ extern unsigned int etm_can_next_pulse_count;  // This value will get updated in
 // Public Debug and Status registers
 extern ETMCanSystemDebugData local_debug_data;  
 extern ETMCanAgileConfig     etm_can_my_configuration;
-extern ETMCanSyncMessage     etm_can_sync_message;
 /*
   DPARKER provide more description here.  How is it used.  What bits to set and what affect will setting them have
   This is the status register for this board.  Word0 bits (0,1) and Word1 bits (0) are mangaged by the Can module

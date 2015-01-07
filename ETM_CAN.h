@@ -858,7 +858,6 @@ extern ETMCanMessageBuffer etm_can_rx_data_log_buffer;
 
 // Can Module Funtions
 void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr);
-void ETMCanSendSync(unsigned int sync_3, unsigned int sync_2, unsigned int sync_1, unsigned int sync_0);
 void ETMCanMasterPulseSyncDisable(void);
 void ETMCanMasterHVLambdaUpdateOutput(void);
 void ETMCanMasterGunDriverUpdatePulseTop(void);

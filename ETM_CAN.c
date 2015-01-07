@@ -42,6 +42,7 @@ void ETMCanCheckForTimeOut(void);
 void ETMCanSetValueCalibrationUpload(ETMCanMessage* message_ptr);
 void ETMCanProcessLogData(void);
 void ETMCanMasterStandardCommunication(void);
+void ETMCanSendSync();
 #else
 
 void ETMCanSendStatus(void);
@@ -102,7 +103,7 @@ void ETMCanCheckForTimeOut(void) {
     _T3IF = 0;
     local_can_errors.timeout++;
     etm_can_persistent_data.can_timeout_count = local_can_errors.timeout;
-    _CONTROL_CAN_FAULT = 1;
+    _CONTROL_CAN_COM_LOSS = 1;
     
 #ifdef __ETM_CAN_MASTER_MODULE
     etm_can_ethernet_board_data.status_connected_boards = etm_can_ethernet_board_data.status_received_register;
@@ -340,13 +341,14 @@ void ETMCanDoSlaveSync(ETMCanMessage* message_ptr) {
   // At this time all that happens is that the chip watchdog is reset
   // DPARKER move to assembly and issure W0-W3, SR usage
 
-  etm_can_sync_message.sync_0 = message_ptr->word0;
+  _SYNC_CONTROL_WORD = message_ptr->word0;
   etm_can_sync_message.sync_1 = message_ptr->word1;
   etm_can_sync_message.sync_2 = message_ptr->word2;
   etm_can_sync_message.sync_3 = message_ptr->word3;
   
   ClrWdt();
-  _CONTROL_CAN_FAULT = 0;
+  _CONTROL_CAN_COM_LOSS = 0;
+  
   TMR3 = 0;
 }
 
@@ -520,6 +522,12 @@ void ETMCanInitialize(void) {
   } else {
     etm_can_persistent_data.reset_count++;
   }
+
+  _SYNC_CONTROL_WORD = 0;
+  etm_can_sync_message.sync_1 = 1;
+  etm_can_sync_message.sync_2 = 2;
+  etm_can_sync_message.sync_3 = 3;
+  
 
   _POR = 0;
   _BOR = 0;
@@ -828,13 +836,13 @@ void ETMCanSetValueCalibrationUpload(ETMCanMessage* message_ptr) {
   // Dparker impliment this
 }
 
-void ETMCanSendSync(unsigned int sync_3, unsigned int sync_2, unsigned int sync_1, unsigned int sync_0) {
+void ETMCanSendSync(void) {
   ETMCanMessage sync_message;
   sync_message.identifier = ETM_CAN_MSG_SYNC_TX;
-  sync_message.word0 = sync_0;
-  sync_message.word1 = sync_1;
-  sync_message.word2 = sync_2;
-  sync_message.word3 = sync_3;
+  sync_message.word0 = _SYNC_CONTROL_WORD;
+  sync_message.word1 = etm_can_sync_message.sync_1;
+  sync_message.word2 = etm_can_sync_message.sync_2;
+  sync_message.word3 = etm_can_sync_message.sync_3;
   
   ETMCanTXMessage(&sync_message, &CXTX1CON);
   local_can_errors.tx_1++;
@@ -863,7 +871,7 @@ void ETMCanMasterStandardCommunication(void) {
       {
       case 0x0:
 	// Send Sync Command (this is on TX1)
-	ETMCanSendSync(0,0,0,0);
+	ETMCanSendSync();
 	break;
 
       case 0x1:
@@ -899,7 +907,7 @@ void ETMCanMasterStandardCommunication(void) {
 	
       case 0x4:
 	// Send Sync Command (this is on TX1)
-	ETMCanSendSync(0,0,0,0);
+	ETMCanSendSync();
 	break;
 	
       case 0x5:
