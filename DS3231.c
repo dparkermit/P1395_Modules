@@ -9,51 +9,51 @@ unsigned char slave_address = RTC_SLAVE_ADDRESS;
 unsigned char ConvertToBCD(unsigned char decimal, unsigned char hour);
 unsigned char ConvertFromBCD(unsigned char decimal, unsigned char hour);
 
-unsigned char ConfigureDS3231(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK, unsigned char I2Cport, unsigned char config){
-    ptr_REAL_TIME_CLOCK->control_register = config;
-    //unsigned char status;
-    ptr_REAL_TIME_CLOCK->I2Cport = I2Cport;
-
-    if (WaitForI2CBusIdle(ptr_REAL_TIME_CLOCK->I2Cport) == 0){
-        if (GenerateI2CStart(ptr_REAL_TIME_CLOCK->I2Cport) == 0){
-            if (WriteByteI2C(slave_address, ptr_REAL_TIME_CLOCK->I2Cport) == 0){
-                if (WriteByteI2C(CONTROL_ADDRESS, ptr_REAL_TIME_CLOCK->I2Cport) == 0){
-                    if (WriteByteI2C(ptr_REAL_TIME_CLOCK->control_register, ptr_REAL_TIME_CLOCK->I2Cport) == 0){
-                        if (GenerateI2CStop(ptr_REAL_TIME_CLOCK->I2Cport) == 0){
-                            return 0;
-                        }
-                        else
-                            return 6;
-                    }
-                    else
-                        return 5;
-                }
-                else
-                    return 4;
-            }
-            else
-               return 3;
-        }
-        else
-            return 2;
+unsigned char ConfigureDS3231(RTC_DS3231* ptr_REAL_TIME_CLOCK, unsigned char I2Cport, unsigned char config, unsigned long fcy_clk, unsigned long i2c_baud_rate) {
+  ptr_REAL_TIME_CLOCK->control_register = config;
+  ptr_REAL_TIME_CLOCK->I2Cport = I2Cport;
+  
+  ConfigureI2C(ptr_REAL_TIME_CLOCK->I2Cport, I2CCON_DEFAULT_SETUP_PIC30F, i2c_baud_rate, fcy_clk, 0);
+  
+  if (WaitForI2CBusIdle(ptr_REAL_TIME_CLOCK->I2Cport) == 0){
+    if (GenerateI2CStart(ptr_REAL_TIME_CLOCK->I2Cport) == 0){
+      if (WriteByteI2C(slave_address, ptr_REAL_TIME_CLOCK->I2Cport) == 0){
+	if (WriteByteI2C(CONTROL_ADDRESS, ptr_REAL_TIME_CLOCK->I2Cport) == 0){
+	  if (WriteByteI2C(ptr_REAL_TIME_CLOCK->control_register, ptr_REAL_TIME_CLOCK->I2Cport) == 0){
+	    if (GenerateI2CStop(ptr_REAL_TIME_CLOCK->I2Cport) == 0){
+	      return 0;
+	    }
+	    else
+	      return 6;
+	  }
+	  else
+	    return 5;
+	}
+	else
+	  return 4;
+      }
+      else
+	return 3;
     }
     else
-        return 1;
+      return 2;
+  }
+  else
+    return 1;
 }
 
-
-unsigned char SetDateAndTime(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK){
+unsigned char SetDateAndTime(RTC_DS3231* ptr_REAL_TIME_CLOCK, RTC_TIME* ptr_TIME){
     if (WaitForI2CBusIdle(ptr_REAL_TIME_CLOCK->I2Cport) == 0){
         if (GenerateI2CStart(ptr_REAL_TIME_CLOCK->I2Cport) == 0){
             if (WriteByteI2C(slave_address, ptr_REAL_TIME_CLOCK->I2Cport) == 0){
                 if (WriteByteI2C(SECONDS_ADDRESS, ptr_REAL_TIME_CLOCK->I2Cport) == 0){
-                    if (WriteByteI2C(ConvertToBCD(ptr_REAL_TIME_CLOCK->second, 0), ptr_REAL_TIME_CLOCK->I2Cport) == 0){
-                        if (WriteByteI2C(ConvertToBCD(ptr_REAL_TIME_CLOCK->minute, 0), ptr_REAL_TIME_CLOCK->I2Cport) == 0){
-                            if (WriteByteI2C(ConvertToBCD(ptr_REAL_TIME_CLOCK->hour, 1), ptr_REAL_TIME_CLOCK->I2Cport) == 0){
-                                if (WriteByteI2C(ConvertToBCD(ptr_REAL_TIME_CLOCK->day, 0), ptr_REAL_TIME_CLOCK->I2Cport) == 0){
-                                    if (WriteByteI2C(ConvertToBCD(ptr_REAL_TIME_CLOCK->date, 0), ptr_REAL_TIME_CLOCK->I2Cport) == 0){
-                                        if (WriteByteI2C(ConvertToBCD(ptr_REAL_TIME_CLOCK->month, 0), ptr_REAL_TIME_CLOCK->I2Cport) == 0){
-                                            if (WriteByteI2C(ConvertToBCD(ptr_REAL_TIME_CLOCK->year, 0), ptr_REAL_TIME_CLOCK->I2Cport) == 0){
+                    if (WriteByteI2C(ConvertToBCD(ptr_TIME->second, 0), ptr_REAL_TIME_CLOCK->I2Cport) == 0){
+                        if (WriteByteI2C(ConvertToBCD(ptr_TIME->minute, 0), ptr_REAL_TIME_CLOCK->I2Cport) == 0){
+                            if (WriteByteI2C(ConvertToBCD(ptr_TIME->hour, 1), ptr_REAL_TIME_CLOCK->I2Cport) == 0){
+                                if (WriteByteI2C(ConvertToBCD(ptr_TIME->day, 0), ptr_REAL_TIME_CLOCK->I2Cport) == 0){
+                                    if (WriteByteI2C(ConvertToBCD(ptr_TIME->date, 0), ptr_REAL_TIME_CLOCK->I2Cport) == 0){
+                                        if (WriteByteI2C(ConvertToBCD(ptr_TIME->month, 0), ptr_REAL_TIME_CLOCK->I2Cport) == 0){
+                                            if (WriteByteI2C(ConvertToBCD(ptr_TIME->year, 0), ptr_REAL_TIME_CLOCK->I2Cport) == 0){
                                                 if (GenerateI2CStop(ptr_REAL_TIME_CLOCK->I2Cport) == 0)
                                                     return 0;
                                                 else
@@ -93,7 +93,7 @@ unsigned char SetDateAndTime(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK){
         return 1;
 }
 
-unsigned char ReadDateAndTime(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK){
+unsigned char ReadDateAndTime(RTC_DS3231* ptr_REAL_TIME_CLOCK, RTC_TIME* ptr_TIME){
     unsigned int data;
     unsigned char temp;
     
@@ -107,9 +107,9 @@ unsigned char ReadDateAndTime(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK){
                             if (data == 0xFA00)
                                 return 7;
                             temp = data & 0x00FF;
-                            ptr_REAL_TIME_CLOCK->second = ConvertFromBCD(temp, 0);
-                            if (ptr_REAL_TIME_CLOCK->second > 60) {
-                                ptr_REAL_TIME_CLOCK->second = 0;
+                            ptr_TIME->second = ConvertFromBCD(temp, 0);
+                            if (ptr_TIME->second > 60) {
+                                ptr_TIME->second = 0;
                                 return 8;
                             }
                             if (GenerateACK(ptr_REAL_TIME_CLOCK->I2Cport) != 0)
@@ -118,9 +118,9 @@ unsigned char ReadDateAndTime(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK){
                             if (data == 0xFA00)
                                 return 0xA;
                             temp = data & 0x00FF;
-                            ptr_REAL_TIME_CLOCK->minute = ConvertFromBCD(temp, 0);
-                            if (ptr_REAL_TIME_CLOCK->minute > 60) {
-                                ptr_REAL_TIME_CLOCK->minute = 0;
+                            ptr_TIME->minute = ConvertFromBCD(temp, 0);
+                            if (ptr_TIME->minute > 60) {
+                                ptr_TIME->minute = 0;
                                 return 0xB;
                             }
                             if (GenerateACK(ptr_REAL_TIME_CLOCK->I2Cport) != 0)
@@ -129,9 +129,9 @@ unsigned char ReadDateAndTime(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK){
                             if (data == 0xFA00)
                                 return 0xD;
                             temp = data & 0x00FF;
-                            ptr_REAL_TIME_CLOCK->hour = ConvertFromBCD(temp, 1);
-                            if (ptr_REAL_TIME_CLOCK->hour > 24) {
-                                ptr_REAL_TIME_CLOCK->hour = 0;
+                            ptr_TIME->hour = ConvertFromBCD(temp, 1);
+                            if (ptr_TIME->hour > 24) {
+                                ptr_TIME->hour = 0;
                                 return 0xE;
                             }
                             if (GenerateACK(ptr_REAL_TIME_CLOCK->I2Cport) != 0)
@@ -140,9 +140,9 @@ unsigned char ReadDateAndTime(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK){
                             if (data == 0xFA00)
                                 return 0x10;
                             temp = data & 0x00FF;
-                            ptr_REAL_TIME_CLOCK->day = ConvertFromBCD(temp, 0);
-                            if (ptr_REAL_TIME_CLOCK->day > 7) {
-                                ptr_REAL_TIME_CLOCK->day = 0;
+                            ptr_TIME->day = ConvertFromBCD(temp, 0);
+                            if (ptr_TIME->day > 7) {
+                                ptr_TIME->day = 0;
                                 return 0x11;
                             }
                             if (GenerateACK(ptr_REAL_TIME_CLOCK->I2Cport) != 0)
@@ -151,9 +151,9 @@ unsigned char ReadDateAndTime(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK){
                             if (data == 0xFA00)
                                 return 0x13;
                             temp = data & 0x00FF;
-                            ptr_REAL_TIME_CLOCK->date = ConvertFromBCD(temp, 0);
-                            if (ptr_REAL_TIME_CLOCK->date > 31) {
-                                ptr_REAL_TIME_CLOCK->date = 0;
+                            ptr_TIME->date = ConvertFromBCD(temp, 0);
+                            if (ptr_TIME->date > 31) {
+                                ptr_TIME->date = 0;
                                 return 0x14;
                             }
                             if (GenerateACK(ptr_REAL_TIME_CLOCK->I2Cport) != 0)
@@ -162,9 +162,9 @@ unsigned char ReadDateAndTime(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK){
                             if (data == 0xFA00)
                                 return 0x16;
                             temp = data & 0x00FF;
-                            ptr_REAL_TIME_CLOCK->month = ConvertFromBCD(temp, 0);
-                            if (ptr_REAL_TIME_CLOCK->month > 12) {
-                                ptr_REAL_TIME_CLOCK->month = 0;
+                            ptr_TIME->month = ConvertFromBCD(temp, 0);
+                            if (ptr_TIME->month > 12) {
+                                ptr_TIME->month = 0;
                                 return 0x17;
                             }
                             if (GenerateACK(ptr_REAL_TIME_CLOCK->I2Cport) != 0)
@@ -173,9 +173,9 @@ unsigned char ReadDateAndTime(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK){
                             if (data == 0xFA00)
                                 return 0x19;
                             temp = data & 0x00FF;
-                            ptr_REAL_TIME_CLOCK->year = ConvertFromBCD(temp, 0);
-                            if (ptr_REAL_TIME_CLOCK->year > 99) {
-                                ptr_REAL_TIME_CLOCK->year = 0;
+                            ptr_TIME->year = ConvertFromBCD(temp, 0);
+                            if (ptr_TIME->year > 99) {
+                                ptr_TIME->year = 0;
                                 return 0x1A;
                             }
                             if (GenerateNACK(ptr_REAL_TIME_CLOCK->I2Cport) != 0)
@@ -204,7 +204,7 @@ unsigned char ReadDateAndTime(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK){
     else
         return 1;
 }
-
+/*
 unsigned int ReadRTCTemperature(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK) {
     if (WaitForI2CBusIdle(ptr_REAL_TIME_CLOCK->I2Cport) == 0){
         if (GenerateI2CStart(ptr_REAL_TIME_CLOCK->I2Cport) == 0){
@@ -239,7 +239,7 @@ unsigned int ReadRTCTemperature(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK) {
     else
         return 1;
 }
-
+*/
 unsigned char ConvertFromBCD(unsigned char bcd, unsigned char hour){
     unsigned char twenty = 0;
     unsigned char ten = 0;
@@ -284,7 +284,34 @@ unsigned char ConvertToBCD(unsigned char decimal, unsigned char hour){
     }
     return bcd;
 }
-unsigned int ReadRTCTimeDifference(REAL_TIME_CLOCK* ptr_rtc_old, REAL_TIME_CLOCK* ptr_rtc_new) {
+
+unsigned long RTCDateToSeconds(RTC_TIME* ptr_time) {
+  unsigned long temp;
+  unsigned int  temp_int;
+  
+  temp      = ptr_time->year;
+  temp     *= 366;
+  
+  temp_int  = ptr_time->month;
+  temp_int *= 31;
+  temp_int += ptr_time->date;
+  
+  temp     += temp_int;  // temp is now our sudo days
+
+  temp     *= 24;
+  temp     += ptr_time->hour;  // temp is now our sudo hours
+  
+  temp     *= 60;
+  temp     += ptr_time->minute; // temp is now our sudo minute
+  
+  temp     *= 60;
+  temp     += ptr_time->second; // temp is nouw our sudo seconds
+
+  return temp;
+}
+
+/*
+unsigned int ReadRTCTimeDifference(RTC_TIME* ptr_rtc_old, RTC_TIME* ptr_rtc_new) {
     unsigned int seconds;
 
     if (ptr_rtc_old->year == ptr_rtc_new->year) {
@@ -326,4 +353,4 @@ unsigned int ReadRTCTimeDifference(REAL_TIME_CLOCK* ptr_rtc_old, REAL_TIME_CLOCK
 
     return seconds;
 }
-
+*/

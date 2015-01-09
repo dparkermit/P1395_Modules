@@ -38,6 +38,26 @@
 #define __DS3231_H
 #include "ETM_I2C.h"
 
+// 
+typedef struct {
+  unsigned char year;              //00-99
+  unsigned char month;            //01-12
+  unsigned char day;              //1-7
+  unsigned char date;             //01-31
+  unsigned char hour;             //0-23
+  unsigned char minute;           //0-59
+  unsigned char second;           //0-59
+} RTC_TIME;
+
+
+typedef struct {
+  unsigned char I2Cport;          //DS3231 I2C port
+  unsigned char control_register; //See ConfigureDS3231()
+  unsigned char status_register;  //See ConfigureDS3231()
+} RTC_DS3231;
+
+
+/*
 // Global Real Time Clock Variable
 typedef struct{
     unsigned int year;              //00-99
@@ -52,6 +72,8 @@ typedef struct{
     unsigned char status_register;  //See ConfigureDS3231()
     int temperature;                //2's complement signed, Celsius
 } REAL_TIME_CLOCK;
+*/
+
 
 // Real Time Clock Slave Address
 #define RTC_SLAVE_ADDRESS 0b11010000   //LSB = Read/Write
@@ -59,7 +81,7 @@ typedef struct{
 //Default configuration
 #define RTC_DEFAULT_CONFIG 0b00000100
 
-unsigned char ConfigureDS3231(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK, unsigned char I2Cport, unsigned char config);
+unsigned char ConfigureDS3231(RTC_DS3231* ptr_REAL_TIME_CLOCK, unsigned char i2c_port, unsigned char rtc_config, unsigned long fcy_clk, unsigned long i2c_baud_rate);
 //
 //  Return:
 //      0x00 = worked properly
@@ -88,7 +110,7 @@ unsigned char ConfigureDS3231(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK, unsigned cha
         //  Bit 0: Alarm 1 Interrupt Flag
 //
 
-unsigned char SetDateAndTime(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK);
+unsigned char SetDateAndTime(RTC_DS3231* ptr_REAL_TIME_CLOCK, RTC_TIME* ptr_TIME);
 //
 //  Description: Call this function to set the date and time to what is stored
 //                  at the memory address of the pointer passed in
@@ -108,7 +130,7 @@ unsigned char SetDateAndTime(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK);
 //          0x0C = I2C stop issue
 //
 
-unsigned char ReadDateAndTime(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK);
+unsigned char ReadDateAndTime(RTC_DS3231* ptr_REAL_TIME_CLOCK, RTC_TIME* ptr_TIME);
 //
 //  Description: Call this function to read the date and time which is then
 //                  stored at the memory address of the pointer passed in
@@ -143,14 +165,20 @@ unsigned char ReadDateAndTime(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK);
 //          0x1C = Error generating stop
 //
 
-unsigned int ReadRTCTemperature(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK);
+//unsigned int ReadRTCTemperature(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK);
 //
 //  Description: Call this function to read the temperature which is then
 //                  stored at the memory address of the pointer passed in
 //  Return: This function will return an integer temperature in Celsius
 //
 
-unsigned int ReadRTCTimeDifference(REAL_TIME_CLOCK* ptr_rtc_old, REAL_TIME_CLOCK* ptr_rtc_new);
+
+
+// Sudo Second Count = (((Year * 366 + Month * 31 + date) * 24 + hour)*60 + minute)*60 + second
+unsigned long RTCDateToSeconds(RTC_TIME* ptr_time);
+
+
+//unsigned int ReadRTCTimeDifference(RTC_TIME* ptr_rtc_old, RTC_TIME* ptr_rtc_new);
 //
 //  Description: Call this function to calculate the difference
 //              of two REAL_TIME_CLOCK structures
