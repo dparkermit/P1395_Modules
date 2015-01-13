@@ -132,6 +132,19 @@ typedef struct {
 
 } ETMCanSystemDebugData;
 
+// Self test register BIT Deffinitions  
+#define SELF_TEST_5V_OV             0x0001
+#define SELF_TEST_5V_UV             0x0002
+#define SELF_TEST_15V_OV            0x0004
+#define SELF_TEST_15V_UV            0x0008
+#define SELF_TEST_N15V_OV           0x0010
+#define SELF_TEST_N15V_UV           0x0020
+#define SELF_TEST_ADC_OV            0x0040
+#define SELF_TEST_ADC_UV            0x0080
+#define SELF_TEST_ADC_EXT           0x0100
+#define SELF_TEST_EEPROM            0x0200
+#define SELF_TEST_DAC               0x0400
+
 
 
 typedef struct {

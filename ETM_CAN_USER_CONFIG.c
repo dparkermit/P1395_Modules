@@ -17,6 +17,12 @@
 #include "A36487.h"
 #endif
 
+#ifdef __A36582
+#include "A36582.h"
+#endif
+
+
+
 unsigned int global_reset_faults;
 
 void ETMCanSetValueBoardSpecific(ETMCanMessage* message_ptr) {
@@ -255,6 +261,17 @@ void ETMCanLogCustomPacketC(void) {
             0);
 #endif
 
+
+#ifdef __A36582
+    ETMCanLogData(
+		  ETM_CAN_DATA_LOG_REGISTER_MAGNETRON_MON_FAST_PREVIOUS_PULSE,
+		  global_data_A36582.sample_index,
+		  global_data_A36582.analog_input_magnetron_current_internal_adc.reading_scaled_and_calibrated,
+		  global_data_A36582.analog_input_magnetron_current_external_adc.reading_scaled_and_calibrated,
+		  _STATUS_ARC_DETECTED
+		  );
+#endif
+
 }
 
 void ETMCanLogCustomPacketD(void) {
@@ -302,6 +319,18 @@ void ETMCanLogCustomPacketD(void) {
             (psb_params.grid_width_high3 << 8) & psb_params.grid_width_high2);
 #endif
 
+
+#ifdef __A36582
+    ETMCanLogData(
+		  ETM_CAN_DATA_LOG_REGISTER_MAGNETRON_MON_SLOW_FILTERED_PULSE,
+		  0,
+		  global_data_A36582.arc_this_hv_on,
+		  global_data_A36582.filtered_high_energy_pulse_current,
+		  global_data_A36582.filtered_low_energy_pulse_current
+		  );
+#endif
+
+
 }
 
 void ETMCanLogCustomPacketE(void) {
@@ -328,22 +357,43 @@ void ETMCanLogCustomPacketE(void) {
             (psb_params.grid_delay_low1 << 8) & psb_params.grid_delay_low0);
 #endif
 
+#ifdef __A36582
+    ETMCanLogData(
+		  // DPARKER need to confirm this pointer math
+		  ETM_CAN_DATA_LOG_REGISTER_MAGNETRON_MON_SLOW_ARCS,
+		  *((unsigned int*)&global_data_A36582.arc_total + 1),          // This is the high word
+		  *((unsigned int*)&global_data_A36582.arc_total),              // This is the low word
+		  *((unsigned int*)&global_data_A36582.pulse_this_hv_on + 1),   // This is the high word
+		  *((unsigned int*)&global_data_A36582.pulse_this_hv_on)        // This is the high word
+		  );
+#endif
 }
 
-void ETMCanLogCustomPacketF(void) {
+  void ETMCanLogCustomPacketF(void) {
   /* 
      Use this to log Board specific data packet
      This will get executed once per update cycle (1.6 seconds) and will be spaced out in time from the other log data
   */
-
+  
   // There is no F packet for HV Lamdba, leave blank
-
+  
 #ifdef __A36487
-    ETMCanLogData(ETM_CAN_DATA_LOG_REGISTER_PULSE_SYNC_SLOW_TIMING_DATA_1,
-            (psb_params.pfn_delay_low << 8) & psb_params.rf_delay_low,
-            (psb_params.grid_width_low3 << 8) & psb_params.grid_width_low2,
-            (psb_params.grid_width_low1 << 8) & psb_params.grid_width_low0,
-            (psb_params.afc_delay_low << 8) & psb_params.spare_delay_low);
+  ETMCanLogData(ETM_CAN_DATA_LOG_REGISTER_PULSE_SYNC_SLOW_TIMING_DATA_1,
+    (psb_params.pfn_delay_low << 8) & psb_params.rf_delay_low,
+    (psb_params.grid_width_low3 << 8) & psb_params.grid_width_low2,
+    (psb_params.grid_width_low1 << 8) & psb_params.grid_width_low0,
+    (psb_params.afc_delay_low << 8) & psb_params.spare_delay_low);
+#endif
+  
+  
+  
+#ifdef __A36582
+  ETMCanLogData(ETM_CAN_DATA_LOG_REGISTER_MAGNETRON_MON_SLOW_PULSE_COUNT,
+    *((unsigned int*)&global_data_A36582.pulse_total + 3),        // This is the most significant word
+    *((unsigned int*)&global_data_A36582.pulse_total + 2),        
+    *((unsigned int*)&global_data_A36582.pulse_total + 1),        
+    *((unsigned int*)&global_data_A36582.pulse_total)             // This is the least significant word
+    );
 #endif
 
 }
