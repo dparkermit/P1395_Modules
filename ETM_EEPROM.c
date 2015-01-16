@@ -1,4 +1,11 @@
 #include "ETM_EEPROM.h"
+#if defined(__dsPIC30F__)
+#include <p30fxxxx.h>
+#elif defined(__dsPIC33F__)
+#include <p33Fxxxx.h>
+#elif defined(__PIC24H__)
+#include <p24Hxxxx.h>
+#endif
 
 
 void ETMEEPromConfigureDevice(ETMEEProm* ptr_eeprom, unsigned char i2c_address, unsigned char i2c_port, unsigned int size_bytes, unsigned long fcy_clk, unsigned long i2c_baud_rate) {
@@ -15,6 +22,8 @@ void ETMEEPromWriteWord(ETMEEProm* ptr_eeprom, unsigned int register_location, u
   unsigned char data_low_byte;
   unsigned char data_high_byte;
   unsigned int error_check;
+  unsigned int busy_count;
+  unsigned int busy;
    
    
   if (register_location < (ptr_eeprom->size_bytes >> 1) ) {
@@ -27,9 +36,22 @@ void ETMEEPromWriteWord(ETMEEProm* ptr_eeprom, unsigned int register_location, u
     adr_high_byte = (temp >> 8);
     adr_low_byte = (temp & 0x00FF);
     
+    error_check = 1;
     error_check = WaitForI2CBusIdle(ptr_eeprom->i2c_port);
     error_check |= GenerateI2CStart(ptr_eeprom->i2c_port);
     error_check |= WriteByteI2C(ptr_eeprom->address | I2C_WRITE_CONTROL_BIT, ptr_eeprom->i2c_port);
+
+    busy = _ACKSTAT;
+    busy_count = 0;
+    while (busy && (busy_count <= 200)) {
+      error_check |= GenerateI2CStop(ptr_eeprom->i2c_port);
+      error_check = WaitForI2CBusIdle(ptr_eeprom->i2c_port);
+      error_check |= GenerateI2CStart(ptr_eeprom->i2c_port);
+      error_check |= WriteByteI2C(ptr_eeprom->address | I2C_WRITE_CONTROL_BIT, ptr_eeprom->i2c_port);
+      busy = _ACKSTAT;
+      busy_count++;
+    }
+    
     error_check |= WriteByteI2C(adr_high_byte, ptr_eeprom->i2c_port);
     error_check |= WriteByteI2C(adr_low_byte, ptr_eeprom->i2c_port);
     error_check |= WriteByteI2C(data_low_byte, ptr_eeprom->i2c_port);
@@ -54,7 +76,9 @@ unsigned int ETMEEPromReadWord(ETMEEProm* ptr_eeprom, unsigned int register_loca
   unsigned char adr_low_byte;
   unsigned char data_low_byte;
   unsigned char data_high_byte;
-  
+  unsigned int busy_count;
+  unsigned int busy;
+
   if (register_location < (ptr_eeprom->size_bytes >> 1) ) {
     // The requeted register address is within the boundry of this device.
     
@@ -64,8 +88,19 @@ unsigned int ETMEEPromReadWord(ETMEEProm* ptr_eeprom, unsigned int register_loca
  
     error_check = WaitForI2CBusIdle(ptr_eeprom->i2c_port);
     error_check |= GenerateI2CStart(ptr_eeprom->i2c_port);
-    
     error_check |= WriteByteI2C(ptr_eeprom->address | I2C_WRITE_CONTROL_BIT, ptr_eeprom->i2c_port);
+
+    busy = _ACKSTAT;
+    busy_count = 0;
+    while (busy && (busy_count <= 200)) {
+      error_check |= GenerateI2CStop(ptr_eeprom->i2c_port);
+      error_check = WaitForI2CBusIdle(ptr_eeprom->i2c_port);
+      error_check |= GenerateI2CStart(ptr_eeprom->i2c_port);
+      error_check |= WriteByteI2C(ptr_eeprom->address | I2C_WRITE_CONTROL_BIT, ptr_eeprom->i2c_port);
+      busy = _ACKSTAT;
+      busy_count++;
+    }
+
     error_check |= WriteByteI2C(adr_high_byte, ptr_eeprom->i2c_port);
     error_check |= WriteByteI2C(adr_low_byte, ptr_eeprom->i2c_port);
     
@@ -103,6 +138,9 @@ void ETMEEPromWritePage(ETMEEProm* ptr_eeprom, unsigned int page_number, unsigne
   unsigned char data_high_byte;
   unsigned int error_check;
   unsigned int n;
+  unsigned int busy_count;
+  unsigned int busy;
+
   if (words_to_write > 0) {
     if (words_to_write > 16) {
       words_to_write = 16;
@@ -118,6 +156,18 @@ void ETMEEPromWritePage(ETMEEProm* ptr_eeprom, unsigned int page_number, unsigne
       error_check = WaitForI2CBusIdle(ptr_eeprom->i2c_port);
       error_check |= GenerateI2CStart(ptr_eeprom->i2c_port);
       error_check |= WriteByteI2C(ptr_eeprom->address | I2C_WRITE_CONTROL_BIT, ptr_eeprom->i2c_port);  
+      busy = _ACKSTAT;
+      busy_count = 0;
+      while (busy && (busy_count <= 200)) {
+	error_check |= GenerateI2CStop(ptr_eeprom->i2c_port);
+	error_check = WaitForI2CBusIdle(ptr_eeprom->i2c_port);
+	error_check |= GenerateI2CStart(ptr_eeprom->i2c_port);
+	error_check |= WriteByteI2C(ptr_eeprom->address | I2C_WRITE_CONTROL_BIT, ptr_eeprom->i2c_port);
+	busy = _ACKSTAT;
+	busy_count++;
+      }
+      
+
       error_check |= WriteByteI2C(adr_high_byte, ptr_eeprom->i2c_port);
       error_check |= WriteByteI2C(adr_low_byte, ptr_eeprom->i2c_port);
       
@@ -149,6 +199,8 @@ void ETMEEPromReadPage(ETMEEProm* ptr_eeprom, unsigned int page_number, unsigned
   unsigned char data_low_byte;
   unsigned char data_high_byte;
   unsigned int n;
+  unsigned int busy_count;
+  unsigned int busy;
 
   if (words_to_read > 0) {
     if (words_to_read > 16) {
@@ -162,9 +214,19 @@ void ETMEEPromReadPage(ETMEEProm* ptr_eeprom, unsigned int page_number, unsigned
       adr_low_byte = (temp & 0x00FF);
 
       error_check = WaitForI2CBusIdle(ptr_eeprom->i2c_port);
-      error_check |= GenerateI2CStart(ptr_eeprom->i2c_port);
-      
+      error_check |= GenerateI2CStart(ptr_eeprom->i2c_port);      
       error_check |= WriteByteI2C(ptr_eeprom->address | I2C_WRITE_CONTROL_BIT, ptr_eeprom->i2c_port);
+      busy = _ACKSTAT;
+      busy_count = 0;
+      while (busy && (busy_count <= 200)) {
+	error_check |= GenerateI2CStop(ptr_eeprom->i2c_port);
+	error_check = WaitForI2CBusIdle(ptr_eeprom->i2c_port);
+	error_check |= GenerateI2CStart(ptr_eeprom->i2c_port);
+	error_check |= WriteByteI2C(ptr_eeprom->address | I2C_WRITE_CONTROL_BIT, ptr_eeprom->i2c_port);
+	busy = _ACKSTAT;
+	busy_count++;
+      }
+
       error_check |= WriteByteI2C(adr_high_byte, ptr_eeprom->i2c_port);
       error_check |= WriteByteI2C(adr_low_byte, ptr_eeprom->i2c_port);
       
