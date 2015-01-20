@@ -3,8 +3,10 @@
 
 #include "ETM_CAN_USER_CONFIG.h"
 
-
-
+#ifdef __USE_EXTERNAL_EEPROM
+#include "ETM_EEPROM.h"
+void ETMCanSelectExternalEEprom(ETMEEProm* ptr_eeprom);
+#endif 
 
 typedef struct {
   unsigned control_0_not_ready:1;
@@ -329,5 +331,7 @@ void ETMCanIonPumpSendTargetCurrentReading(unsigned int target_current_reading, 
 */
 
 extern unsigned int global_reset_faults;
+
+
 
 #endif

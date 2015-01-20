@@ -5,6 +5,7 @@
 
 #ifdef __A36444
 #define __USE_CAN_1
+#define __USE_EXTERNAL_EEPROM
 #define FCY_CLK                             10000000      // 10 MHz
 #define FCY_CLK_MHZ                         10.000        // 10 MHz
 #define ETM_CAN_MY_ADDRESS                  ETM_CAN_ADDR_HV_LAMBDA_BOARD
@@ -63,6 +64,7 @@
 #ifdef __A36507
 #define __USE_CAN_1
 #define __ETM_CAN_MASTER_MODULE
+#define __USE_EXTERNAL_EEPROM
 #define FCY_CLK                             20000000      // 10 MHz
 #define FCY_CLK_MHZ                         20.000        // 10 MHz
 #define ETM_CAN_MY_ADDRESS                  ETM_CAN_ADDR_ETHERNET_BOARD

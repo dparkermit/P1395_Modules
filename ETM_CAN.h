@@ -286,12 +286,8 @@ void ETMCanReturnValueBoardSpecific(ETMCanMessage* message_ptr);
 
 
 // Default Register Locations
-#define ETM_CAN_REGISTER_DEFAULT_CMD_RESET_FAULTS                       0x000
 #define ETM_CAN_REGISTER_DEFAULT_CMD_RESET_MCU                          0x001
-#define ETM_CAN_REGISTER_DEFAULT_CMD_RESEND_CONFIG                      0x002
-#define ETM_CAN_REGISTER_DEFAULT_CMD_WRITE_EEPROM_PAGE                  0x003
-#define ETM_CAN_REGISTER_DEFAULT_CMD_DISABLE_HIGH_SPEED_DATA_LOGGING    0x004
-#define ETM_CAN_REGISTER_DEFAULT_CMD_ENABLE_HIGH_SPEED_DATA_LOGGING     0x005
+#define ETM_CAN_REGISTER_DEFAULT_CMD_RESET_ANALOG_CALIBRATION           0x003
 
 // Default Calibration Locations
 #define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_AN0                       0x400 
@@ -637,6 +633,10 @@ typedef struct {
 
 } ETMCanRamMirrorHVLambda;
 
+extern ETMCanRamMirrorHVLambda          etm_can_hv_lamdba_mirror;
+
+//#define _HV_LAMBDA_CONNECTED            etm_can_hv_lamdba_mirror.status_data.control_7_ecb_can_not_active
+
 
 typedef struct {
   // ------------------- ION PUMP BOARD --------------------- //
@@ -736,7 +736,10 @@ typedef struct {
 
 } ETMCanRamMirrorHeaterMagnet;
 
+extern ETMCanRamMirrorHeaterMagnet      etm_can_heater_magnet_mirror;
 
+#define _HEATER_MAGNET_CONNECTED        etm_can_heater_magnet_mirror.status_data.status_bits.control_7_ecb_can_not_active
+#define _HEATER_MAGNET_ON               !etm_can_heater_magnet_mirror.status_data.status_bits.control_0_not_ready
 
 typedef struct {
   // -------------------- GUN DRIVER INTERFACE BOARD ---------------//
@@ -771,6 +774,11 @@ typedef struct {
 
 } ETMCanRamMirrorGunDriver;
 
+extern ETMCanRamMirrorGunDriver         etm_can_gun_driver_mirror;
+
+#define _GUN_DRIVER_CONNECTED           etm_can_gun_driver_mirror.status_data.status_bits.control_7_ecb_can_not_active
+#define _GUN_HEATER_ON                  etm_can_gun_driver_mirror.status_data.status_bits.status_7 // DPARKER Need to put the real status number
+
 
 
 typedef struct {
@@ -794,6 +802,8 @@ typedef struct {
   unsigned long long magmon_pulses_lifetime;
 
 } ETMCanRamMirrorMagnetronCurrent;
+
+extern ETMCanRamMirrorMagnetronCurrent  etm_can_magnetron_current_mirror;
 
 
 typedef struct {
@@ -842,13 +852,10 @@ typedef struct {
 
 
 // PUBLIC Variables
-extern ETMCanRamMirrorHVLambda          etm_can_hv_lamdba_mirror;
+
 extern ETMCanRamMirrorIonPump           etm_can_ion_pump_mirror;
 extern ETMCanRamMirrorAFC               etm_can_afc_mirror;
 extern ETMCanRamMirrorCooling           etm_can_cooling_mirror;
-extern ETMCanRamMirrorHeaterMagnet      etm_can_heater_magnet_mirror;
-extern ETMCanRamMirrorGunDriver         etm_can_gun_driver_mirror;
-extern ETMCanRamMirrorMagnetronCurrent  etm_can_magnetron_current_mirror;
 extern ETMCanRamMirrorPulseSync         etm_can_pulse_sync_mirror;
 extern ETMCanHighSpeedData              etm_can_high_speed_data_test;
 extern ETMCanRamMirrorEthernetBoard     etm_can_ethernet_board_data;

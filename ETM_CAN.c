@@ -1,8 +1,50 @@
 #include "ETM_CAN.h"
 #include "p30fxxxx.h"
 
+/* 
+   EEPROM Utilization for P1395
+   4K Words 0 -> FFF
+   256 Pages 0 -> FF
+
+
+   Calibration Data
+   Page 0x00 -> 0x07 (Register 0x0000 -> 0x07)
+
+   ECB Specific EEPROM
+   Page 0x10 = Heater Complete Times
+   Page 0x11 = System Time on 
+   Page 0x12 = AFC & Heater/Magnet Settings
+   Page 0x13 = HV Lambda Settings
+   Page 0x14 = Gun Driver Settings
+   Page 0x15 = Pulse Sync Personaility 1 Settings
+   Page 0x16 = Pulse Sync Personaility 1 Setting
+   Page 0x17 = Pulse Sync Personaility 1 Settings
+   Page 0x18 = Pulse Sync Personaility 1 Settings
+   Page 0x19 = Reserved for Future Use
+   Page 0x1A = Reserved for Future Use
+   Page 0x1B = Reserved for Future Use
+   Page 0x1C = Reserved for Future Use
+   Page 0x1D = Reserved for Future Use
+   Page 0x1E = Reserved for Future Use
+   Page 0x1F = Reserved for Future Use
+   
+   Pulse Monitor Board Specific EEPROM
+   Page 0x20 = Counter for Pulses Total (4 words), Arc Total (2 words)
+
+   Page 0x7F = Event Log Pointer
+   Page 0x80 -> 0xFF = Event Log Data 
+
+*/
+
+#ifdef __USE_EXTERNAL_EEPROM
+ETMEEProm* ptr_external_eeprom;
+#endif
+
+void ETMCanLoadDefaultAnalogCalibration(void);
 
 void ETMCanCheckForStatusChange(void);
+
+
 
 
 // Public Buffers
@@ -11,6 +53,7 @@ ETMCanMessageBuffer etm_can_tx_message_buffer;
 #ifdef __ETM_CAN_MASTER_MODULE
 ETMCanMessageBuffer etm_can_rx_data_log_buffer;
 ETMCanRamMirrorEthernetBoard     etm_can_ethernet_board_data;
+
 #endif
 
 // Public Variables
@@ -43,6 +86,21 @@ void ETMCanSetValueCalibrationUpload(ETMCanMessage* message_ptr);
 void ETMCanProcessLogData(void);
 void ETMCanMasterStandardCommunication(void);
 void ETMCanSendSync();
+
+
+typedef struct {
+  unsigned int index;
+  unsigned int scale;
+  unsigned int offset;
+  
+} ETMCanCalibrationData;
+
+ETMCanCalibrationData test_calibration_data;
+
+void ETMCanMasterSet2FromSlave(ETMCanMessage* message_ptr);
+
+
+
 #else
 
 void ETMCanSendStatus(void);
@@ -51,7 +109,7 @@ void ETMCanExecuteCMD(ETMCanMessage* message_ptr);
 void ETMCanExecuteCMDDefault(ETMCanMessage* message_ptr);
 
 void ETMCanReturnValue(ETMCanMessage* message_ptr);
-void ETMCanReturnValueCalibration(ETMCanMessage* message_ptr);
+void ETMCanReturnEEPromRegister(ETMCanMessage* message_ptr);
 
 void ETMCanDoSlaveSync(ETMCanMessage* message_ptr);
 void ETMCanDoSlaveLog(void);
@@ -71,6 +129,26 @@ typedef struct {
 
 volatile PersistentData etm_can_persistent_data __attribute__ ((persistent));
 
+
+
+
+#define DEFAULT_CALIBRATION_DATA_PAGE  {0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000}
+void ETMCanLoadDefaultAnalogCalibration(void) {
+  unsigned int default_calibration_data[16] = DEFAULT_CALIBRATION_DATA_PAGE;
+
+#ifdef __USE_EXTERNAL_EEPROM
+  ETMEEPromWritePage(ptr_external_eeprom, 0, 16, default_calibration_data);
+  ETMEEPromWritePage(ptr_external_eeprom, 1, 16, default_calibration_data);
+  ETMEEPromWritePage(ptr_external_eeprom, 2, 16, default_calibration_data);
+  ETMEEPromWritePage(ptr_external_eeprom, 3, 16, default_calibration_data);
+  ETMEEPromWritePage(ptr_external_eeprom, 4, 16, default_calibration_data);
+  ETMEEPromWritePage(ptr_external_eeprom, 5, 16, default_calibration_data);
+  ETMEEPromWritePage(ptr_external_eeprom, 6, 16, default_calibration_data);
+  ETMEEPromWritePage(ptr_external_eeprom, 7, 16, default_calibration_data);
+#else
+  // DPARKER configure the data in internal EEPROM
+#endif
+}
 
 
 
@@ -134,7 +212,8 @@ void ETMCanProcessMessage(void) {
     
 #ifdef __ETM_CAN_MASTER_MODULE
     if ((next_message.identifier & ETM_CAN_MSG_MASTER_ADDR_MASK) == ETM_CAN_MSG_SET_2_RX) {
-      ETMCanSetValue(&next_message);      
+      ETMCanMasterSet2FromSlave(&next_message);
+      //ETMCanSetValue(&next_message);      
     } else if ((next_message.identifier & ETM_CAN_MSG_MASTER_ADDR_MASK) == ETM_CAN_MSG_STATUS_RX) {
       ETMCanUpdateStatusBoardSpecific(&next_message);
     } else {
@@ -178,6 +257,23 @@ unsigned int ETMCanCheckBit(unsigned int data, unsigned int bit_mask) {
 }
 
 
+#ifdef __ETM_CAN_MASTER_MODULE
+void ETMCanMasterSet2FromSlave(ETMCanMessage* message_ptr) {
+  unsigned int index_word;
+  index_word = message_ptr->word3 & 0x0FFF;
+  
+  if ((index_word >= 0x0F00) & (index_word < 0x0F80)) {
+    // This is Calibration data that was read from the slave EEPROM
+    test_calibration_data.index = message_ptr->word3;
+    test_calibration_data.scale = message_ptr->word1;
+    test_calibration_data.offset = message_ptr->word0;
+  } else {
+    // It was not a set value index 
+    local_can_errors.invalid_index++;
+  }
+}
+#endif
+
 
 void ETMCanSetValue(ETMCanMessage* message_ptr) {
   unsigned int index_word;
@@ -194,7 +290,7 @@ void ETMCanSetValue(ETMCanMessage* message_ptr) {
     // Default Register index
     // This is not valid for the master module
     local_can_errors.invalid_index++;
-  } else if ((index_word & 0x0FFF) <= 0x4FF) {
+  } else if ( ((index_word & 0x0FFF) >= 0xF00) && ((index_word & 0x0FFF) < 0xF80)  ) {
     ETMCanSetValueCalibrationUpload(message_ptr);
   } else {
     // It was not a set value index 
@@ -214,7 +310,7 @@ void ETMCanSetValue(ETMCanMessage* message_ptr) {
     // It is a board specific defailt registers
     // These are not implimented at this time because there are no default set values
     local_can_errors.invalid_index++;
-  } else if ((index_word & 0x0FFF) <= 0x4FF) {
+  } else if ( ((index_word & 0x0FFF) >= 0xF00) && ((index_word & 0x0FFF) < 0xF80)  ) {
     ETMCanSetValueCalibration(message_ptr);
   } else {
     // It was not a set value index 
@@ -276,8 +372,8 @@ void ETMCanExecuteCMDDefault(ETMCanMessage* message_ptr) {
     __asm__ ("Reset");
     break;
 
-  case ETM_CAN_REGISTER_DEFAULT_CMD_WRITE_EEPROM_PAGE:
-    // DPARKER implement this
+  case ETM_CAN_REGISTER_DEFAULT_CMD_RESET_ANALOG_CALIBRATION:
+    ETMCanLoadDefaultAnalogCalibration();
     break;
  
   default:
@@ -291,35 +387,75 @@ void ETMCanExecuteCMDDefault(ETMCanMessage* message_ptr) {
 
 void ETMCanReturnValue(ETMCanMessage* message_ptr) {
   unsigned int index_word;
+  unsigned int message_index;
   index_word = message_ptr->word3;
+  message_ptr->word0 = 0;
+  message_ptr->word1 = 0;
+  message_ptr->word2 = 0;
+
   if ((index_word & 0xF000) != (ETM_CAN_MY_ADDRESS << 12)) {
     // The index is not addressed to this board
     local_can_errors.invalid_index++;
-  } else if ((index_word & 0x0FFF) <= 0x00FF) {
-    // It is not a valid return Value ID
-    local_can_errors.invalid_index++;
-  } else if ((index_word & 0x0FFF) <= 0x2FF) {
+    return;
+  }
+  
+  message_index = (message_ptr->word3 & 0x0FFF);
+  if ((message_index >= 0x200) && (message_index < 0x300)) {
     // It is a board specific return value
     ETMCanReturnValueBoardSpecific(message_ptr);
-  } else if ((index_word & 0x0FFF) <= 0x3FF) {
-    // It is a board specific default registers
-    // These are not implimented at this time because there are no default set values
-    local_can_errors.invalid_index++;
-  } else if ((index_word & 0x0FFF) <= 0x4FF) {
-    ETMCanReturnValueCalibration(message_ptr);
+  } else if ((message_index >= 0xF00) && (message_index < 0xF80)) {
+    ETMCanReturnEEPromRegister(message_ptr);
   } else {
     // It was not a set value index 
     local_can_errors.invalid_index++;
+    return;
   }
+  
+  // Send Message Back to ECB with data
+  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, message_ptr);
+  MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
+
 }
 
 
 void ETMCanSetValueCalibration(ETMCanMessage* message_ptr) {
-  // DPARKER need to impliment calibration system
+  unsigned int register_address;
+  unsigned int scale_value;
+  unsigned int offset_value;
+  register_address = (message_ptr->word3 & 0x00FF);
+  
+  offset_value = message_ptr->word0;
+  scale_value = message_ptr->word1;
+
+#ifdef __USE_EXTERNAL_EEPROM
+  ETMEEPromWriteWord(ptr_external_eeprom, register_address, offset_value);
+  ETMEEPromWriteWord(ptr_external_eeprom, (register_address + 1), scale_value);
+#else
+  // Add functions for internal EEPROM
+#endif
+
+  // Send Message Back to ECB with data
+  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, message_ptr);
+  MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
 }
 
-void ETMCanReturnValueCalibration(ETMCanMessage* message_ptr) {
-  // DPARKER need to impliment calibration system
+void ETMCanReturnEEPromRegister(ETMCanMessage* message_ptr) {
+  unsigned int register_address;
+  unsigned int scale_value;
+  unsigned int offset_value;
+  register_address = (message_ptr->word3 & 0x00FF);
+  
+#ifdef __USE_EXTERNAL_EEPROM
+  offset_value= ETMEEPromReadWord(ptr_external_eeprom, register_address);
+  scale_value = ETMEEPromReadWord(ptr_external_eeprom, (register_address + 1));
+#else
+  offset_value = 0;
+  scale_value  = 0;
+  // Add functions for internal EEPROM
+#endif
+    
+  message_ptr->word0 = offset_value;
+  message_ptr->word1 = scale_value;
 }
 
 void ETMCanSendStatus(void) {
@@ -511,6 +647,12 @@ void ETMCanIonPumpSendTargetCurrentReading(unsigned int target_current_reading, 
   test_status_register.status_0_not_ready = *dan_test & 0b1000000000000000;
   
 */
+
+#ifdef __USE_EXTERNAL_EEPROM
+void ETMCanSelectExternalEEprom(ETMEEProm* ptr_eeprom) {
+  ptr_external_eeprom = ptr_eeprom;
+}
+#endif
 
 
 void ETMCanInitialize(void) {

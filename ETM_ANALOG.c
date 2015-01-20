@@ -25,13 +25,11 @@ void ETMAnalogInitializeInput(AnalogInput* ptr_analog_input, unsigned int fixed_
     // read calibration data from EEPROM
 #ifdef __USE_EXTERNAL_EEPROM
     // read calibration dat from the external EEPROM
-    cal_data_address = CALIBRATION_DATA_START_REGISTER + input_channel*2;
+    cal_data_address = CALIBRATION_DATA_START_REGISTER + analog_port*4;
     ptr_analog_input->calibration_internal_offset = ETMEEPromReadWord(cal_data_address);
     ptr_analog_input->calibration_internal_scale  = ETMEEPromReadWord(cal_data_address+1);
-    // load_the adc external calibration data
-    cal_data_address = CALIBRATION_DATA_START_REGISTER + 0x20 + input_channel*2;
-    ptr_analog_input->calibration_external_offset = ETMEEPromReadWord(cal_data_address);
-    ptr_analog_input->calibration_external_scale  = ETMEEPromReadWord(cal_data_address+1);        
+    ptr_analog_input->calibration_external_offset = ETMEEPromReadWord(cal_data_address+2);
+    ptr_analog_input->calibration_external_scale  = ETMEEPromReadWord(cal_data_address+3);        
 #elif defined __USE_INTERNAL_EEPROM
     // read calibration dat from the internal EEPROM
     
@@ -85,13 +83,12 @@ void ETMAnalogInitializeOutput(AnalogOutput* ptr_analog_output, unsigned int fix
     // read calibration data from EEPROM
 #ifdef __USE_EXTERNAL_EEPROM
     // read calibration dat from the external EEPROM
-    cal_data_address = CALIBRATION_DATA_START_REGISTER + 0x40 + input_channel*2;
+    cal_data_address = CALIBRATION_DATA_START_REGISTER + 0x40 + analog_port*4;
     ptr_analog_output->calibration_internal_offset = ETMEEPromReadWord(cal_data_address);
     ptr_analog_output->calibration_internal_scale  = ETMEEPromReadWord(cal_data_address+1);
-    // load_the adc external calibration data
-    cal_data_address = CALIBRATION_DATA_START_REGISTER + 0x60 + input_channel*2;
-    ptr_analog_output->calibration_external_offset = ETMEEPromReadWord(cal_data_address);
-    ptr_analog_output->calibration_external_scale  = ETMEEPromReadWord(cal_data_address+1);        
+    ptr_analog_output->calibration_external_offset = ETMEEPromReadWord(cal_data_address+2);
+    ptr_analog_output->calibration_external_scale  = ETMEEPromReadWord(cal_data_address+3);
+
 #elif defined __USE_INTERNAL_EEPROM
     // read calibration dat from the internal EEPROM
     
