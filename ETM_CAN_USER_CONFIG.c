@@ -266,8 +266,8 @@ void ETMCanLogCustomPacketC(void) {
     ETMCanLogData(
 		  ETM_CAN_DATA_LOG_REGISTER_MAGNETRON_MON_FAST_PREVIOUS_PULSE,
 		  global_data_A36582.sample_index,
-		  global_data_A36582.analog_input_magnetron_current_internal_adc.reading_scaled_and_calibrated,
-		  global_data_A36582.analog_input_magnetron_current_external_adc.reading_scaled_and_calibrated,
+		  global_data_A36582.imag_internal_adc.reading_scaled_and_calibrated,
+		  global_data_A36582.imag_external_adc.reading_scaled_and_calibrated,
 		  _STATUS_ARC_DETECTED
 		  );
 #endif
@@ -325,8 +325,8 @@ void ETMCanLogCustomPacketD(void) {
 		  ETM_CAN_DATA_LOG_REGISTER_MAGNETRON_MON_SLOW_FILTERED_PULSE,
 		  0,
 		  global_data_A36582.arc_this_hv_on,
-		  global_data_A36582.filtered_high_energy_pulse_current,
-		  global_data_A36582.filtered_low_energy_pulse_current
+		  global_data_A36582.filt_int_adc_low,
+		  global_data_A36582.filt_int_adc_high
 		  );
 #endif
 

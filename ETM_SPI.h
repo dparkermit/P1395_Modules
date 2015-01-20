@@ -55,6 +55,11 @@ extern unsigned int etm_spi2_error_count; // This global variable counts the num
 #define ETM_DEFAULT_SPI_CON2_VALUE 0b0000000000000000 // This works for V1 and V2 because it is ignored in V1
 #define ETM_DEFAULT_SPI_STAT_VALUE 0b1010000000000000 // This works for V1 & V2 because they are identical
 
+#define SPI_CLK_1_MBIT          1000000
+#define SPI_CLK_2_MBIT          2000000
+#define SPI_CLK_5_MBIT          5000000
+#define SPI_CLK_10_MBIT        10000000
+
 
 /* 
    ----------- Example Code -----------
