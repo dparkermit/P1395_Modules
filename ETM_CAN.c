@@ -29,7 +29,8 @@
    Page 0x1F = Reserved for Future Use
    
    Pulse Monitor Board Specific EEPROM
-   Page 0x20 = Counter for Pulses Total (4 words), Arc Total (2 words)
+   Page 0x20 = "Register A" for Pulse Total (4 words), Arc Total (2 words), CRC (1 word)
+   Page 0x21 = "Register B" for Pulse Total (4 words), Arc Total (2 words), CRC (1 word)
 
    Page 0x7F = Event Log Pointer
    Page 0x80 -> 0xFF = Event Log Data 
@@ -134,9 +135,10 @@ volatile PersistentData etm_can_persistent_data __attribute__ ((persistent));
 
 #define DEFAULT_CALIBRATION_DATA_PAGE  {0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000}
 void ETMCanLoadDefaultAnalogCalibration(void) {
-  unsigned int default_calibration_data[16] = DEFAULT_CALIBRATION_DATA_PAGE;
 
 #ifdef __USE_EXTERNAL_EEPROM
+  unsigned int default_calibration_data[16] = DEFAULT_CALIBRATION_DATA_PAGE;
+
   ETMEEPromWritePage(ptr_external_eeprom, 0, 16, default_calibration_data);
   ETMEEPromWritePage(ptr_external_eeprom, 1, 16, default_calibration_data);
   ETMEEPromWritePage(ptr_external_eeprom, 2, 16, default_calibration_data);
@@ -477,15 +479,29 @@ void ETMCanDoSlaveSync(ETMCanMessage* message_ptr) {
   // At this time all that happens is that the chip watchdog is reset
   // DPARKER move to assembly and issure W0-W3, SR usage
 
+  // It should be noted that if any of these registers are written ANYWHERE else, then they can be bashed
+
   _SYNC_CONTROL_WORD = message_ptr->word0;
   etm_can_sync_message.sync_1 = message_ptr->word1;
   etm_can_sync_message.sync_2 = message_ptr->word2;
-  etm_can_sync_message.sync_3 = message_ptr->word3;
+  etm_can_sync_message.sync_3 = 0xFFFF;  // Use this to indicate that a sync message has been recieved
+  //_CONTROL_CAN_SYNC_REC = 1;
   
   ClrWdt();
   _CONTROL_CAN_COM_LOSS = 0;
   
   TMR3 = 0;
+
+#ifdef __A36487
+  // The Pulse Sync Board needs to see if it needs to inhibit X_RAYs
+  // This can be based by an update to read/modify update to this PORT that is currently in process
+  // It will get fixed the next time through the control loop, but there is nothing else we can do
+  // Hopefully we are using good coding principles and not bashing a PORT register.
+  if (_SYNC_CONTROL_PULSE_SYNC_DISABLE_HV || _SYNC_CONTROL_PULSE_SYNC_DISABLE_XRAY) {
+    PIN_CPU_XRAY_ENABLE_OUT = !OLL_CPU_XRAY_ENABLE;
+  }
+#endif
+
 }
 
 
@@ -830,7 +846,7 @@ void ETMCanInitialize(void) {
 
 
 
-void __attribute__((interrupt, no_auto_psv)) _CXInterrupt(void) {
+void __attribute__((interrupt(__save__(CORCON,SR)), no_auto_psv)) _CXInterrupt(void) {
   ETMCanMessage can_message;
 #ifdef __ETM_CAN_MASTER_MODULE
   unsigned int msg_address;
@@ -1002,7 +1018,7 @@ void ETMCanMasterStandardCommunication(void) {
   
   if (_T2IF) {
     // should be true once every 25mS
-    // ecah of the 8 cases will be true once every 200mS
+    // each of the 8 cases will be true once every 200mS
     _T2IF = 0;
     
     etm_can_default_transmit_counter++;
@@ -1012,28 +1028,18 @@ void ETMCanMasterStandardCommunication(void) {
     switch (etm_can_default_transmit_counter) 
       {
       case 0x0:
-	// Send Sync Command (this is on TX1)
+	// Send Sync Command (this is on TX1) - This also includes Pulse Sync Enable/Disable
 	ETMCanSendSync();
 	break;
 
       case 0x1:
-	// Send Enable/Disable command to Pulse Sync Board  (this is on TX2)
-	if (ETMCanMasterReadyToPulse()) {
-	  // Send out message to enable Pulse Sync Board
-	  master_message.identifier = (ETM_CAN_MSG_CMD_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
-	  master_message.word3 = ETM_CAN_REGISTER_PULSE_SYNC_CMD_ENABLE_PULSES;
-	  master_message.word2 = 0;
-	  master_message.word1 = 0;
-	  master_message.word0 = 0;
-	  ETMCanTXMessage(&master_message, &CXTX2CON);
-	} else {
-	  ETMCanMasterPulseSyncDisable();
-	}
+	// Send High/Low Energy Program voltage to Lambda Board
+	ETMCanMasterHVLambdaUpdateOutput();
 	break;
 	
       case 0x2:
-	// Send High/Low Energy Program voltage to Lambda Board
-	ETMCanMasterHVLambdaUpdateOutput();
+	// Send Sync Command (this is on TX1) - This also includes Pulse Sync Enable/Disable
+	ETMCanSendSync();
 	break;
 	
       case 0x3:
@@ -1048,28 +1054,18 @@ void ETMCanMasterStandardCommunication(void) {
 	break;
 	
       case 0x4:
-	// Send Sync Command (this is on TX1)
+	// Send Sync Command (this is on TX1) - This also includes Pulse Sync Enable/Disable
 	ETMCanSendSync();
 	break;
-	
+
       case 0x5:
-	// Send Enable/Disable command to Pulse Sync Board  (this is on TX2)
-	if (ETMCanMasterReadyToPulse()) {
-	  // Send out message to enable Pulse Sync Board
-	  master_message.identifier = (ETM_CAN_MSG_CMD_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
-	  master_message.word3 = ETM_CAN_REGISTER_PULSE_SYNC_CMD_ENABLE_PULSES;
-	  master_message.word2 = 0;
-	  master_message.word1 = 0;
-	  master_message.word0 = 0;
-	  ETMCanTXMessage(&master_message, &CXTX2CON);
-	} else {
-	  ETMCanMasterPulseSyncDisable();
-	}
+	// Send High/Low Energy Pulse top voltage to Gun Driver
+	ETMCanMasterGunDriverUpdatePulseTop();
 	break;
 	
       case 0x6:
-	// Send High/Low Energy Pulse top voltage to Gun Driver
-	ETMCanMasterGunDriverUpdatePulseTop();
+	// Send Sync Command (this is on TX1) - This also includes Pulse Sync Enable/Disable
+	ETMCanSendSync();
 	break;
 	
       case 0x7:

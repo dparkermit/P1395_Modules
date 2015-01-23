@@ -69,6 +69,7 @@ extern ETMCanStatusRegister  etm_can_status_register;
 #define _CONTROL_NOT_CONFIGURED       etm_can_status_register.status_bits.control_2_not_configured
 #define _CONTROL_SELF_CHECK_ERROR     etm_can_status_register.status_bits.control_3_self_check_error
 
+
 #define _STATUS_0                     etm_can_status_register.status_bits.status_0
 #define _STATUS_1                     etm_can_status_register.status_bits.status_1
 #define _STATUS_2                     etm_can_status_register.status_bits.status_2
@@ -272,7 +273,7 @@ void ETMCanLogCustomPacketF(void);
 #endif
 
 
-#ifdef __A35487
+#ifdef __A36487
 // Only for Pulse Sync Board
 void ETMCanPulseSyncSendNextPulseLevel(unsigned int next_pulse_level, unsigned int next_pulse_count);
 #endif

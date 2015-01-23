@@ -119,7 +119,7 @@ void ETMCanSetValueBoardSpecific(ETMCanMessage* message_ptr) {
       break;
 
   case ETM_CAN_REGISTER_PULSE_SYNC_SET_1_CUSTOMER_LED_OUTPUT:
-      psb_data.system_state = message_ptr->word0;
+      psb_data.led_state = message_ptr->word0;
       break;
 #endif
 
@@ -165,6 +165,8 @@ void ETMCanExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
       
       
 #ifdef __A36487     //A36487 PULSE SYNC BOARD
+	  /*
+	    DPARKER - These commands have been removed
       case ETM_CAN_REGISTER_PULSE_SYNC_CMD_ENABLE_PULSES:
           psb_data.enable_pulses = 1;
           psb_data.can_comm_ok = 1;         //For 200ms Timeout
@@ -173,6 +175,7 @@ void ETMCanExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
           psb_data.enable_pulses = 0;
           psb_data.can_comm_ok = 1;         //For 200ms Timeout
           break;
+	  */
 #endif
       
       
@@ -194,9 +197,10 @@ void ETMCanReturnValueBoardSpecific(ETMCanMessage* message_ptr) {
     */
 
 #ifdef __A36487     //A36487 PULSE SYNC BOARD
-      case ETM_CAN_REGISTER_PULSE_SYNC_REQUEST_PERSONALITY_MODULE:
-          etm_can_status_register.status_word_0 = psb_data.personality;         //Where do you want this stored????
-          break;
+    // DPARKER Change this
+    //case ETM_CAN_REGISTER_PULSE_SYNC_REQUEST_PERSONALITY_MODULE:
+    //      etm_can_status_register.status_word_0 = psb_data.personality;         //Where do you want this stored????
+    //      break;
 #endif
 
 
@@ -212,7 +216,7 @@ void ETMCanResetFaults(void) {
   global_reset_faults = 1;
 
 #ifdef __A36487
-    psb_faults.reset_faults = 1;
+  //psb_faults.reset_faults = 1;
 #endif
 
 }
