@@ -37,6 +37,11 @@
 
 */
 
+
+#ifdef __ETM_CAN_MASTER_MODULE
+#include "A36507.h"
+#endif
+
 #ifdef __USE_EXTERNAL_EEPROM
 ETMEEProm* ptr_external_eeprom;
 #endif
@@ -186,20 +191,20 @@ void ETMCanCheckForTimeOut(void) {
     _CONTROL_CAN_COM_LOSS = 1;
     
 #ifdef __ETM_CAN_MASTER_MODULE
+    // Save the status of recieved boards (only for display on GUI)
     etm_can_ethernet_board_data.status_connected_boards = etm_can_ethernet_board_data.status_received_register;
 
-    // Clear the bits for any board that is connected
-    etm_can_ion_pump_mirror.status_data.status_bits.control_7_ecb_can_not_active = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_ION_PUMP_BOARD);
-    etm_can_magnetron_current_mirror.status_data.status_bits.control_7_ecb_can_not_active = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_MAGNETRON_CURRENT_BOARD);
-    etm_can_pulse_sync_mirror.status_data.status_bits.control_7_ecb_can_not_active = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_PULSE_SYNC_BOARD);
-    etm_can_hv_lamdba_mirror.status_data.status_bits.control_7_ecb_can_not_active = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_HV_LAMBDA_BOARD);
-    etm_can_afc_mirror.status_data.status_bits.control_7_ecb_can_not_active = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_AFC_CONTROL_BOARD);
-    etm_can_cooling_mirror.status_data.status_bits.control_7_ecb_can_not_active = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_COOLING_INTERFACE_BOARD);
-    etm_can_heater_magnet_mirror.status_data.status_bits.control_7_ecb_can_not_active = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_HEATER_MAGNET_BOARD);
-    etm_can_gun_driver_mirror.status_data.status_bits.control_7_ecb_can_not_active = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_GUN_DRIVER_BOARD);
+    // Indicate which board(s) are not connected
+    _ION_PUMP_NOT_CONNECTED        = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_ION_PUMP_BOARD);
+    _PULSE_CURRENT_NOT_CONNECTED   = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_MAGNETRON_CURRENT_BOARD);
+    _PULSE_SYNC_NOT_CONNECTED      = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_PULSE_SYNC_BOARD);
+    _HV_LAMBDA_NOT_CONNECTED       = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_HV_LAMBDA_BOARD);
+    _AFC_NOT_CONNECTED             = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_AFC_CONTROL_BOARD);
+    _COOLING_NOT_CONNECTED         = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_COOLING_INTERFACE_BOARD);
+    _HEATER_MAGNET_NOT_CONNECTED   = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_HEATER_MAGNET_BOARD);
+    _GUN_DRIVER_NOT_CONNECTED      = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_GUN_DRIVER_BOARD);
 
     etm_can_ethernet_board_data.status_received_register = 0x0000;
-
 #endif
     
   }
@@ -841,20 +846,15 @@ void ETMCanInitialize(void) {
 }
 
 
-
-
-
-
-
+#ifdef __ETM_CAN_MASTER_MODULE
 void __attribute__((interrupt(__save__(CORCON,SR)), no_auto_psv)) _CXInterrupt(void) {
   ETMCanMessage can_message;
-#ifdef __ETM_CAN_MASTER_MODULE
+  ETMCanMessage sync_message;
   unsigned int msg_address;
-#endif
 
   _CXIF = 0;
   local_can_errors.isr_entered++;
-
+  
   if(CXRX0CONbits.RXFUL) {
     /*
       A message has been received in Buffer Zero
@@ -869,18 +869,11 @@ void __attribute__((interrupt(__save__(CORCON,SR)), no_auto_psv)) _CXInterrupt(v
     } else {
       // The commmand was received by Filter 1
       local_can_errors.rx_0_filt_1++;
-#ifdef __ETM_CAN_MASTER_MODULE
       // The command is a data log.  Add it to the data log buffer
       ETMCanRXMessageBuffer(&etm_can_rx_data_log_buffer, &CXRX0CON);
-#else
-      // The command is a sync command.
-      ETMCanRXMessage(&can_message, &CXRX0CON);
-      ETMCanDoSlaveSync(&can_message);
-#endif
     }
     CXINTFbits.RX0IF = 0; // Clear the Interuppt Status bit
   }
-  
   
   if(CXRX1CONbits.RXFUL) {
     /* 
@@ -888,45 +881,29 @@ void __attribute__((interrupt(__save__(CORCON,SR)), no_auto_psv)) _CXInterrupt(v
        This command gets pushed onto the command message buffer
     */
     local_can_errors.rx_1_filt_2++;
-
-#ifdef __ETM_CAN_MASTER_MODULE
     if ((CXRX1SID & ETM_CAN_MSG_MASTER_ADDR_MASK) == ETM_CAN_MSG_STATUS_RX)  {
       // The master is receiving a status update
       // We need to immediately update the fault and pulse inhibit information
-      msg_address = CXRX1SID; 
+      msg_address = CXRX1SID;
       msg_address >>= 3;
       msg_address &= 0x000F;
       msg_address = 1 << msg_address;
       if (CXRX1B1 & 0x0001)  {
 	// This board is faulted set the fault bit for this board address
-	if ((etm_can_ethernet_board_data.fault_status_bits & msg_address) == 0) {
-	  // This is a NEW fault
-	  // We can't disable the pulse sync board here because of the asyncronous nature of this interrupt.
+	if ((etm_can_ethernet_board_data.not_operate_bits & msg_address) == 0) {
+	  // This is a NEW not operate bit
 	  // There could already be an "enable" command in process that would overwrite this disable when the interrupt exits (possibly even before the disable message is sent)
-	  etm_can_ethernet_board_data.fault_status_bits |= msg_address;
+	  etm_can_ethernet_board_data.not_operate_bits |= msg_address;
 	  etm_can_ethernet_board_data.pulse_sync_disable_requested = 1;
 	}
       } else {
 	// Clear the fault bit for this board address
-	etm_can_ethernet_board_data.fault_status_bits &= ~msg_address;
-      }
-
-      if (CXRX1B1 & 0x0002) {
-	//The board is not ready to pulse, set the pulse inhibit for this board address
-	if ((etm_can_ethernet_board_data.pulse_inhibit_status_bits & msg_address) == 0) {
-	  etm_can_ethernet_board_data.pulse_inhibit_status_bits |= msg_address;
-	  etm_can_ethernet_board_data.pulse_sync_disable_requested = 1;
-	}
-      } else {
-	// Clear the inibit status bit for this board address
-	etm_can_ethernet_board_data.pulse_inhibit_status_bits &= ~msg_address;
+	etm_can_ethernet_board_data.not_operate_bits &= ~msg_address;
       }
     }
-#endif
     ETMCanRXMessageBuffer(&etm_can_rx_message_buffer, &CXRX1CON);
     CXINTFbits.RX1IF = 0; // Clear the Interuppt Status bit
   }
-    
   
   if ((!CXTX0CONbits.TXREQ) && (ETMCanBufferNotEmpty(&etm_can_tx_message_buffer))) {
     /*
@@ -937,7 +914,6 @@ void __attribute__((interrupt(__save__(CORCON,SR)), no_auto_psv)) _CXInterrupt(v
     CXINTFbits.TX0IF = 0;
     local_can_errors.tx_0++;
   }
-  
   
   if (CXINTFbits.ERRIF) {
     // There was some sort of CAN Error
@@ -952,9 +928,75 @@ void __attribute__((interrupt(__save__(CORCON,SR)), no_auto_psv)) _CXInterrupt(v
       PIN_CAN_OPERATION_LED = 1;
     }
   }
-
   local_can_errors.CXEC_reg = CXEC;
 }
+
+#else //#ifdef __ETM_CAN_MASTER_MODULE
+
+void __attribute__((interrupt(__save__(CORCON,SR)), no_auto_psv)) _CXInterrupt(void) {
+  ETMCanMessage can_message;
+    
+  _CXIF = 0;
+  local_can_errors.isr_entered++;
+  
+  if(CXRX0CONbits.RXFUL) {
+    /*
+      A message has been received in Buffer Zero
+    */
+    if (!CXRX0CONbits.FILHIT0) {
+      // The command was received by Filter 0
+      local_can_errors.rx_0_filt_0++;
+      // It is a Next Pulse Level Command
+      ETMCanRXMessage(&can_message, &CXRX0CON);
+      etm_can_next_pulse_level = can_message.word2;
+      etm_can_next_pulse_count = can_message.word3;
+    } else {
+      // The commmand was received by Filter 1
+      local_can_errors.rx_0_filt_1++;
+      // The command is a sync command.
+      ETMCanRXMessage(&can_message, &CXRX0CON);
+      ETMCanDoSlaveSync(&can_message);
+    }
+    CXINTFbits.RX0IF = 0; // Clear the Interuppt Status bit
+  }
+    
+  if(CXRX1CONbits.RXFUL) {
+    /* 
+       A message has been recieved in Buffer 1
+       This command gets pushed onto the command message buffer
+    */
+    local_can_errors.rx_1_filt_2++;
+    ETMCanRXMessageBuffer(&etm_can_rx_message_buffer, &CXRX1CON);
+    CXINTFbits.RX1IF = 0; // Clear the Interuppt Status bit
+  }
+
+  if ((!CXTX0CONbits.TXREQ) && (ETMCanBufferNotEmpty(&etm_can_tx_message_buffer))) {
+    /*
+      TX0 is empty and there is a message waiting in the transmit message buffer
+      Load the next message into TX0
+    */
+    ETMCanTXMessageBuffer(&etm_can_tx_message_buffer, &CXTX0CON);
+    CXINTFbits.TX0IF = 0;
+    local_can_errors.tx_0++;
+  }
+  
+  if (CXINTFbits.ERRIF) {
+    // There was some sort of CAN Error
+    // DPARKER - figure out which error and fix/reset
+    local_can_errors.error_flag++;
+    CXINTFbits.ERRIF = 0;
+  } else {
+    // FLASH THE CAN LED
+    if (PIN_CAN_OPERATION_LED) {
+      PIN_CAN_OPERATION_LED = 0;
+    } else {
+      PIN_CAN_OPERATION_LED = 1;
+    }
+  }
+  local_can_errors.CXEC_reg = CXEC;
+}
+
+#endif // #ifdef __ETM_CAN_MASTER_MODULE
 
 
 
@@ -1016,6 +1058,12 @@ void ETMCanMasterStandardCommunication(void) {
 
   ETMCanMessage master_message;
   
+  if (etm_can_ethernet_board_data.pulse_sync_disable_requested) {
+    etm_can_ethernet_board_data.pulse_sync_disable_requested = 0;
+    _SYNC_CONTROL_PULSE_SYNC_DISABLE_XRAY = 1;
+    ETMCanSendSync();
+  }
+
   if (_T2IF) {
     // should be true once every 25mS
     // each of the 8 cases will be true once every 200mS
@@ -1030,6 +1078,42 @@ void ETMCanMasterStandardCommunication(void) {
       case 0x0:
 	// Send Sync Command (this is on TX1) - This also includes Pulse Sync Enable/Disable
 	ETMCanSendSync();
+	if (global_data_A36507.send_pulse_sync_config) {
+	  global_data_A36507.send_pulse_sync_config = 0;
+	  // DPARKER SEND OUT PULSE SYNC CONFIGURATION DATA
+	  // DPARKER MUST FIRST CONFIRM THAT WE HAVE A VALID MODE SELECTED
+	  // DPARKER, FOR NOW SEND OUT TEMP CONFIGURATION
+
+	  master_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
+	  master_message.word3      = ETM_CAN_REGISTER_PULSE_SYNC_SET_1_HIGH_ENERGY_TIMING_REG_0;
+	  master_message.word2      = 0;
+	  master_message.word1      = 0;
+	  master_message.word0      = 0;
+	  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &master_message);
+
+	  master_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
+	  master_message.word3      = ETM_CAN_REGISTER_PULSE_SYNC_SET_1_HIGH_ENERGY_TIMING_REG_1;
+	  master_message.word2      = 0;
+	  master_message.word1      = 0;
+	  master_message.word0      = 0;
+	  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &master_message);
+
+	  master_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
+	  master_message.word3      = ETM_CAN_REGISTER_PULSE_SYNC_SET_1_LOW_ENERGY_TIMING_REG_0;
+	  master_message.word2      = 0;
+	  master_message.word1      = 0;
+	  master_message.word0      = 0;
+	  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &master_message);
+
+	  master_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
+	  master_message.word3      = ETM_CAN_REGISTER_PULSE_SYNC_SET_1_LOW_ENERGY_TIMING_REG_1;
+	  master_message.word2      = 0;
+	  master_message.word1      = 0;
+	  master_message.word0      = 0;
+	  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &master_message);
+	  MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
+
+	}
 	break;
 
       case 0x1:
@@ -1086,15 +1170,12 @@ unsigned int ETMCanMasterReadyToPulse(void) {
   unsigned int ready_to_pulse;
   
   ready_to_pulse = etm_can_ethernet_board_data.software_pulse_enable;
-
-  if ((etm_can_ethernet_board_data.fault_status_bits) & ETM_CAN_BIT_ALL_ACTIVE_BOARDS) {
-    // There was a fault on one of the boards
-    ready_to_pulse = 0;
-  } 
-  if ((etm_can_ethernet_board_data.pulse_inhibit_status_bits) & ETM_CAN_BIT_ALL_ACTIVE_BOARDS) {
+  
+  // DPARKER - ADD CHECK FOR ENABLED BOARDS
+  if (etm_can_ethernet_board_data.not_operate_bits) {
     // One of the boards is not ready to pulse
     ready_to_pulse = 0;
-  }
+  } 
   return ready_to_pulse;
 }
 
@@ -1460,8 +1541,11 @@ void ETMCanProcessLogData(void) {
 
 void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr) {
   unsigned int source_board;
+  unsigned int all_boards_connected;
   source_board = (message_ptr->identifier >> 3);
   source_board &= 0x000F;
+
+  
   switch (source_board) {
     /*
       Place all board specific status updates here
@@ -1545,29 +1629,84 @@ void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr) {
     local_can_errors.address_error++;
     break;
   }
-  if ((etm_can_ethernet_board_data.status_received_register & ETM_CAN_BIT_ALL_ACTIVE_SLAVE_BOARDS) == ETM_CAN_BIT_ALL_ACTIVE_SLAVE_BOARDS) {
-    // A status update has been received from all active boards
 
+  // Figure out if all the boards are connected
+  all_boards_connected = 1;
+  
+#ifndef __IGNORE_HV_LAMBDA_MODULE
+  if (ETMCanCheckBit(etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_HV_LAMBDA_BOARD)) {
+    _HV_LAMBDA_NOT_CONNECTED = 0;
+  } else {
+    all_boards_connected = 0;
+  }
+#endif
+
+#ifndef __IGNORE_ION_PUMP_MODULE
+  if (ETMCanCheckBit(etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_ION_PUMP_BOARD)) {
+    _ION_PUMP_NOT_CONNECTED = 0;
+  } else  {
+    all_boards_connected = 0;
+  }
+#endif
+
+#ifndef __IGNORE_AFC_MODULE
+  if (ETMCanCheckBit(etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_AFC_CONTROL_BOARD)) {
+    _AFC_NOT_CONNECTED = 0;
+  } else {
+    all_boards_connected = 0;
+  }
+#endif
+
+#ifndef __IGNORE_COOLING_INTERFACE_MODULE
+  if (ETMCanCheckBit(etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_COOLING_INTERFACE_BOARD)) {
+    _COOLING_NOT_CONNECTED = 0;
+  } else {
+    all_boards_connected = 0;
+  }
+#endif
+
+#ifndef __IGNORE_HEATER_MAGNET_MODULE
+  if (ETMCanCheckBit(etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_HEATER_MAGNET_BOARD)) {
+    _HEATER_MAGNET_NOT_CONNECTED = 0;
+  } else {
+    all_boards_connected = 0;
+  }
+#endif
+
+#ifndef __IGNORE_GUN_DRIVER_MODULE
+  if (ETMCanCheckBit(etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_GUN_DRIVER_BOARD)) {
+    _GUN_DRIVER_NOT_CONNECTED = 0;
+  } else {
+    all_boards_connected = 0;
+  }
+#endif
+
+#ifndef __IGNORE_PULSE_CURRENT_MODULE
+  if (ETMCanCheckBit(etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_MAGNETRON_CURRENT_BOARD)) {
+    _PULSE_CURRENT_NOT_CONNECTED = 0;
+  } else {
+    all_boards_connected = 0;
+  }
+#endif
+
+#ifndef __IGNORE_PULSE_SYNC_MODULE
+  if (ETMCanCheckBit(etm_can_ethernet_board_data.status_received_register, ETM_CAN_BIT_PULSE_SYNC_BOARD)) {
+    _PULSE_SYNC_NOT_CONNECTED = 0;
+  } else {
+    all_boards_connected = 0;
+  }
+#endif
+
+  if (all_boards_connected) {
+    // Save the state of recieved boards (only for display on GUI)
     etm_can_ethernet_board_data.status_connected_boards = etm_can_ethernet_board_data.status_received_register;
-
-    // Clear the bits of all the connected boards
-    etm_can_ion_pump_mirror.status_data.status_bits.control_7_ecb_can_not_active = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_ION_PUMP_BOARD);
-    etm_can_magnetron_current_mirror.status_data.status_bits.control_7_ecb_can_not_active = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_MAGNETRON_CURRENT_BOARD);
-    etm_can_pulse_sync_mirror.status_data.status_bits.control_7_ecb_can_not_active = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_PULSE_SYNC_BOARD);
-    etm_can_hv_lamdba_mirror.status_data.status_bits.control_7_ecb_can_not_active = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_HV_LAMBDA_BOARD);
-    etm_can_afc_mirror.status_data.status_bits.control_7_ecb_can_not_active = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_AFC_CONTROL_BOARD);
-    etm_can_cooling_mirror.status_data.status_bits.control_7_ecb_can_not_active = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_COOLING_INTERFACE_BOARD);
-    etm_can_heater_magnet_mirror.status_data.status_bits.control_7_ecb_can_not_active = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_HEATER_MAGNET_BOARD);
-    etm_can_gun_driver_mirror.status_data.status_bits.control_7_ecb_can_not_active = !ETMCanCheckBit(etm_can_ethernet_board_data.status_connected_boards, ETM_CAN_BIT_GUN_DRIVER_BOARD);
 
     // Clear the status received register
     etm_can_ethernet_board_data.status_received_register = 0x0000; 
     
     // Reset T3 to start the next timer cycle
     TMR3 = 0;
-
-  } 
-
+  }
 }
 
 

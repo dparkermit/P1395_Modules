@@ -281,8 +281,8 @@ void ETMCanReturnValueBoardSpecific(ETMCanMessage* message_ptr);
 #define ETM_CAN_BIT_GUN_DRIVER_BOARD                                    0b0000000100000000
 //#define ETM_CAN_BIT_ALL_ACTIVE_BOARDS                                   0b0100000111111110
 //#define ETM_CAN_BIT_ALL_ACTIVE_SLAVE_BOARDS                             0b0000000111111110
-#define ETM_CAN_BIT_ALL_ACTIVE_BOARDS                                   0b0100000000011000  // Pulse Sync, HV Lambda, ECB
-#define ETM_CAN_BIT_ALL_ACTIVE_SLAVE_BOARDS                             0b0000000000011000  // HV Lambda, ECB
+//#define ETM_CAN_BIT_ALL_ACTIVE_BOARDS                                   0b0100000000011000  // Pulse Sync, HV Lambda, ECB
+//#define ETM_CAN_BIT_ALL_ACTIVE_SLAVE_BOARDS                             0b0000000000011000  // HV Lambda, ECB
 
 
 // Default Register Locations
@@ -599,15 +599,17 @@ typedef struct {
   ETMCanCanStatus*       can_status;
   ETMCanAgileConfig*     configuration;
 
-  unsigned int           fault_status_bits;
-  unsigned int           pulse_inhibit_status_bits;
+  unsigned int           not_operate_bits;
+  unsigned int           unused_0;//pulse_inhibit_status_bits;
   unsigned int           software_pulse_enable;
-  unsigned int           pulse_sync_disable_requested;
+  unsigned int           pulse_sync_disable_requested; // This is used by the CAN interrupt to signal that we need to send a pulse_sync_disable message
 
-  unsigned int           status_received_register;
-  unsigned int           status_connected_boards;
+  unsigned int           status_connected_boards;   // This register indicates which boards are connected.
+  unsigned int           status_received_register;  // When a status message is recieved, the corresponding bit is set in this register
 
 } ETMCanRamMirrorEthernetBoard;
+
+extern ETMCanRamMirrorEthernetBoard     etm_can_ethernet_board_data;
 
 
 typedef struct {
@@ -635,7 +637,9 @@ typedef struct {
 
 extern ETMCanRamMirrorHVLambda          etm_can_hv_lamdba_mirror;
 
-//#define _HV_LAMBDA_CONNECTED            etm_can_hv_lamdba_mirror.status_data.control_7_ecb_can_not_active
+#define _HV_LAMBDA_NOT_CONFIGURED          etm_can_hv_lamdba_mirror.status_data.status_bits.control_2_not_configured
+#define _HV_LAMBDA_NOT_CONNECTED           etm_can_hv_lamdba_mirror.status_data.status_bits.control_7_ecb_can_not_active
+#define _HV_LAMBDA_NOT_READY               etm_can_hv_lamdba_mirror.status_data.status_bits.control_0_not_ready
 
 
 typedef struct {
@@ -657,6 +661,11 @@ typedef struct {
 
 } ETMCanRamMirrorIonPump;
 
+extern ETMCanRamMirrorIonPump           etm_can_ion_pump_mirror;
+
+#define _ION_PUMP_NOT_CONFIGURED              etm_can_ion_pump_mirror.status_data.status_bits.control_2_not_configured
+#define _ION_PUMP_NOT_CONNECTED               etm_can_ion_pump_mirror.status_data.status_bits.control_7_ecb_can_not_active
+
 typedef struct {
   // -------------------- AFC CONTROL BOARD ---------------//
   // Standard Registers for all Boards
@@ -676,8 +685,10 @@ typedef struct {
 
 } ETMCanRamMirrorAFC;
 
+extern ETMCanRamMirrorAFC               etm_can_afc_mirror;
 
-
+#define _AFC_NOT_CONFIGURED              etm_can_cooling_mirror.status_data.status_bits.control_2_not_configured
+#define _AFC_NOT_CONNECTED               etm_can_cooling_mirror.status_data.status_bits.control_7_ecb_can_not_active
 
 typedef struct {
   // -------------------- COOLING INTERFACE BOARD ---------------//
@@ -705,6 +716,11 @@ typedef struct {
   unsigned int cool_readback_linac_temperature;
 
 } ETMCanRamMirrorCooling;
+
+extern ETMCanRamMirrorCooling           etm_can_cooling_mirror;
+
+#define _COOLING_NOT_CONFIGURED              etm_can_cooling_mirror.status_data.status_bits.control_2_not_configured
+#define _COOLING_NOT_CONNECTED               etm_can_cooling_mirror.status_data.status_bits.control_7_ecb_can_not_active
 
 
 
@@ -738,8 +754,11 @@ typedef struct {
 
 extern ETMCanRamMirrorHeaterMagnet      etm_can_heater_magnet_mirror;
 
-#define _HEATER_MAGNET_CONNECTED        etm_can_heater_magnet_mirror.status_data.status_bits.control_7_ecb_can_not_active
-#define _HEATER_MAGNET_ON               !etm_can_heater_magnet_mirror.status_data.status_bits.control_0_not_ready
+
+#define _HEATER_MAGNET_OFF                  etm_can_heater_magnet_mirror.status_data.status_bits.control_0_not_ready
+#define _HEATER_MAGNET_NOT_CONFIGURED       etm_can_heater_magnet_mirror.status_data.status_bits.control_2_not_configured
+#define _HEATER_MAGNET_NOT_CONNECTED        etm_can_heater_magnet_mirror.status_data.status_bits.control_7_ecb_can_not_active
+
 
 typedef struct {
   // -------------------- GUN DRIVER INTERFACE BOARD ---------------//
@@ -776,8 +795,9 @@ typedef struct {
 
 extern ETMCanRamMirrorGunDriver         etm_can_gun_driver_mirror;
 
-#define _GUN_DRIVER_CONNECTED           etm_can_gun_driver_mirror.status_data.status_bits.control_7_ecb_can_not_active
+#define _GUN_DRIVER_NOT_CONNECTED       etm_can_gun_driver_mirror.status_data.status_bits.control_7_ecb_can_not_active
 #define _GUN_HEATER_ON                  etm_can_gun_driver_mirror.status_data.status_bits.status_7 // DPARKER Need to put the real status number
+#define _GUN_DRIVER_NOT_CONFIGURED      etm_can_gun_driver_mirror.status_data.status_bits.control_2_not_configured
 
 
 
@@ -805,6 +825,8 @@ typedef struct {
 
 extern ETMCanRamMirrorMagnetronCurrent  etm_can_magnetron_current_mirror;
 
+#define _PULSE_CURRENT_NOT_CONNECTED           etm_can_magnetron_current_mirror.status_data.status_bits.control_7_ecb_can_not_active
+#define _PULSE_CURRENT_NOT_CONFIGURED          etm_can_magnetron_current_mirror.status_data.status_bits.control_2_not_configured
 
 typedef struct {
   // -------------------- PULSE SYNC BOARD ---------------//
@@ -850,15 +872,18 @@ typedef struct {
 
 } ETMCanRamMirrorPulseSync;
 
+extern ETMCanRamMirrorPulseSync         etm_can_pulse_sync_mirror;
+#define _PULSE_SYNC_NOT_CONNECTED          etm_can_pulse_sync_mirror.status_data.status_bits.control_7_ecb_can_not_active
+#define _PULSE_SYNC_NOT_CONFIGURED         etm_can_pulse_sync_mirror.status_data.status_bits.control_2_not_configured
+#define _PULSE_SYNC_CUSTOMER_HV_OFF        etm_can_pulse_sync_mirror.status_data.status_bits.status_0
+#define _PULSE_SYNC_CUSTOMER_XRAY_OFF      etm_can_pulse_sync_mirror.status_data.status_bits.status_1
 
 // PUBLIC Variables
 
-extern ETMCanRamMirrorIonPump           etm_can_ion_pump_mirror;
-extern ETMCanRamMirrorAFC               etm_can_afc_mirror;
-extern ETMCanRamMirrorCooling           etm_can_cooling_mirror;
-extern ETMCanRamMirrorPulseSync         etm_can_pulse_sync_mirror;
+
+
 extern ETMCanHighSpeedData              etm_can_high_speed_data_test;
-extern ETMCanRamMirrorEthernetBoard     etm_can_ethernet_board_data;
+
 
 
 
