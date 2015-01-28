@@ -599,13 +599,13 @@ typedef struct {
   ETMCanCanStatus*       can_status;
   ETMCanAgileConfig*     configuration;
 
-  unsigned int           not_operate_bits;
-  unsigned int           unused_0;//pulse_inhibit_status_bits;
-  unsigned int           software_pulse_enable;
-  unsigned int           pulse_sync_disable_requested; // This is used by the CAN interrupt to signal that we need to send a pulse_sync_disable message
-
-  unsigned int           status_connected_boards;   // This register indicates which boards are connected.
   unsigned int           status_received_register;  // When a status message is recieved, the corresponding bit is set in this register
+  unsigned int           control_state_mirror; //not_operate_bits;  // This indicates which boards are in the not operate state
+  unsigned int           unused_1; //pulse_inhibit_status_bits;
+  unsigned int           unused_2; //software_pulse_enable;
+  unsigned int           unused_3; //pulse_sync_disable_requested; // This is used by the CAN interrupt to signal that we need to send a pulse_sync_disable message
+
+  unsigned int           unused_4; //status_connected_boards;   // This register indicates which boards are connected.
 
 } ETMCanRamMirrorEthernetBoard;
 
@@ -663,6 +663,7 @@ typedef struct {
 
 extern ETMCanRamMirrorIonPump           etm_can_ion_pump_mirror;
 
+#define _ION_PUMP_NOT_READY                   etm_can_ion_pump_mirror.status_data.status_bits.control_0_not_ready
 #define _ION_PUMP_NOT_CONFIGURED              etm_can_ion_pump_mirror.status_data.status_bits.control_2_not_configured
 #define _ION_PUMP_NOT_CONNECTED               etm_can_ion_pump_mirror.status_data.status_bits.control_7_ecb_can_not_active
 
@@ -687,8 +688,9 @@ typedef struct {
 
 extern ETMCanRamMirrorAFC               etm_can_afc_mirror;
 
-#define _AFC_NOT_CONFIGURED              etm_can_cooling_mirror.status_data.status_bits.control_2_not_configured
-#define _AFC_NOT_CONNECTED               etm_can_cooling_mirror.status_data.status_bits.control_7_ecb_can_not_active
+#define _AFC_NOT_READY                   etm_can_afc_mirror.status_data.status_bits.control_0_not_ready
+#define _AFC_NOT_CONFIGURED              etm_can_afc_mirror.status_data.status_bits.control_2_not_configured
+#define _AFC_NOT_CONNECTED               etm_can_afc_mirror.status_data.status_bits.control_7_ecb_can_not_active
 
 typedef struct {
   // -------------------- COOLING INTERFACE BOARD ---------------//
@@ -719,6 +721,7 @@ typedef struct {
 
 extern ETMCanRamMirrorCooling           etm_can_cooling_mirror;
 
+#define _COOLING_NOT_READY                   etm_can_cooling_mirror.status_data.status_bits.control_0_not_ready
 #define _COOLING_NOT_CONFIGURED              etm_can_cooling_mirror.status_data.status_bits.control_2_not_configured
 #define _COOLING_NOT_CONNECTED               etm_can_cooling_mirror.status_data.status_bits.control_7_ecb_can_not_active
 
@@ -795,9 +798,12 @@ typedef struct {
 
 extern ETMCanRamMirrorGunDriver         etm_can_gun_driver_mirror;
 
-#define _GUN_DRIVER_NOT_CONNECTED       etm_can_gun_driver_mirror.status_data.status_bits.control_7_ecb_can_not_active
+
 #define _GUN_HEATER_ON                  etm_can_gun_driver_mirror.status_data.status_bits.status_7 // DPARKER Need to put the real status number
+#define _GUN_DRIVER_NOT_READY           etm_can_gun_driver_mirror.status_data.status_bits.control_0_not_ready
 #define _GUN_DRIVER_NOT_CONFIGURED      etm_can_gun_driver_mirror.status_data.status_bits.control_2_not_configured
+#define _GUN_DRIVER_NOT_CONNECTED       etm_can_gun_driver_mirror.status_data.status_bits.control_7_ecb_can_not_active
+
 
 
 
@@ -825,8 +831,10 @@ typedef struct {
 
 extern ETMCanRamMirrorMagnetronCurrent  etm_can_magnetron_current_mirror;
 
-#define _PULSE_CURRENT_NOT_CONNECTED           etm_can_magnetron_current_mirror.status_data.status_bits.control_7_ecb_can_not_active
+#define _PULSE_CURRENT_NOT_READY               etm_can_magnetron_current_mirror.status_data.status_bits.control_0_not_ready
 #define _PULSE_CURRENT_NOT_CONFIGURED          etm_can_magnetron_current_mirror.status_data.status_bits.control_2_not_configured
+#define _PULSE_CURRENT_NOT_CONNECTED           etm_can_magnetron_current_mirror.status_data.status_bits.control_7_ecb_can_not_active
+
 
 typedef struct {
   // -------------------- PULSE SYNC BOARD ---------------//
@@ -873,8 +881,9 @@ typedef struct {
 } ETMCanRamMirrorPulseSync;
 
 extern ETMCanRamMirrorPulseSync         etm_can_pulse_sync_mirror;
-#define _PULSE_SYNC_NOT_CONNECTED          etm_can_pulse_sync_mirror.status_data.status_bits.control_7_ecb_can_not_active
+#define _PULSE_SYNC_NOT_READY              etm_can_pulse_sync_mirror.status_data.status_bits.control_0_not_ready
 #define _PULSE_SYNC_NOT_CONFIGURED         etm_can_pulse_sync_mirror.status_data.status_bits.control_2_not_configured
+#define _PULSE_SYNC_NOT_CONNECTED          etm_can_pulse_sync_mirror.status_data.status_bits.control_7_ecb_can_not_active
 #define _PULSE_SYNC_CUSTOMER_HV_OFF        etm_can_pulse_sync_mirror.status_data.status_bits.status_0
 #define _PULSE_SYNC_CUSTOMER_XRAY_OFF      etm_can_pulse_sync_mirror.status_data.status_bits.status_1
 
@@ -892,10 +901,10 @@ extern ETMCanMessageBuffer etm_can_rx_data_log_buffer;
 
 // Can Module Funtions
 void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr);
-void ETMCanMasterPulseSyncDisable(void);
+//void ETMCanMasterPulseSyncDisable(void);
 void ETMCanMasterHVLambdaUpdateOutput(void);
 void ETMCanMasterGunDriverUpdatePulseTop(void);
-unsigned int ETMCanMasterReadyToPulse(void);
+//unsigned int ETMCanMasterReadyToPulse(void);
 
 
 
