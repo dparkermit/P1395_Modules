@@ -128,9 +128,6 @@ unsigned int ETMCanBufferNotEmpty(ETMCanMessageBuffer* buffer_ptr);
 #define PR3_VALUE                (FCY_CLK/256/T3_FREQUENCY_HZ)
 
 
-
-
-
 // Define RX SID Masks
 // RECEIVE MODE                                  0bXXXCCCCCCAAAAMX0
 #define ETM_CAN_MASTER_RX0_MASK                  0b0001100000000001
@@ -204,11 +201,6 @@ unsigned int ETMCanBufferNotEmpty(ETMCanMessageBuffer* buffer_ptr);
 
 #define CXTXXDLC_VALUE                           0b0000000011000000
 
-
-
-
-
-
 typedef struct {
   // Can data log 0
   unsigned int CXEC_reg;
@@ -279,16 +271,13 @@ void ETMCanReturnValueBoardSpecific(ETMCanMessage* message_ptr);
 #define ETM_CAN_BIT_COOLING_INTERFACE_BOARD                             0b0000000001000000
 #define ETM_CAN_BIT_HEATER_MAGNET_BOARD                                 0b0000000010000000
 #define ETM_CAN_BIT_GUN_DRIVER_BOARD                                    0b0000000100000000
-//#define ETM_CAN_BIT_ALL_ACTIVE_BOARDS                                   0b0100000111111110
-//#define ETM_CAN_BIT_ALL_ACTIVE_SLAVE_BOARDS                             0b0000000111111110
-//#define ETM_CAN_BIT_ALL_ACTIVE_BOARDS                                   0b0100000000011000  // Pulse Sync, HV Lambda, ECB
-//#define ETM_CAN_BIT_ALL_ACTIVE_SLAVE_BOARDS                             0b0000000000011000  // HV Lambda, ECB
 
 
 // Default Register Locations
 #define ETM_CAN_REGISTER_DEFAULT_CMD_RESET_MCU                          0x001
 #define ETM_CAN_REGISTER_DEFAULT_CMD_RESET_ANALOG_CALIBRATION           0x003
 
+/*
 // Default Calibration Locations
 #define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_AN0                       0x400 
 #define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_AN1                       0x402 
@@ -358,15 +347,14 @@ void ETMCanReturnValueBoardSpecific(ETMCanMessage* message_ptr);
 #define ETM_CAN_CALIBRATION_REGISTER_PARAMETER_26_27                    0x49A
 #define ETM_CAN_CALIBRATION_REGISTER_PARAMETER_28_29                    0x49C
 #define ETM_CAN_CALIBRATION_REGISTER_PARAMETER_30_31                    0x49E
-
+*/
 
 // Board Specific Register Locations
 #define ETM_CAN_REGISTER_HV_LAMBDA_SET_1_LAMBDA_SET_POINT               0x4100
-#define ETM_CAN_REGISTER_HV_LAMBDA_CMD_HV_ON                            0x4080
-#define ETM_CAN_REGISTER_HV_LAMBDA_CMD_HV_OFF                           0x4081
+//#define ETM_CAN_REGISTER_HV_LAMBDA_CMD_HV_ON                            0x4080
+//#define ETM_CAN_REGISTER_HV_LAMBDA_CMD_HV_OFF                           0x4081
 
-#define ETM_CAN_REGISTER_AFC_SET_1_HOME_POSITION                        0x5100
-#define ETM_CAN_REGISTER_AFC_SET_1_AFC_OFFSET                           0x5101
+#define ETM_CAN_REGISTER_AFC_SET_1_HOME_POSITION_AND_OFFSET             0x5100
 #define ETM_CAN_REGISTER_AFC_CMD_DO_AUTO_ZERO                           0x5080
 #define ETM_CAN_REGISTER_AFC_CMD_ENTER_AFC_MODE                         0x5081
 #define ETM_CAN_REGISTER_AFC_CMD_ENTER_MANUAL_MODE                      0x5082
@@ -374,42 +362,42 @@ void ETMCanReturnValueBoardSpecific(ETMCanMessage* message_ptr);
 #define ETM_CAN_REGISTER_AFC_CMD_DO_RELATIVE_MOVE                       0x5084
 
 
-#define ETM_CAN_REGISTER_COOLING_CMD_OPEN_SF6_SOLENOID_RELAY            0x6080
-#define ETM_CAN_REGISTER_COOLING_CMD_CLOSE_SF6_SOLENOID_RELAY           0x6081
+//#define ETM_CAN_REGISTER_COOLING_CMD_OPEN_SF6_SOLENOID_RELAY            0x6080
+//#define ETM_CAN_REGISTER_COOLING_CMD_CLOSE_SF6_SOLENOID_RELAY           0x6081
 #define ETM_CAN_REGISTER_COOLING_CMD_SF6_PULSE_LIMIT_OVERRIDE           0x6082
 #define ETM_CAN_REGISTER_COOLING_CMD_SF6_LEAK_LIMIT_OVERRIDE            0x6083
 #define ETM_CAN_REGISTER_COOLING_CMD_RESET_BOTTLE_COUNT                 0x6084
 
 #define ETM_CAN_REGISTER_HEATER_MAGNET_SET_1_CURRENT_SET_POINT          0x7100
-#define ETM_CAN_REGISTER_HEATER_MAGNET_CMD_OUTPUT_ENABLE                0x7080
-#define ETM_CAN_REGISTER_HEATER_MAGNET_CMD_OUTPUT_DISABLE               0x7081
+//#define ETM_CAN_REGISTER_HEATER_MAGNET_CMD_OUTPUT_ENABLE                0x7080
+//#define ETM_CAN_REGISTER_HEATER_MAGNET_CMD_OUTPUT_DISABLE               0x7081
 
 
 #define ETM_CAN_REGISTER_GUN_DRIVER_SET_1_GRID_TOP_SET_POINT            0x8100
 #define ETM_CAN_REGISTER_GUN_DRIVER_SET_1_HEATER_CATHODE_SET_POINT      0x8101
-#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_ENABLE_HEATER                   0x8080
-#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_DISABLE_HEATER                  0x8081
-#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_ENABLE_TRIGGER                  0x8082
-#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_DISABLE_TRIGGER                 0x8083
-#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_ENABLE_PULSE_TOP                0x8084
-#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_DISABLE_PULSE_TOP               0x8085
-#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_ENABLE_HV                       0x8086
-#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_DISABLE_HV                      0x8087
-#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_ZERO_HEATER_TIME_DELAY          0x8088
+//#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_ENABLE_HEATER                   0x8080
+//#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_DISABLE_HEATER                  0x8081
+//#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_ENABLE_TRIGGER                  0x8082
+//#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_DISABLE_TRIGGER                 0x8083
+//#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_ENABLE_PULSE_TOP                0x8084
+//#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_DISABLE_PULSE_TOP               0x8085
+//#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_ENABLE_HV                       0x8086
+//#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_DISABLE_HV                      0x8087
+//#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_ZERO_HEATER_TIME_DELAY          0x8088
 
 #define ETM_CAN_REGISTER_PULSE_SYNC_SET_1_HIGH_ENERGY_TIMING_REG_0      0x3100
 #define ETM_CAN_REGISTER_PULSE_SYNC_SET_1_HIGH_ENERGY_TIMING_REG_1      0x3101
 #define ETM_CAN_REGISTER_PULSE_SYNC_SET_1_LOW_ENERGY_TIMING_REG_0       0x3102
 #define ETM_CAN_REGISTER_PULSE_SYNC_SET_1_LOW_ENERGY_TIMING_REG_1       0x3103
-#define ETM_CAN_REGISTER_PULSE_SYNC_SET_1_CUSTOMER_LED_OUTPUT           0x3110
-#define ETM_CAN_REGISTER_PULSE_SYNC_REQUEST_PERSONALITY_MODULE          0x3120
-#define ETM_CAN_REGISTER_PULSE_SYNC_CMD_ENABLE_PULSES                   0x3080
-#define ETM_CAN_REGISTER_PULSE_SYNC_CMD_DISABLE_PULSES                  0x3081
+//#define ETM_CAN_REGISTER_PULSE_SYNC_SET_1_CUSTOMER_LED_OUTPUT           0x3110
+//#define ETM_CAN_REGISTER_PULSE_SYNC_REQUEST_PERSONALITY_MODULE          0x3120
+//#define ETM_CAN_REGISTER_PULSE_SYNC_CMD_ENABLE_PULSES                   0x3080
+//#define ETM_CAN_REGISTER_PULSE_SYNC_CMD_DISABLE_PULSES                  0x3081
 
 
 #define ETM_CAN_REGISTER_ECB_SET_2_HIGH_ENERGY_TARGET_CURRENT_MON       0xE100
 #define ETM_CAN_REGISTER_ECB_SET_2_LOW_ENERGY_TARGET_CURRENT_MON        0xE101
-#define ETM_CAN_REGISTER_ECB_SET_2_PERSONAILITY_MODULE                  ETM_CAN_REGISTER_PULSE_SYNC_REQUEST_PERSONALITY_MODULE
+//#define ETM_CAN_REGISTER_ECB_SET_2_PERSONAILITY_MODULE                  ETM_CAN_REGISTER_PULSE_SYNC_REQUEST_PERSONALITY_MODULE
 
 
 //------------------ DATA LOGGING REGISTERS --------------------------//
@@ -453,6 +441,7 @@ void ETMCanReturnValueBoardSpecific(ETMCanMessage* message_ptr);
 #define ETM_CAN_DATA_LOG_REGISTER_GUN_DRIVER_SLOW_PULSE_TOP_MON         0x8C
 #define ETM_CAN_DATA_LOG_REGISTER_GUN_DRIVER_SLOW_HEATER_MON            0x8D
 #define ETM_CAN_DATA_LOG_REGISTER_GUN_DRIVER_SLOW_SET_POINTS            0x8E
+#define ETM_CAN_DATA_LOG_REGISTER_GUN_DRIVER_FPGA_DATA                  0x8F          
 
 #define ETM_CAN_DATA_LOG_REGISTER_PULSE_SYNC_FAST_TRIGGER_DATA          0x3C
 #define ETM_CAN_DATA_LOG_REGISTER_PULSE_SYNC_SLOW_TIMING_DATA_0         0x3D
@@ -561,8 +550,11 @@ void ETMCanReturnValueBoardSpecific(ETMCanMessage* message_ptr);
 
 typedef struct {
   unsigned int pulse_count;
-  unsigned int high_low_energy;
+  unsigned int status_bits; //This will contain high_low_energy?, arc_this_pulse?, what else???
   
+  unsigned int x_ray_on_seconds_lsw;  // This is the lsw of x_ray_on_seconds, when the ECB recieved the "next pulse level" command
+  unsigned int x_ray_on_milliseconds; // This is a representation of the milliseconds, when the ECB recieved the "next pulse level" command
+
   unsigned int hvlambda_readback_high_energy_lambda_program_voltage;
   unsigned int hvlambda_readback_low_energy_lambda_program_voltage;
   unsigned int hvlambda_readback_peak_lambda_voltage;
@@ -578,7 +570,6 @@ typedef struct {
 
   unsigned int magmon_readback_magnetron_high_energy_current;
   unsigned int magmon_readback_magnetron_low_energy_current;
-  unsigned int magmon_readback_arc_detected;
 
   unsigned char psync_readback_customer_trigger_width;
   unsigned char psync_readback_filtered_customer_trigger_width;
@@ -588,6 +579,16 @@ typedef struct {
   unsigned char psync_readback_low_energy_grid_delay;
   
 } ETMCanHighSpeedData;
+// 22 words
+
+extern ETMCanHighSpeedData high_speed_data_buffer_a[32];
+extern ETMCanHighSpeedData high_speed_data_buffer_b[32];
+extern unsigned int high_speed_data_buffer_a_full;
+extern unsigned int high_speed_data_buffer_b_full;
+
+// internal use only
+// a pointer to the buffer that we are currently writing too.
+
 
 
 
@@ -632,6 +633,11 @@ typedef struct {
 
   // Additional Control/Interface data
   unsigned int hvlambda_enabled;
+
+  // DPARKER still need to add this data to Ethernet Interface
+  unsigned int hvlambda_readback_high_vprog;
+  unsigned int hvlambda_readback_low_vprog;
+  unsigned int hvlambda_readback_peak_lambda_voltage;
 
 } ETMCanRamMirrorHVLambda;
 
@@ -683,6 +689,14 @@ typedef struct {
   unsigned int afc_readback_home_position;
   unsigned int afc_readback_offset;
   unsigned int afc_readback_current_position;
+
+  // DPARKER - Need to add this to ethernet interface
+  unsigned int afc_readback_afc_a_input_reading;
+  unsigned int afc_readback_afc_b_input_reading;
+  unsigned int afc_readback_filtered_error_reading;
+  unsigned int afc_readback_target_position;
+  
+  
 
 } ETMCanRamMirrorAFC;
 
@@ -750,8 +764,8 @@ typedef struct {
   unsigned int htrmag_readback_magnet_voltage_set_point;
 
   // Additional Control/Interface data
-  unsigned int htrmag_heater_enable;
-  unsigned int htrmag_magnet_enable;
+  unsigned int htrmag_heater_current_set_point_scaled;//htrmag_heater_enable;
+  unsigned int unused_0;  //htrmag_magnet_enable;
 
 } ETMCanRamMirrorHeaterMagnet;
 
@@ -791,8 +805,12 @@ typedef struct {
   unsigned int gun_readback_heater_voltage_set_point;
   unsigned int gun_readback_cathode_voltage_set_point;
 
-  // Additional Control/Interface data
-  unsigned int gun_high_voltage_enable;
+  // DPARKER NEED TO ADD TO INTERFACE
+  unsigned int gun_readback_fpga_asdr_register;
+  unsigned int gun_readback_analog_fault_status;
+  unsigned int gun_readback_system_logic_state;
+  unsigned int gun_readback_bias_voltage_mon;
+  
 
 } ETMCanRamMirrorGunDriver;
 
@@ -900,10 +918,8 @@ extern ETMCanHighSpeedData              etm_can_high_speed_data_test;
 extern ETMCanMessageBuffer etm_can_rx_data_log_buffer;
 
 // Can Module Funtions
-void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr);
+
 //void ETMCanMasterPulseSyncDisable(void);
-void ETMCanMasterHVLambdaUpdateOutput(void);
-void ETMCanMasterGunDriverUpdatePulseTop(void);
 //unsigned int ETMCanMasterReadyToPulse(void);
 
 

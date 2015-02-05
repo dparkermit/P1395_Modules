@@ -82,7 +82,7 @@ unsigned int WaitForI2CBusIdle(unsigned char i2c_port) {
     while (I2CSTATbits.TRSTAT) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x0100;
 	etm_i2c1_error_count++;
 	break;	
       }
@@ -97,7 +97,7 @@ unsigned int WaitForI2CBusIdle(unsigned char i2c_port) {
     while (I2C1STATbits.TRSTAT) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x0100;
 	etm_i2c1_error_count++;
 	break;	
       }
@@ -112,7 +112,7 @@ unsigned int WaitForI2CBusIdle(unsigned char i2c_port) {
     while (I2C2STATbits.TRSTAT) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x0100;
 	etm_i2c2_error_count++;
 	break;
       }
@@ -142,7 +142,7 @@ unsigned int GenerateI2CStart(unsigned char i2c_port) {
     while (I2CCONbits.SEN) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x0200;
 	etm_i2c1_error_count++;
 	break;
       }
@@ -158,7 +158,7 @@ unsigned int GenerateI2CStart(unsigned char i2c_port) {
     while (I2C1CONbits.SEN) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x0200;
 	etm_i2c1_error_count++;
 	break;
       }
@@ -174,7 +174,7 @@ unsigned int GenerateI2CStart(unsigned char i2c_port) {
     while (I2C2CONbits.SEN) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x0200;
 	etm_i2c2_error_count++;
 	break;
       }
@@ -201,7 +201,7 @@ unsigned int GenerateI2CRestart(unsigned char i2c_port) {
     while (I2CCONbits.RSEN) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x0400;
 	etm_i2c1_error_count++;
 	break;
       }
@@ -217,7 +217,7 @@ unsigned int GenerateI2CRestart(unsigned char i2c_port) {
     while (I2C1CONbits.RSEN) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x0400;
 	etm_i2c1_error_count++;
 	break;
       }
@@ -233,7 +233,7 @@ unsigned int GenerateI2CRestart(unsigned char i2c_port) {
     while (I2C2CONbits.RSEN) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x0400;
 	etm_i2c2_error_count++;
 	break;
       }
@@ -260,7 +260,7 @@ unsigned int WriteByteI2C(unsigned char data, unsigned char i2c_port) {
     while (!I2CSTATbits.TRSTAT) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x0800;
 	etm_i2c1_error_count++;
 	break;
       }
@@ -269,7 +269,7 @@ unsigned int WriteByteI2C(unsigned char data, unsigned char i2c_port) {
     while (I2CSTATbits.TRSTAT) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x0800;
 	etm_i2c1_error_count++;
 	break;
       }
@@ -285,7 +285,7 @@ unsigned int WriteByteI2C(unsigned char data, unsigned char i2c_port) {
     while (!I2C1STATbits.TRSTAT) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x0800;
 	etm_i2c1_error_count++;
 	break;
       }
@@ -294,7 +294,7 @@ unsigned int WriteByteI2C(unsigned char data, unsigned char i2c_port) {
     while (I2C1STATbits.TRSTAT) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x0800;
 	etm_i2c1_error_count++;
 	break;
       }
@@ -310,7 +310,7 @@ unsigned int WriteByteI2C(unsigned char data, unsigned char i2c_port) {
     while (!I2C2STATbits.TRSTAT) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x0800;
 	etm_i2c2_error_count++;
 	break;
       }
@@ -319,7 +319,7 @@ unsigned int WriteByteI2C(unsigned char data, unsigned char i2c_port) {
     while (I2C2STATbits.TRSTAT) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x0800;
 	etm_i2c2_error_count++;
 	break;
       }
@@ -344,7 +344,7 @@ unsigned int ReadByteI2C(unsigned char i2c_port) {
     while (I2CCONbits.RCEN) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x1000;
 	etm_i2c1_error_count++;
 	break;
       }
@@ -353,7 +353,7 @@ unsigned int ReadByteI2C(unsigned char i2c_port) {
     while (!I2CSTATbits.RBF) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x1000;
 	etm_i2c1_error_count++;
 	break;
       }
@@ -372,7 +372,7 @@ unsigned int ReadByteI2C(unsigned char i2c_port) {
     while (I2C1CONbits.RCEN) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x1000;
 	etm_i2c1_error_count++;
 	break;
       }
@@ -381,7 +381,7 @@ unsigned int ReadByteI2C(unsigned char i2c_port) {
     while (!I2C1STATbits.RBF) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x1000;
 	etm_i2c1_error_count++;
 	break;
       }
@@ -400,7 +400,7 @@ unsigned int ReadByteI2C(unsigned char i2c_port) {
     while (I2C2CONbits.RCEN) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x1000;
 	etm_i2c2_error_count++;
 	break;
       }
@@ -409,7 +409,7 @@ unsigned int ReadByteI2C(unsigned char i2c_port) {
     while (!I2C2STATbits.RBF) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x1000;
 	etm_i2c2_error_count++;
 	break;
       }
@@ -439,7 +439,7 @@ unsigned int GenerateI2CStop(unsigned char i2c_port) {
     while (I2CCONbits.PEN) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x2000;
 	etm_i2c1_error_count++;
 	break;
       }
@@ -455,7 +455,7 @@ unsigned int GenerateI2CStop(unsigned char i2c_port) {
     while (I2C1CONbits.PEN) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x2000;
 	etm_i2c1_error_count++;
 	break;
       }
@@ -471,7 +471,7 @@ unsigned int GenerateI2CStop(unsigned char i2c_port) {
     while (I2C2CONbits.PEN) {
       loop_counter++;
       if (loop_counter > etm_i2c_loop_timeout) {
-	i2c_result = 0xFA00;
+	i2c_result = 0x2000;
 	etm_i2c2_error_count++;
 	break;
       }
@@ -495,7 +495,7 @@ unsigned int GenerateACK(unsigned char i2c_port) {
         while (I2CCONbits.ACKEN) {
         loop_counter++;
         if (loop_counter > etm_i2c_loop_timeout) {
-            ret = 0xFA00;
+            ret = 0x4000;
             etm_i2c1_error_count++;
             break;
           }
@@ -510,7 +510,7 @@ unsigned int GenerateACK(unsigned char i2c_port) {
         while (I2C1CONbits.ACKEN) {
         loop_counter++;
         if (loop_counter > etm_i2c_loop_timeout) {
-            ret = 0xFA00;
+            ret = 0x4000;
             etm_i2c1_error_count++;
             break;
           }
@@ -525,7 +525,7 @@ unsigned int GenerateACK(unsigned char i2c_port) {
         while (I2C2CONbits.ACKEN) {
         loop_counter++;
         if (loop_counter > etm_i2c_loop_timeout) {
-            ret = 0xFA00;
+            ret = 0x4000;
             etm_i2c1_error_count++;
             break;
           }
@@ -549,7 +549,7 @@ unsigned int GenerateNACK(unsigned char i2c_port) {
         while (I2CCONbits.ACKEN) {
         loop_counter++;
         if (loop_counter > etm_i2c_loop_timeout) {
-            ret = 0xFA00;
+            ret = 0x8000;
             etm_i2c1_error_count++;
             break;
           }
@@ -564,7 +564,7 @@ unsigned int GenerateNACK(unsigned char i2c_port) {
         while (I2C1CONbits.ACKEN) {
         loop_counter++;
         if (loop_counter > etm_i2c_loop_timeout) {
-            ret = 0xFA00;
+            ret = 0x8000;
             etm_i2c1_error_count++;
             break;
           }
@@ -579,7 +579,7 @@ unsigned int GenerateNACK(unsigned char i2c_port) {
         while (I2C2CONbits.ACKEN) {
         loop_counter++;
         if (loop_counter > etm_i2c_loop_timeout) {
-            ret = 0xFA00;
+            ret = 0x8000;
             etm_i2c1_error_count++;
             break;
           }

@@ -104,7 +104,7 @@ unsigned char ReadDateAndTime(RTC_DS3231* ptr_REAL_TIME_CLOCK, RTC_TIME* ptr_TIM
                     if (GenerateI2CRestart(ptr_REAL_TIME_CLOCK->I2Cport) == 0) {
                         if (WriteByteI2C(slave_address + 1, ptr_REAL_TIME_CLOCK->I2Cport) == 0){
                             data = ReadByteI2C(ptr_REAL_TIME_CLOCK->I2Cport);
-                            if (data == 0xFA00)
+                            if (data == 0x1000)
                                 return 7;
                             temp = data & 0x00FF;
                             ptr_TIME->second = ConvertFromBCD(temp, 0);
@@ -115,7 +115,7 @@ unsigned char ReadDateAndTime(RTC_DS3231* ptr_REAL_TIME_CLOCK, RTC_TIME* ptr_TIM
                             if (GenerateACK(ptr_REAL_TIME_CLOCK->I2Cport) != 0)
                                 return 9;
                             data = ReadByteI2C(ptr_REAL_TIME_CLOCK->I2Cport);
-                            if (data == 0xFA00)
+                            if (data == 0x1000)
                                 return 0xA;
                             temp = data & 0x00FF;
                             ptr_TIME->minute = ConvertFromBCD(temp, 0);
@@ -126,7 +126,7 @@ unsigned char ReadDateAndTime(RTC_DS3231* ptr_REAL_TIME_CLOCK, RTC_TIME* ptr_TIM
                             if (GenerateACK(ptr_REAL_TIME_CLOCK->I2Cport) != 0)
                                 return 0xC;
                             data = ReadByteI2C(ptr_REAL_TIME_CLOCK->I2Cport);
-                            if (data == 0xFA00)
+                            if (data == 0x1000)
                                 return 0xD;
                             temp = data & 0x00FF;
                             ptr_TIME->hour = ConvertFromBCD(temp, 1);
@@ -137,7 +137,7 @@ unsigned char ReadDateAndTime(RTC_DS3231* ptr_REAL_TIME_CLOCK, RTC_TIME* ptr_TIM
                             if (GenerateACK(ptr_REAL_TIME_CLOCK->I2Cport) != 0)
                                 return 0xF;
                             data = ReadByteI2C(ptr_REAL_TIME_CLOCK->I2Cport);
-                            if (data == 0xFA00)
+                            if (data == 0x1000)
                                 return 0x10;
                             temp = data & 0x00FF;
                             ptr_TIME->day = ConvertFromBCD(temp, 0);
@@ -148,7 +148,7 @@ unsigned char ReadDateAndTime(RTC_DS3231* ptr_REAL_TIME_CLOCK, RTC_TIME* ptr_TIM
                             if (GenerateACK(ptr_REAL_TIME_CLOCK->I2Cport) != 0)
                                 return 0x12;
                             data = ReadByteI2C(ptr_REAL_TIME_CLOCK->I2Cport);
-                            if (data == 0xFA00)
+                            if (data == 0x1000)
                                 return 0x13;
                             temp = data & 0x00FF;
                             ptr_TIME->date = ConvertFromBCD(temp, 0);
@@ -159,7 +159,7 @@ unsigned char ReadDateAndTime(RTC_DS3231* ptr_REAL_TIME_CLOCK, RTC_TIME* ptr_TIM
                             if (GenerateACK(ptr_REAL_TIME_CLOCK->I2Cport) != 0)
                                 return 0x15;
                             data = ReadByteI2C(ptr_REAL_TIME_CLOCK->I2Cport);
-                            if (data == 0xFA00)
+                            if (data == 0x1000)
                                 return 0x16;
                             temp = data & 0x00FF;
                             ptr_TIME->month = ConvertFromBCD(temp, 0);
@@ -170,7 +170,7 @@ unsigned char ReadDateAndTime(RTC_DS3231* ptr_REAL_TIME_CLOCK, RTC_TIME* ptr_TIM
                             if (GenerateACK(ptr_REAL_TIME_CLOCK->I2Cport) != 0)
                                 return 0x18;
                             data = ReadByteI2C(ptr_REAL_TIME_CLOCK->I2Cport);
-                            if (data == 0xFA00)
+                            if (data == 0x1000)
                                 return 0x19;
                             temp = data & 0x00FF;
                             ptr_TIME->year = ConvertFromBCD(temp, 0);

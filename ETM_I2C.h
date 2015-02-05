@@ -41,7 +41,7 @@ unsigned int WaitForI2CBusIdle(unsigned char i2c_port);
   This will wait for bus idle on the specified I2C Bus
   
   The result will be 0x0000 if everything works properly
-  The result will be 0xFA00 if there is an I2C bus fault
+  The result will be 0x0100 if there is an I2C bus fault
 */
 
 unsigned int GenerateI2CStart(unsigned char i2c_port);
@@ -49,7 +49,7 @@ unsigned int GenerateI2CStart(unsigned char i2c_port);
   This will generate a start condition on the specified I2C bus
   
   The result will be 0x0000 if everything works properly
-  The result will be 0xFA00 if there is an I2C bus fault
+  The result will be 0x0200 if there is an I2C bus fault
 */
 
 unsigned int GenerateI2CRestart(unsigned char i2c_port);
@@ -57,7 +57,7 @@ unsigned int GenerateI2CRestart(unsigned char i2c_port);
   This will generate a re-start condition on the specified I2C bus
   
   The result will be 0x0000 if everything works properly
-  The result will be 0xFA00 if there is an I2C bus fault
+  The result will be 0x0400 if there is an I2C bus fault
 */
 
 unsigned int WriteByteI2C(unsigned char data, unsigned char i2c_port);
@@ -65,7 +65,7 @@ unsigned int WriteByteI2C(unsigned char data, unsigned char i2c_port);
   This will write a byte to the specified I2C bus
   
   The result will be 0x0000 if everything works properly
-  The result will be 0xFA00 if there is an I2C bus fault
+  The result will be 0x0800 if there is an I2C bus fault
 */
 
 unsigned int ReadByteI2C(unsigned char i2c_port);
@@ -73,7 +73,7 @@ unsigned int ReadByteI2C(unsigned char i2c_port);
   This will read a byte from the specified I2C bus
   
   The result will be 0x00dd if everything works properly
-  The result will be 0xFA00 if there is an I2C bus fault
+  The result will be 0x1000 if there is an I2C bus fault
 */
 
 
@@ -82,7 +82,7 @@ unsigned int GenerateI2CStop(unsigned char i2c_port);
   This will generate a stop condition on the specified I2C bus
   
   The result will be 0x0000 if everything works properly
-  The result will be 0xFA00 if there is an I2C bus fault
+  The result will be 0x2000 if there is an I2C bus fault
 */
 
 unsigned int GenerateACK(unsigned char i2c_port);
@@ -90,7 +90,7 @@ unsigned int GenerateACK(unsigned char i2c_port);
   This will generate a master ACK sequence
 
   The result will be 0x0000 if everything works properly
-  The result will be 0xFA00 if there is an I2C bus fault
+  The result will be 0x4000 if there is an I2C bus fault
 */
 #define GenerateI2CAck GenerateACK
 
@@ -99,7 +99,7 @@ unsigned int GenerateNACK(unsigned char i2c_port);
   This will generate a master NACK sequence
 
   The result will be 0x0000 if everything works properly
-  The result will be 0xFA00 if there is an I2C bus fault
+  The result will be 0x8000 if there is an I2C bus fault
 */
 #define GenerateI2CNack GenerateNACK
 

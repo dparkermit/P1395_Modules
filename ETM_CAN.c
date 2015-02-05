@@ -1,42 +1,6 @@
 #include "ETM_CAN.h"
 #include "p30fxxxx.h"
 
-/* 
-   EEPROM Utilization for P1395
-   4K Words 0 -> FFF
-   256 Pages 0 -> FF
-
-
-   Calibration Data
-   Page 0x00 -> 0x07 (Register 0x0000 -> 0x07)
-
-   ECB Specific EEPROM
-   Page 0x10 = Heater Complete Times
-   Page 0x11 = System Time on 
-   Page 0x12 = AFC & Heater/Magnet Settings
-   Page 0x13 = HV Lambda Settings
-   Page 0x14 = Gun Driver Settings
-   Page 0x15 = Pulse Sync Personaility 1 Settings
-   Page 0x16 = Pulse Sync Personaility 1 Setting
-   Page 0x17 = Pulse Sync Personaility 1 Settings
-   Page 0x18 = Pulse Sync Personaility 1 Settings
-   Page 0x19 = Reserved for Future Use
-   Page 0x1A = Reserved for Future Use
-   Page 0x1B = Reserved for Future Use
-   Page 0x1C = Reserved for Future Use
-   Page 0x1D = Reserved for Future Use
-   Page 0x1E = Reserved for Future Use
-   Page 0x1F = Reserved for Future Use
-   
-   Pulse Monitor Board Specific EEPROM
-   Page 0x20 = "Register A" for Pulse Total (4 words), Arc Total (2 words), CRC (1 word)
-   Page 0x21 = "Register B" for Pulse Total (4 words), Arc Total (2 words), CRC (1 word)
-
-   Page 0x7F = Event Log Pointer
-   Page 0x80 -> 0xFF = Event Log Data 
-
-*/
-
 
 #ifdef __ETM_CAN_MASTER_MODULE
 #include "A36507.h"
@@ -49,6 +13,45 @@ ETMEEProm* ptr_external_eeprom;
 void ETMCanLoadDefaultAnalogCalibration(void);
 
 void ETMCanCheckForStatusChange(void);
+
+
+/*
+  EEPROM ALLOCATION
+  Each Page is 16 words (16 registers)
+  External EEPROM is Pages 0->255 (Registers 0->8191)
+  Internal EEPROM is Pages 0->127 (Registers 0->4095)
+  
+  Page 0x000 -> Page 0x006   - System Configuration Value, ECB ONLY
+  Page 0x007                 - System On Counters, ECB ONLY
+  Page 0x008                 - System Heater last complete times, ECB ONLY
+  Page 0x009 -> Page 0x0F    - Reserved for ECB
+
+  Page 0x010 -> Page 0x017   - Calibration Data - ALL BOARDS (may not be used of course)
+  Page 0x018 -> Page 0x01F   - Reserved for ALL Board calibration data
+
+  Page 0x020                 - Pulse/Arc Counters, Pulse Current Monitor Borad Only                
+  Page 0x021                 - SF6 Pulses Remaining, Cooling Interface Board
+  Page 0x022 -> Page 0x02F   - Reserved for board specific saving
+
+  Page 0x030 -> Page 0x126   - Reserved for ???????
+
+  Page 0x127                 - Event Log Point, ECB ONLY
+  Page 0x128 -> Page 0x255   - Event Log Data, ECB ONLY  
+  
+
+  Reading and writing Calibration Data
+  There are 2 words of data for each calibration (gain, offset)
+  These are always transmitted as a pair by the CAN bus and the GUI should do the same.
+  These are addressed as EVEN registers.
+  A command should be formatted
+  Word4 = Register Address (must be even) = (high nibble = board address) (3 low nibbles = calibration register)
+  For example the GUI would write the "High Voltage lambda DAC2 Ext Cal Data" with EEPROM Address 0x414A
+  It would read the calibration data with the same address
+  
+
+ 
+
+*/
 
 
 
@@ -80,6 +83,7 @@ ETMCanSyncMessage     etm_can_sync_message;
 
 
 
+
 // Private Functions
 void ETMCanProcessMessage(void);
 void ETMCanSetValue(ETMCanMessage* message_ptr);
@@ -92,6 +96,18 @@ void ETMCanSetValueCalibrationUpload(ETMCanMessage* message_ptr);
 void ETMCanProcessLogData(void);
 void ETMCanMasterStandardCommunication(void);
 void ETMCanSendSync();
+
+void ETMCanMasterHtrMagnetUpdateOutput(void);
+void ETMCanMasterGunDriverUpdateHeaterCathode(void);
+void ETMCanMasterAFCUpdateHomeOffset(void);
+void ETMCanMasterPulseSyncUpdateHighRegZero(void);
+void ETMCanMasterPulseSyncUpdateHighRegOne(void);
+void ETMCanMasterPulseSyncUpdateLowRegZero(void);
+void ETMCanMasterPulseSyncUpdateLowRegOne(void);
+void ETMCanMasterHVLambdaUpdateOutput(void);
+void ETMCanMasterGunDriverUpdatePulseTop(void);
+void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr);
+
 
 
 typedef struct {
@@ -126,6 +142,7 @@ unsigned int previous_status;  // DPARKER - Need better name
 
 //local variables
 unsigned int etm_can_default_transmit_counter;
+unsigned int etm_can_slow_speed_master_updates;
 
 typedef struct {
   unsigned int reset_count;
@@ -136,26 +153,6 @@ typedef struct {
 volatile PersistentData etm_can_persistent_data __attribute__ ((persistent));
 
 
-
-
-#define DEFAULT_CALIBRATION_DATA_PAGE  {0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000}
-void ETMCanLoadDefaultAnalogCalibration(void) {
-
-#ifdef __USE_EXTERNAL_EEPROM
-  unsigned int default_calibration_data[16] = DEFAULT_CALIBRATION_DATA_PAGE;
-
-  ETMEEPromWritePage(ptr_external_eeprom, 0, 16, default_calibration_data);
-  ETMEEPromWritePage(ptr_external_eeprom, 1, 16, default_calibration_data);
-  ETMEEPromWritePage(ptr_external_eeprom, 2, 16, default_calibration_data);
-  ETMEEPromWritePage(ptr_external_eeprom, 3, 16, default_calibration_data);
-  ETMEEPromWritePage(ptr_external_eeprom, 4, 16, default_calibration_data);
-  ETMEEPromWritePage(ptr_external_eeprom, 5, 16, default_calibration_data);
-  ETMEEPromWritePage(ptr_external_eeprom, 6, 16, default_calibration_data);
-  ETMEEPromWritePage(ptr_external_eeprom, 7, 16, default_calibration_data);
-#else
-  // DPARKER configure the data in internal EEPROM
-#endif
-}
 
 
 
@@ -389,6 +386,9 @@ void ETMCanExecuteCMDDefault(ETMCanMessage* message_ptr) {
 }
 
 
+void ETMCanLoadDefaultAnalogCalibration(void) {
+  //DPARKER WRITE THIS
+}
 
 void ETMCanReturnValue(ETMCanMessage* message_ptr) {
   unsigned int index_word;
@@ -469,8 +469,8 @@ void ETMCanSendStatus(void) {
 
   message.word0 = _CONTROL_REGISTER;
   message.word1 = _FAULT_REGISTER;
-  message.word2 = 0xA0A0;
-  message.word3 = 0xB0B0;
+  message.word2 = etm_can_status_register.data_word_A;
+  message.word3 = etm_can_status_register.data_word_B;
   
   ETMCanTXMessage(&message, &CXTX1CON);
   local_can_errors.tx_1++;
@@ -1058,112 +1058,97 @@ void ETMCanMasterStandardCommunication(void) {
     The sync command and Pulse Sync enable command are each sent twice for an effecive rate of 100ms (10Hz)
   */
 
-  ETMCanMessage master_message;
-  
   if ((_STATUS_X_RAY_DISABLED == 0) && (_SYNC_CONTROL_PULSE_SYNC_DISABLE_XRAY)) {
     // We need to immediately send out a sync message
     ETMCanSendSync();
   }
 
+
   if (_T2IF) {
     // should be true once every 25mS
     // each of the 8 cases will be true once every 200mS
     _T2IF = 0;
-    
-    etm_can_default_transmit_counter++;
-    etm_can_default_transmit_counter &= 0x7;
 
-    
-    switch (etm_can_default_transmit_counter) 
-      {
-      case 0x0:
-	// Send Sync Command (this is on TX1) - This also includes Pulse Sync Enable/Disable
-	ETMCanSendSync();
-	if (global_data_A36507.send_pulse_sync_config) {
-	  global_data_A36507.send_pulse_sync_config = 0;
-	  // DPARKER SEND OUT PULSE SYNC CONFIGURATION DATA
-	  // DPARKER MUST FIRST CONFIRM THAT WE HAVE A VALID MODE SELECTED
-	  // DPARKER, FOR NOW SEND OUT TEMP CONFIGURATION
+    if (!_STATUS_PERSONALITY_LOADED) {
+      // Just send out a sync message
+      ETMCanSendSync();
+    } else {
+      etm_can_default_transmit_counter++;
+      etm_can_default_transmit_counter &= 0x7;
+      
+      
+      switch (etm_can_default_transmit_counter) 
+	{
+	case 0x0:
+	  // Send Sync Command (this is on TX1) - This also includes Pulse Sync Enable/Disable
+	  ETMCanSendSync();
+	  break;
+	  
+	case 0x1:
+	  // Send High/Low Energy Program voltage to Lambda Board
+	  ETMCanMasterHVLambdaUpdateOutput();
+	  break;
+	  
+	case 0x2:
+	  // Send Sync Command (this is on TX1) - This also includes Pulse Sync Enable/Disable
+	  ETMCanSendSync();
+	  break;
+	  
+	case 0x3:
+	  // Send Heater/Magnet Current to Heater Magnet Board
+	  ETMCanMasterHtrMagnetUpdateOutput();
+	  break;
+	  
+	case 0x4:
+	  // Send Sync Command (this is on TX1) - This also includes Pulse Sync Enable/Disable
+	  ETMCanSendSync();
+	  break;
+	  
+	case 0x5:
+	  // Send High/Low Energy Pulse top voltage to Gun Driver
+	  ETMCanMasterGunDriverUpdatePulseTop();
+	  break;
+	  
+	case 0x6:
+	  // Send Sync Command (this is on TX1) - This also includes Pulse Sync Enable/Disable
+	  ETMCanSendSync();
+	  break;
+	  
+	case 0x7:
+	  // LOOP THROUGH SLOWER SPEED TRANSMITS
+	  /*
+	    THis is the following messages
+	    Gun Driver Heater/Cathode
+	    AFC Home/Offset
+	    Pulse Sync Registers 1,2,3,4
+	  */
 
-	  master_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
-	  master_message.word3      = ETM_CAN_REGISTER_PULSE_SYNC_SET_1_HIGH_ENERGY_TIMING_REG_0;
-	  master_message.word2      = 0;
-	  master_message.word1      = 0;
-	  master_message.word0      = 0;
-	  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &master_message);
-
-	  master_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
-	  master_message.word3      = ETM_CAN_REGISTER_PULSE_SYNC_SET_1_HIGH_ENERGY_TIMING_REG_1;
-	  master_message.word2      = 0;
-	  master_message.word1      = 0;
-	  master_message.word0      = 0;
-	  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &master_message);
-
-	  master_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
-	  master_message.word3      = ETM_CAN_REGISTER_PULSE_SYNC_SET_1_LOW_ENERGY_TIMING_REG_0;
-	  master_message.word2      = 0;
-	  master_message.word1      = 0;
-	  master_message.word0      = 0;
-	  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &master_message);
-
-	  master_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
-	  master_message.word3      = ETM_CAN_REGISTER_PULSE_SYNC_SET_1_LOW_ENERGY_TIMING_REG_1;
-	  master_message.word2      = 0;
-	  master_message.word1      = 0;
-	  master_message.word0      = 0;
-	  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &master_message);
-	  MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
-
+	  etm_can_slow_speed_master_updates++;
+	  if (etm_can_slow_speed_master_updates >= 6) {
+	    etm_can_slow_speed_master_updates = 0;
+	  } 
+	  
+	  if (etm_can_slow_speed_master_updates == 0) {
+	    ETMCanMasterGunDriverUpdateHeaterCathode();  
+	  }
+	  if (etm_can_slow_speed_master_updates == 1) {
+	    ETMCanMasterAFCUpdateHomeOffset();	   
+	  }
+	  if (etm_can_slow_speed_master_updates == 2) {
+	    ETMCanMasterPulseSyncUpdateHighRegZero();	   
+	  }
+	  if (etm_can_slow_speed_master_updates == 3) {
+	    ETMCanMasterPulseSyncUpdateHighRegOne();	   
+	  }
+	  if (etm_can_slow_speed_master_updates == 4) {
+	    ETMCanMasterPulseSyncUpdateLowRegZero();	   
+	  }
+	  if (etm_can_slow_speed_master_updates == 5) {
+	    ETMCanMasterPulseSyncUpdateLowRegOne();	   
+	  }
+	  break;
 	}
-	break;
-
-      case 0x1:
-	// Send High/Low Energy Program voltage to Lambda Board
-	ETMCanMasterHVLambdaUpdateOutput();
-	break;
-	
-      case 0x2:
-	// Send Sync Command (this is on TX1) - This also includes Pulse Sync Enable/Disable
-	ETMCanSendSync();
-	break;
-	
-      case 0x3:
-	// Send Heater/Magnet Current to Heater Magnet Board
-	master_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_HEATER_MAGNET_BOARD << 3));
-	master_message.word3 = ETM_CAN_REGISTER_HEATER_MAGNET_SET_1_CURRENT_SET_POINT;
-	master_message.word2 = 0;
-	master_message.word1 = etm_can_heater_magnet_mirror.htrmag_heater_current_set_point;
-	master_message.word0 = etm_can_heater_magnet_mirror.htrmag_magnet_current_set_point;
-	ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &master_message);
-	MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
-	break;
-	
-      case 0x4:
-	// Send Sync Command (this is on TX1) - This also includes Pulse Sync Enable/Disable
-	ETMCanSendSync();
-	break;
-
-      case 0x5:
-	// Send High/Low Energy Pulse top voltage to Gun Driver
-	ETMCanMasterGunDriverUpdatePulseTop();
-	break;
-	
-      case 0x6:
-	// Send Sync Command (this is on TX1) - This also includes Pulse Sync Enable/Disable
-	ETMCanSendSync();
-	break;
-	
-      case 0x7:
-	// Send Heater/Cathode set points to Gun Driver
-	master_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_GUN_DRIVER_BOARD << 3));
-	master_message.word3 = ETM_CAN_REGISTER_GUN_DRIVER_SET_1_HEATER_CATHODE_SET_POINT;
-	master_message.word2 = 0;
-	master_message.word1 = etm_can_gun_driver_mirror.gun_cathode_voltage_set_point;
-	master_message.word0 = etm_can_gun_driver_mirror.gun_heater_voltage_set_point;
-	ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &master_message);
-	MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
-	break;
-      }
+    }
   }
 }
 /*
@@ -1192,6 +1177,89 @@ void ETMCanMasterPulseSyncDisable(void) {
   ETMCanTXMessage(&can_message, &CXTX2CON);
 }
 */
+
+void ETMCanMasterPulseSyncUpdateHighRegZero(void) {
+  ETMCanMessage can_message;
+  can_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
+  can_message.word3 = ETM_CAN_REGISTER_PULSE_SYNC_SET_1_HIGH_ENERGY_TIMING_REG_0;
+  can_message.word2 = 0;
+  can_message.word1 = 0;
+  can_message.word0 = 0;
+  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &can_message);
+  MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
+}
+
+void ETMCanMasterPulseSyncUpdateHighRegOne(void) {
+  ETMCanMessage can_message;
+  can_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
+  can_message.word3 = ETM_CAN_REGISTER_PULSE_SYNC_SET_1_HIGH_ENERGY_TIMING_REG_1;
+  can_message.word2 = 0;
+  can_message.word1 = 0;
+  can_message.word0 = 0;
+  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &can_message);
+  MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
+}
+
+void ETMCanMasterPulseSyncUpdateLowRegZero(void) {
+  ETMCanMessage can_message;
+  can_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
+  can_message.word3 = ETM_CAN_REGISTER_PULSE_SYNC_SET_1_LOW_ENERGY_TIMING_REG_0;
+  can_message.word2 = 0;
+  can_message.word1 = 0;
+  can_message.word0 = 0;
+  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &can_message);
+  MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
+}
+
+void ETMCanMasterPulseSyncUpdateLowRegOne(void) {
+  ETMCanMessage can_message;
+  can_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
+  can_message.word3 = ETM_CAN_REGISTER_PULSE_SYNC_SET_1_LOW_ENERGY_TIMING_REG_1;
+  can_message.word2 = 0;
+  can_message.word1 = 0;
+  can_message.word0 = 0;
+  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &can_message);
+  MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
+}
+
+
+
+
+
+void ETMCanMasterAFCUpdateHomeOffset(void) {
+  ETMCanMessage can_message;
+  can_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_AFC_CONTROL_BOARD << 3));
+  can_message.word3 = ETM_CAN_REGISTER_AFC_SET_1_HOME_POSITION_AND_OFFSET;
+  can_message.word2 = 0;
+  can_message.word1 = (unsigned int)etm_can_afc_mirror.afc_offset;
+  can_message.word0 = etm_can_afc_mirror.afc_home_position;
+  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &can_message);
+  MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
+}
+
+void ETMCanMasterGunDriverUpdateHeaterCathode(void) {
+  ETMCanMessage can_message;
+  can_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_GUN_DRIVER_BOARD << 3));
+  can_message.word3 = ETM_CAN_REGISTER_GUN_DRIVER_SET_1_HEATER_CATHODE_SET_POINT;
+  can_message.word2 = 0;
+  can_message.word1 = etm_can_gun_driver_mirror.gun_cathode_voltage_set_point;
+  can_message.word0 = etm_can_gun_driver_mirror.gun_heater_voltage_set_point;
+  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &can_message);
+  MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
+}
+
+
+void ETMCanMasterHtrMagnetUpdateOutput(void) {
+  ETMCanMessage can_message;
+  can_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_HEATER_MAGNET_BOARD << 3));
+  can_message.word3 = ETM_CAN_REGISTER_HEATER_MAGNET_SET_1_CURRENT_SET_POINT;
+  can_message.word2 = 0;
+  can_message.word1 = etm_can_heater_magnet_mirror.htrmag_heater_current_set_point_scaled;
+  can_message.word0 = etm_can_heater_magnet_mirror.htrmag_magnet_current_set_point;
+  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &can_message);
+  MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
+}
+
 
 void ETMCanMasterHVLambdaUpdateOutput(void) {
   ETMCanMessage can_message;
