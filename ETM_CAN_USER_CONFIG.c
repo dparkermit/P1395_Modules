@@ -145,22 +145,29 @@ void ETMCanExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
       */
 
 #ifdef __A36224
-      case ETM_CAN_REGISTER_COOLING_CMD_OPEN_SF6_SOLENOID_RELAY:
-          ETMCanClearBit(&etm_can_status_register.status_word_0,STATUS_BIT_SF6_SOLENOID_RELAY_STATE);
-    break;
+      /*
+      //DPARKER why do does first two commands exist???
+    case ETM_CAN_REGISTER_COOLING_CMD_OPEN_SF6_SOLENOID_RELAY:
+      ETMCanClearBit(&etm_can_status_register.status_word_0,STATUS_BIT_SF6_SOLENOID_RELAY_STATE);
+      break;
+      
 
-      case ETM_CAN_REGISTER_COOLING_CMD_CLOSE_SF6_SOLENOID_RELAY:
-          ETMCanSetBit(&etm_can_status_register.status_word_0,STATUS_BIT_SF6_SOLENOID_RELAY_STATE);
-    break;
-      case ETM_CAN_REGISTER_COOLING_CMD_SF6_PULSE_LIMIT_OVERRIDE:
-          OverrideSF6PulseLimit();
-          break;
-      case ETM_CAN_REGISTER_COOLING_CMD_RESET_BOTTLE_COUNT:
-          global_data_A36224_000.SF6_bottle_counter=700;
-        break;
-      case ETM_CAN_REGISTER_COOLING_CMD_SF6_LEAK_LIMIT_OVERRIDE:
-          OverrideSF6LowPressure();
-          break;
+    case ETM_CAN_REGISTER_COOLING_CMD_CLOSE_SF6_SOLENOID_RELAY:
+      ETMCanSetBit(&etm_can_status_register.status_word_0,STATUS_BIT_SF6_SOLENOID_RELAY_STATE);
+      break;
+      */      
+
+    case ETM_CAN_REGISTER_COOLING_CMD_SF6_PULSE_LIMIT_OVERRIDE:
+      OverrideSF6PulseLimit();
+      break;
+
+    case ETM_CAN_REGISTER_COOLING_CMD_RESET_BOTTLE_COUNT:
+      global_data_A36224_000.SF6_bottle_counter=700;
+      break;
+
+    case ETM_CAN_REGISTER_COOLING_CMD_SF6_LEAK_LIMIT_OVERRIDE:
+      OverrideSF6LowPressure();
+      break;
 #endif
       
       

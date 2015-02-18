@@ -601,12 +601,22 @@ typedef struct {
   ETMCanAgileConfig*     configuration;
 
   unsigned int           status_received_register;  // When a status message is recieved, the corresponding bit is set in this register
-  unsigned int           control_state_mirror; //not_operate_bits;  // This indicates which boards are in the not operate state
+  unsigned int           mirror_control_state;
+  unsigned long          mirror_system_powered_seconds;
+  unsigned long          mirror_system_hv_on_seconds;
+  unsigned long          mirror_system_xray_on_seconds;
+  unsigned long          mirror_time_seconds_now;
+  unsigned int           mirror_average_output_power_watts;
+  unsigned int           mirror_thyratron_warmup_counter_seconds;
+  unsigned int           mirror_magnetron_heater_warmup_counter_seconds;
+  unsigned int           mirror_gun_driver_heater_warmup_counter_seconds;
+
   unsigned int           unused_1; //pulse_inhibit_status_bits;
   unsigned int           unused_2; //software_pulse_enable;
   unsigned int           unused_3; //pulse_sync_disable_requested; // This is used by the CAN interrupt to signal that we need to send a pulse_sync_disable message
-
   unsigned int           unused_4; //status_connected_boards;   // This register indicates which boards are connected.
+
+
 
 } ETMCanRamMirrorEthernetBoard;
 
@@ -630,9 +640,6 @@ typedef struct {
   unsigned int hvlambda_readback_vmon;
   unsigned int hvlambda_readback_imon;
   unsigned int hvlambda_readback_base_plate_temp;
-
-  // Additional Control/Interface data
-  unsigned int hvlambda_enabled;
 
   // DPARKER still need to add this data to Ethernet Interface
   unsigned int hvlambda_readback_high_vprog;
@@ -722,14 +729,15 @@ typedef struct {
   unsigned int cool_readback_magnetron_coolant_flow;
   unsigned int cool_readback_linac_coolant_flow;
   unsigned int cool_readback_circulator_coolant_flow;
-  unsigned int cool_readback_spare_word_0;
-  unsigned int cool_readback_spare_word_1;
   unsigned int cool_readback_hx_coolant_flow;
   unsigned int cool_readback_spare_coolant_flow;
   unsigned int cool_readback_coolant_temperature;
   unsigned int cool_readback_sf6_pressure;
   unsigned int cool_readback_cabinet_temperature;
   unsigned int cool_readback_linac_temperature;
+  unsigned int cool_readback_spare_word_0;
+  unsigned int cool_readback_spare_word_1;
+
 
 } ETMCanRamMirrorCooling;
 
