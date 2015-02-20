@@ -84,7 +84,7 @@ volatile PersistentData etm_can_persistent_data __attribute__ ((persistent));
 
 void ETMCanSetValue(ETMCanMessage* message_ptr);
 void ETMCanSetValueCalibration(ETMCanMessage* message_ptr);
-void ETMCanCheckForTimeOut(void);
+
 
 
 

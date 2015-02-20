@@ -1,12 +1,7 @@
 #ifndef __ETM_CAN_PUBLIC_H
 #define __ETM_CAN_PUBLIC_H
 
-#include "ETM_CAN_USER_CONFIG.h"
-
-#ifdef __USE_EXTERNAL_EEPROM
-#include "ETM_EEPROM.h"
-void ETMCanSelectExternalEEprom(ETMEEProm* ptr_eeprom);
-#endif 
+#include "P1395_MODULE_CONFIG.h"
 
 typedef struct {
   unsigned control_0_not_ready:1;
@@ -245,7 +240,7 @@ extern ETMCanAgileConfig     etm_can_my_configuration;
 */
 
 // Public Functions
-void ETMCanDoCan(void);
+void ETMCanSlaveDoCan(void);
 /*
   This function should be called every time through the processor execution loop (which should be on the order of 10-100s of uS)
   If will do the following
@@ -254,15 +249,15 @@ void ETMCanDoCan(void);
   3) Send out regularly schedule communication (On slaves this is status update and logging data)
 */
 
-void ETMCanInitialize(void);
+void ETMCanSlaveInitialize(void);
 /*
   This is called once when the processor starts up to initialize the can bus and all of the can variables
 */
 
 
-void ETMCanSetBit(unsigned int* int_ptr, unsigned int bit_mask);
-void ETMCanClearBit(unsigned int* int_ptr, unsigned int bit_mask);
-unsigned int ETMCanCheckBit(unsigned int data, unsigned int bit_mask);
+//void ETMCanSetBit(unsigned int* int_ptr, unsigned int bit_mask);
+//void ETMCanClearBit(unsigned int* int_ptr, unsigned int bit_mask);
+//unsigned int ETMCanCheckBit(unsigned int data, unsigned int bit_mask);
 
 
 #ifndef __ETM_CAN_MASTER_MODULE

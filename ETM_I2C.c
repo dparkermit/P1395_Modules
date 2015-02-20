@@ -1,14 +1,5 @@
+#include <xc.h>
 #include "ETM_I2C.h"
-
-
-#if defined(__dsPIC30F__)
-#include <p30fxxxx.h>
-#elif defined(__dsPIC33F__)
-#include <p33Fxxxx.h>
-#elif defined(__PIC24H__)
-#include <p24Hxxxx.h>
-#endif
-
 
 unsigned int etm_i2c1_error_count = 0;
 

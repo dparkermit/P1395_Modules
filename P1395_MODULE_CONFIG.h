@@ -1,11 +1,11 @@
-#ifndef __ETM_CAN_USER_CONFIG_H
-#define __ETM_CAN_USER_CONFIG_H
+#ifndef __P1395_MODULE_CONFIG_H
+#define __P1395_MODULE_CONFIG_H
 
 #include "ETM_CAN_BOARD_SELECT.h"
 
 #ifdef __A36444
 #define __USE_CAN_1
-#define __USE_EXTERNAL_EEPROM
+#define __USE_INTERNAL_EEPROM
 #define FCY_CLK                             10000000      // 10 MHz
 #define FCY_CLK_MHZ                         10.000        // 10 MHz
 #define ETM_CAN_MY_ADDRESS                  ETM_CAN_ADDR_HV_LAMBDA_BOARD
@@ -118,7 +118,7 @@
 
 
 
-#endif //#ifndef __ETM_CAN_USER_CONFIG_H
+#endif //#ifndef __P1395_MODULE_CONFIG_H
 
 
 

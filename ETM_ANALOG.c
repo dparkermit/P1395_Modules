@@ -1,4 +1,5 @@
 #include "ETM_ANALOG.h"
+#include "ETM_EEPROM.h"
 
 #define CALIBRATION_DATA_START_REGISTER 0x100
 
@@ -23,27 +24,12 @@ void ETMAnalogInitializeInput(AnalogInput* ptr_analog_input, unsigned int fixed_
     ptr_analog_input->calibration_external_offset = 0;
   } else {
     // read calibration data from EEPROM
-#ifdef __USE_EXTERNAL_EEPROM
-    // read calibration data from the external EEPROM
+    // read calibration data from the EEPROM
     cal_data_address = CALIBRATION_DATA_START_REGISTER + analog_port*4;
     ptr_analog_input->calibration_internal_offset = ETMEEPromReadWord(cal_data_address);
     ptr_analog_input->calibration_internal_scale  = ETMEEPromReadWord(cal_data_address+1);
     ptr_analog_input->calibration_external_offset = ETMEEPromReadWord(cal_data_address+2);
     ptr_analog_input->calibration_external_scale  = ETMEEPromReadWord(cal_data_address+3);        
-#elif defined __USE_INTERNAL_EEPROM
-    // read calibration data from the internal EEPROM
-    cal_data_address = CALIBRATION_DATA_START_REGISTER + analog_port*4;
-    ptr_analog_input->calibration_internal_offset = ETMEEPromInternalReadWord(cal_data_address);
-    ptr_analog_input->calibration_internal_scale  = ETMEEPromInternalReadWord(cal_data_address+1);
-    ptr_analog_input->calibration_external_offset = ETMEEPromInternalReadWord(cal_data_address+2);
-    ptr_analog_input->calibration_external_scale  = ETMEEPromInternalReadWord(cal_data_address+3);            
-#else
-    // No EEprom was specified, set default calibration values
-    ptr_analog_input->calibration_internal_scale = MACRO_DEC_TO_CAL_FACTOR_2(1);
-    ptr_analog_input->calibration_internal_offset = 0;
-    ptr_analog_input->calibration_external_scale = MACRO_DEC_TO_CAL_FACTOR_2(1);
-    ptr_analog_input->calibration_external_offset = 0;
-#endif
   }
 
   ptr_analog_input->over_trip_point_absolute = over_trip_point_absolute;
@@ -79,27 +65,11 @@ void ETMAnalogInitializeOutput(AnalogOutput* ptr_analog_output, unsigned int fix
     ptr_analog_output->calibration_external_offset = 0;
   } else {
     // read calibration data from EEPROM
-#ifdef __USE_EXTERNAL_EEPROM
-    // read calibration dat from the external EEPROM
     cal_data_address = CALIBRATION_DATA_START_REGISTER + 0x40 + analog_port*4;
     ptr_analog_output->calibration_internal_offset = ETMEEPromReadWord(cal_data_address);
     ptr_analog_output->calibration_internal_scale  = ETMEEPromReadWord(cal_data_address+1);
     ptr_analog_output->calibration_external_offset = ETMEEPromReadWord(cal_data_address+2);
     ptr_analog_output->calibration_external_scale  = ETMEEPromReadWord(cal_data_address+3);
-#elif defined __USE_INTERNAL_EEPROM
-    // read calibration dat from the internal EEPROM
-    cal_data_address = CALIBRATION_DATA_START_REGISTER + 0x40 + analog_port*4;
-    ptr_analog_output->calibration_internal_offset = ETMEEPromInternalReadWord(cal_data_address);
-    ptr_analog_output->calibration_internal_scale  = ETMEEPromInternalReadWord(cal_data_address+1);
-    ptr_analog_output->calibration_external_offset = ETMEEPromInternalReadWord(cal_data_address+2);
-    ptr_analog_output->calibration_external_scale  = ETMEEPromInternalReadWord(cal_data_address+3);    
-#else
-    // No EEprom was specified, set default calibration values
-    ptr_analog_output->calibration_internal_scale = MACRO_DEC_TO_CAL_FACTOR_2(1);
-    ptr_analog_output->calibration_internal_offset = 0;
-    ptr_analog_output->calibration_external_scale = MACRO_DEC_TO_CAL_FACTOR_2(1);
-    ptr_analog_output->calibration_external_offset = 0;
-#endif
   }
 }
 
@@ -246,30 +216,16 @@ unsigned int ETMAnalogCheckUnderRelative(AnalogInput* ptr_analog_input) {
 #define EEPROM_CALIBRATION_PAGE_GENERAL_2           0x17
 
 
-const unsigned int default_calidation_data[16] = {0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000};
+const unsigned int default_calibration_data[16] = {0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000, 0, 0x8000};
 const unsigned int default_zero_data[16]       = {0, 0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0};
 
 void ETMAnalogLoadDefaultCalibration(void) {
-
-#ifdef __USE_EXTERNAL_EEPROM
-  ETMEEPromWritePage(ptr_external_eeprom, EEPROM_CALIBRATION_PAGE_ADC_CHN0_CHN3, 16, default_calibration_data);
-  ETMEEPromWritePage(ptr_external_eeprom, EEPROM_CALIBRATION_PAGE_ADC_CHN4_CHN7, 16, default_calibration_data);
-  ETMEEPromWritePage(ptr_external_eeprom, EEPROM_CALIBRATION_PAGE_ADC_CHN8_CHN11, 16, default_calibration_data);
-  ETMEEPromWritePage(ptr_external_eeprom, EEPROM_CALIBRATION_PAGE_ADC_CHN12_CHN15, 16, default_calibration_data);
-  ETMEEPromWritePage(ptr_external_eeprom, EEPROM_CALIBRATION_PAGE_DAC_CHN0_CHN3, 16, default_calibration_data);
-  ETMEEPromWritePage(ptr_external_eeprom, EEPROM_CALIBRATION_PAGE_DAC_CHN4_CHN7, 16, default_calibration_data);
-  ETMEEPromWritePage(ptr_external_eeprom, EEPROM_CALIBRATION_PAGE_GENERAL_1, 16, default_zero_data);
-  ETMEEPromWritePage(ptr_external_eeprom, EEPROM_CALIBRATION_PAGE_GENERAL_2, 16, default_zero_data);
-#elif defined __USE_INTERNAL_EEPROM
-  ETMEEPromInternalWritePage(ptr_external_eeprom, EEPROM_CALIBRATION_PAGE_ADC_CHN0_CHN3, 16, default_calibration_data);
-  ETMEEPromInternalWritePage(ptr_external_eeprom, EEPROM_CALIBRATION_PAGE_ADC_CHN4_CHN7, 16, default_calibration_data);
-  ETMEEPromInternalWritePage(ptr_external_eeprom, EEPROM_CALIBRATION_PAGE_ADC_CHN8_CHN11, 16, default_calibration_data);
-  ETMEEPromInternalWritePage(ptr_external_eeprom, EEPROM_CALIBRATION_PAGE_ADC_CHN12_CHN15, 16, default_calibration_data);
-  ETMEEPromInternalWritePage(ptr_external_eeprom, EEPROM_CALIBRATION_PAGE_DAC_CHN0_CHN3, 16, default_calibration_data);
-  ETMEEPromInternalWritePage(ptr_external_eeprom, EEPROM_CALIBRATION_PAGE_DAC_CHN4_CHN7, 16, default_calibration_data);
-  ETMEEPromInternalWritePage(ptr_external_eeprom, EEPROM_CALIBRATION_PAGE_GENERAL_1, 16, default_zero_data);
-  ETMEEPromInternalWritePage(ptr_external_eeprom, EEPROM_CALIBRATION_PAGE_GENERAL_2, 16, default_zero_data);
-#else
-  // DO NOTHING as no EEPROM IS SPECIFIED
-#endif
+  ETMEEPromWritePage(EEPROM_CALIBRATION_PAGE_ADC_CHN0_CHN3, 16, (unsigned int*)&default_calibration_data);
+  ETMEEPromWritePage(EEPROM_CALIBRATION_PAGE_ADC_CHN4_CHN7, 16, (unsigned int*)&default_calibration_data);
+  ETMEEPromWritePage(EEPROM_CALIBRATION_PAGE_ADC_CHN8_CHN11, 16, (unsigned int*)&default_calibration_data);
+  ETMEEPromWritePage(EEPROM_CALIBRATION_PAGE_ADC_CHN12_CHN15, 16, (unsigned int*)&default_calibration_data);
+  ETMEEPromWritePage(EEPROM_CALIBRATION_PAGE_DAC_CHN0_CHN3, 16, (unsigned int*)&default_calibration_data);
+  ETMEEPromWritePage(EEPROM_CALIBRATION_PAGE_DAC_CHN4_CHN7, 16, (unsigned int*)&default_calibration_data);
+  ETMEEPromWritePage(EEPROM_CALIBRATION_PAGE_GENERAL_1, 16, (unsigned int*)&default_zero_data);
+  ETMEEPromWritePage(EEPROM_CALIBRATION_PAGE_GENERAL_2, 16, (unsigned int*)&default_zero_data);
 }

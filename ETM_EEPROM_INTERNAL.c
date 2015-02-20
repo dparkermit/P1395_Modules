@@ -1,12 +1,28 @@
-#include <libpic30.h>
 #include <xc.h>
-#include "ETM_EEPROM_INTERNAL.h"
+#include <libpic30.h>
+#include "ETM_EEPROM.h"
+
+
+#if defined(__dsPIC30F6014A__)
+#define INTERNAL_EEPROM_SIZE_WORDS  2048
+#endif
+
+#if defined(__dsPIC30F6010A__)
+#define INTERNAL_EEPROM_SIZE_WORDS  2048
+#endif
+
+#ifndef INTERNAL_EEPROM_SIZE_WORDS
+#define INTERNAL_EEPROM_SIZE_WORDS 0
+#endif
 
 
 __eds__ unsigned int internal_eeprom[INTERNAL_EEPROM_SIZE_WORDS] __attribute__ ((space(eedata))) = {};
 
 
-void ETMEEPromInternalWriteWord(unsigned int register_location, unsigned int data) {
+void ETMEEPromConfigureExternalDevice(unsigned int size_bytes, unsigned long fcy_clk, unsigned long i2c_baud_rate, unsigned char i2c_address, unsigned char i2c_port) {
+}
+
+void ETMEEPromWriteWord(unsigned int register_location, unsigned int data) {
   _prog_addressT write_address;
   
   if (register_location < INTERNAL_EEPROM_SIZE_WORDS) {
@@ -18,7 +34,8 @@ void ETMEEPromInternalWriteWord(unsigned int register_location, unsigned int dat
   }
 }
 
-unsigned int ETMEEPromInternalReadWord(unsigned int register_location) {
+
+unsigned int ETMEEPromReadWord(unsigned int register_location) {
   if (register_location < INTERNAL_EEPROM_SIZE_WORDS) {
     _wait_eedata();
     return internal_eeprom[register_location];
@@ -28,7 +45,22 @@ unsigned int ETMEEPromInternalReadWord(unsigned int register_location) {
 }
 
 
-void ETMEEPromInternalReadPage(unsigned int page_number, unsigned int words_to_read, unsigned int *data) {
+void ETMEEPromWritePage(unsigned int page_number, unsigned int words_to_write, unsigned int *data) {
+  _prog_addressT write_address;
+
+  if (page_number < (INTERNAL_EEPROM_SIZE_WORDS >> 4)) {
+    write_address = __builtin_tbladdress(internal_eeprom);
+    write_address += page_number << 5;
+    // The requeted page address is within the boundry of this device.
+    _wait_eedata();
+    _erase_eedata(write_address, _EE_ROW);
+    _wait_eedata();
+    _write_eedata_row(write_address, (int*)data);
+  }
+}
+
+
+void ETMEEPromReadPage(unsigned int page_number, unsigned int words_to_read, unsigned int *data) {
   unsigned int starting_register;
   unsigned int n;
   
@@ -43,19 +75,5 @@ void ETMEEPromInternalReadPage(unsigned int page_number, unsigned int words_to_r
 	data[n] = internal_eeprom[starting_register + n];
       }
     }
-  }
-}
-
-void ETMEEPromInternalWritePage(unsigned int page_number, unsigned int *data) {
-  _prog_addressT write_address;
-
-  if (page_number < (INTERNAL_EEPROM_SIZE_WORDS >> 4)) {
-    write_address = __builtin_tbladdress(internal_eeprom);
-    write_address += page_number << 5;
-    // The requeted page address is within the boundry of this device.
-    _wait_eedata();
-    _erase_eedata(write_address, _EE_ROW);
-    _wait_eedata();
-    _write_eedata_row(write_address, (int*)data);
   }
 }

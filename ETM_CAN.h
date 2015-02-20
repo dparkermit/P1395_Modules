@@ -1,17 +1,15 @@
 #ifndef __ETM_CAN_H
 #define __ETM_CAN_H
-#include <p30Fxxxx.h>
-#include "ETM_CAN_USER_CONFIG.h"
+#include <xc.h>
+#include "P1395_MODULE_CONFIG.h"
 #include "ETM_CAN_PUBLIC.h"
 #include "timer.h"  // DPARKER remove the requirement for this
 
 
 /*
   Can Resources
-  SEE : https://docs.google.com/document/d/1KNxxG_HYJT6JKNi3hfjoc4e7S5AWfiagMMd_ywYbgFg/edit
+  SEE : https://docs.google.com/document/d/14kmzLJehUPtInFK_YBGFBER4PMTn6awV25-DqEolBPY/edit
 */
-
-
 
 /*
   X = Not Implimented (Don't Care)
@@ -47,18 +45,20 @@ typedef struct {
 
 void ETMCanRXMessage(ETMCanMessage* message_ptr, volatile unsigned int* rx_register_address);
 /*
-  This stores the data selected by data_ptr (C1RX0CON,C1RX1CON,C2RX0CON,C2RX1CON) into the message
+  This stores the data selected by rx_register_address (C1RX0CON,C1RX1CON,C2RX0CON,C2RX1CON) into the message
   If there is no data RX Buffer then error information is placed into the message
   This clears the RXFUL bit so that the buffer is available to receive another message
+  see ETM_CAN_UTILITY.s
 */
 
 
 void ETMCanRXMessageBuffer(ETMCanMessageBuffer* buffer_ptr, volatile unsigned int* rx_data_address);
 /*
-  This stores the data selected by data_ptr (C1RX0CON,C1RX1CON,C2RX0CON,C2RX1CON) into the next available slot in the selected buffer.
+  This stores the data selected by rx_data_address (C1RX0CON,C1RX1CON,C2RX0CON,C2RX1CON) into the next available slot in the selected buffer.
   If the message buffer is full the data in the RX buffer is discarded.
   If the RX buffer is empty, nothing is added to the message buffer
   This clears the RXFUL bit so that the buffer is available to receive another message
+  see ETM_CAN_UTILITY.s
 */
 
 
@@ -67,6 +67,7 @@ void ETMCanTXMessage(ETMCanMessage* message_ptr, volatile unsigned int* tx_regis
   This moves the message data to the TX register indicated by tx_register_address (C1TX0CON, C1TX1CON, C1TX2CON)
   If the TX register is not empty, the data will be overwritten.
   Also sets the transmit bit to queue transmission
+  see ETM_CAN_UTILITY.s
 */
 
 
@@ -76,6 +77,7 @@ void ETMCanTXMessageBuffer(ETMCanMessageBuffer* buffer_ptr, volatile unsigned in
   If the TX register is not empty, no data will be transfered and the message buffer state will remain unchanged
   If the message buffer is empty, no data will be transmited and no error will be generated
   Also sets the transmit bit to queue transmission
+  see ETM_CAN_UTILITY.s
 */
 
 
@@ -83,6 +85,7 @@ void ETMCanAddMessageToBuffer(ETMCanMessageBuffer* buffer_ptr, ETMCanMessage* me
 /*
   This adds a message to the buffer
   If the buffer is full the data is discarded.
+  see ETM_CAN_UTILITY.s
 */
 
 
@@ -90,24 +93,28 @@ void ETMCanReadMessageFromBuffer(ETMCanMessageBuffer* buffer_ptr, ETMCanMessage*
 /*
   This moves the oldest message in the buffer to the message_ptr
   If the buffer is empty it returns the error identifier (0b0000111000000000) and fills the data with Zeros.
+  see ETM_CAN_UTILITY.s
 */
 
 
 void ETMCanBufferInitialize(ETMCanMessageBuffer* buffer_ptr);
 /*
   This initializes a can message buffer.
+  see ETM_CAN_UTILITY.s
 */
 
 
 unsigned int ETMCanBufferRowsAvailable(ETMCanMessageBuffer* buffer_ptr);
 /*
   This returns 0 if the buffer is full, otherwise returns the number of available rows
+  see ETM_CAN_UTILITY.s
 */
 
 
 unsigned int ETMCanBufferNotEmpty(ETMCanMessageBuffer* buffer_ptr);
 /*
   Returns 0 if the buffer is Empty, otherwise returns the number messages in the buffer
+  see ETM_CAN_UTILITY.s
 */
 
 
@@ -149,22 +156,22 @@ unsigned int ETMCanBufferNotEmpty(ETMCanMessageBuffer* buffer_ptr);
 #define ETM_CAN_MSG_MASTER_ADDR_MASK             0b0001111110000100
 #define ETM_CAN_MSG_SLAVE_ADDR_MASK              0b0001110001111100
 
-#define ETM_CAN_MSG_SET_3_RX                     0b0001000000000000
+//#define ETM_CAN_MSG_SET_3_RX                     0b0001000000000000
 #define ETM_CAN_MSG_SET_2_RX                     0b0001010000000100
 #define ETM_CAN_MSG_CMD_RX                       0b0001010010000000
 #define ETM_CAN_MSG_STATUS_RX                    0b0001010100000100
-#define ETM_CAN_MSG_SET_1_RX                     0b0001010110000000
+//#define ETM_CAN_MSG_SET_1_RX                     0b0001010110000000
 #define ETM_CAN_MSG_REQUEST_RX                   0b0001011000000000
 
 
 // Define TX SID VALUES
 #define ETM_CAN_MSG_LVL_TX                       0b0000000000000000
 #define ETM_CAN_MSG_SYNC_TX                      0b0100000000000000
-#define ETM_CAN_MSG_SET_3_TX                     0b1000000000000000
+//#define ETM_CAN_MSG_SET_3_TX                     0b1000000000000000
 #define ETM_CAN_MSG_SET_2_TX                     0b1010000000000100
 #define ETM_CAN_MSG_CMD_TX                       0b1010000010000000
 #define ETM_CAN_MSG_STATUS_TX                    0b1010100000000100
-#define ETM_CAN_MSG_SET_1_TX                     0b1010100010000000
+//#define ETM_CAN_MSG_SET_1_TX                     0b1010100010000000
 #define ETM_CAN_MSG_REQUEST_TX                   0b1011000000000000
 #define ETM_CAN_MSG_DATA_LOG_TX                  0b1100000000000000
 
@@ -243,9 +250,8 @@ void ETMCanSetValueBoardSpecific(ETMCanMessage* message_ptr);
 
 
 #ifndef __ETM_CAN_MASTER_MODULE
-void ETMCanResetFaults(void);
-void ETMCanLogData(unsigned int packet_id, unsigned int word3, unsigned int word2, unsigned int word1, unsigned int word0);
-void ETMCanExecuteCMDBoardSpecific(ETMCanMessage* message_ptr);
+void ETMCanSlaveLogData(unsigned int packet_id, unsigned int word3, unsigned int word2, unsigned int word1, unsigned int word0);
+void ETMCanSlaveExecuteCMDBoardSpecific(ETMCanMessage* message_ptr);
 void ETMCanReturnValueBoardSpecific(ETMCanMessage* message_ptr);
 #endif
 
@@ -277,127 +283,34 @@ void ETMCanReturnValueBoardSpecific(ETMCanMessage* message_ptr);
 #define ETM_CAN_REGISTER_DEFAULT_CMD_RESET_MCU                          0x001
 #define ETM_CAN_REGISTER_DEFAULT_CMD_RESET_ANALOG_CALIBRATION           0x003
 
-/*
-// Default Calibration Locations
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_AN0                       0x400 
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_AN1                       0x402 
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_AN2                       0x404 
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_AN3                       0x406 
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_AN4                       0x408 
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_AN5                       0x40A 
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_AN6                       0x40C 
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_AN7                       0x40E 
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_AN8                       0x410 
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_AN9                       0x412 
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_AN10                      0x414 
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_AN11                      0x416 
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_AN12                      0x418 
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_AN13                      0x41A 
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_AN14                      0x41C 
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_AN15                      0x41E 
-
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_AN0                       0x420 
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_AN1                       0x422 
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_AN2                       0x424 
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_AN3                       0x426 
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_AN4                       0x428 
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_AN5                       0x42A 
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_AN6                       0x42C 
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_AN7                       0x42E 
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_AN8                       0x430 
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_AN9                       0x432 
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_AN10                      0x434 
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_AN11                      0x436 
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_AN12                      0x438 
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_AN13                      0x43A 
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_AN14                      0x43C 
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_AN15                      0x43E 
-
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_DAC0                      0x440 
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_DAC1                      0x442 
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_DAC2                      0x444 
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_DAC3                      0x446 
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_DAC4                      0x448
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_DAC5                      0x44A 
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_DAC6                      0x44C 
-#define ETM_CAN_CALIBRATION_REGISTER_INTERNAL_DAC7                      0x44E 
-
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_DAC0                      0x460 
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_DAC1                      0x462
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_DAC2                      0x464
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_DAC3                      0x466
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_DAC4                      0x468
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_DAC5                      0x46A
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_DAC6                      0x46C
-#define ETM_CAN_CALIBRATION_REGISTER_EXTERNAL_DAC7                      0x46E
-
-#define ETM_CAN_CALIBRATION_REGISTER_PARAMETER_0_1                      0x480
-#define ETM_CAN_CALIBRATION_REGISTER_PARAMETER_2_3                      0x482
-#define ETM_CAN_CALIBRATION_REGISTER_PARAMETER_4_5                      0x484
-#define ETM_CAN_CALIBRATION_REGISTER_PARAMETER_6_7                      0x486
-#define ETM_CAN_CALIBRATION_REGISTER_PARAMETER_8_9                      0x488
-#define ETM_CAN_CALIBRATION_REGISTER_PARAMETER_10_11                    0x48A
-#define ETM_CAN_CALIBRATION_REGISTER_PARAMETER_12_13                    0x48C
-#define ETM_CAN_CALIBRATION_REGISTER_PARAMETER_14_15                    0x48E
-#define ETM_CAN_CALIBRATION_REGISTER_PARAMETER_16_17                    0x490
-#define ETM_CAN_CALIBRATION_REGISTER_PARAMETER_18_19                    0x492
-#define ETM_CAN_CALIBRATION_REGISTER_PARAMETER_20_21                    0x494
-#define ETM_CAN_CALIBRATION_REGISTER_PARAMETER_22_23                    0x496
-#define ETM_CAN_CALIBRATION_REGISTER_PARAMETER_24_25                    0x498
-#define ETM_CAN_CALIBRATION_REGISTER_PARAMETER_26_27                    0x49A
-#define ETM_CAN_CALIBRATION_REGISTER_PARAMETER_28_29                    0x49C
-#define ETM_CAN_CALIBRATION_REGISTER_PARAMETER_30_31                    0x49E
-*/
 
 // Board Specific Register Locations
 #define ETM_CAN_REGISTER_HV_LAMBDA_SET_1_LAMBDA_SET_POINT               0x4100
-//#define ETM_CAN_REGISTER_HV_LAMBDA_CMD_HV_ON                            0x4080
-//#define ETM_CAN_REGISTER_HV_LAMBDA_CMD_HV_OFF                           0x4081
 
 #define ETM_CAN_REGISTER_AFC_SET_1_HOME_POSITION_AND_OFFSET             0x5100
-#define ETM_CAN_REGISTER_AFC_CMD_DO_AUTO_ZERO                           0x5080
-#define ETM_CAN_REGISTER_AFC_CMD_ENTER_AFC_MODE                         0x5081
-#define ETM_CAN_REGISTER_AFC_CMD_ENTER_MANUAL_MODE                      0x5082
-#define ETM_CAN_REGISTER_AFC_CMD_SET_TARGET_POSITION                    0x5083
-#define ETM_CAN_REGISTER_AFC_CMD_DO_RELATIVE_MOVE                       0x5084
+#define ETM_CAN_REGISTER_AFC_CMD_DO_AUTO_ZERO                           0x5101
+#define ETM_CAN_REGISTER_AFC_CMD_ENTER_AFC_MODE                         0x5102
+#define ETM_CAN_REGISTER_AFC_CMD_ENTER_MANUAL_MODE                      0x5103
+#define ETM_CAN_REGISTER_AFC_CMD_SET_TARGET_POSITION                    0x5104
+#define ETM_CAN_REGISTER_AFC_CMD_DO_RELATIVE_MOVE                       0x5105
 
-
-//#define ETM_CAN_REGISTER_COOLING_CMD_OPEN_SF6_SOLENOID_RELAY            0x6080
-//#define ETM_CAN_REGISTER_COOLING_CMD_CLOSE_SF6_SOLENOID_RELAY           0x6081
-#define ETM_CAN_REGISTER_COOLING_CMD_SF6_PULSE_LIMIT_OVERRIDE           0x6082
-#define ETM_CAN_REGISTER_COOLING_CMD_SF6_LEAK_LIMIT_OVERRIDE            0x6083
-#define ETM_CAN_REGISTER_COOLING_CMD_RESET_BOTTLE_COUNT                 0x6084
+#define ETM_CAN_REGISTER_COOLING_CMD_SF6_PULSE_LIMIT_OVERRIDE           0x6100
+#define ETM_CAN_REGISTER_COOLING_CMD_SF6_LEAK_LIMIT_OVERRIDE            0x6101
+#define ETM_CAN_REGISTER_COOLING_CMD_RESET_BOTTLE_COUNT                 0x6102
 
 #define ETM_CAN_REGISTER_HEATER_MAGNET_SET_1_CURRENT_SET_POINT          0x7100
-//#define ETM_CAN_REGISTER_HEATER_MAGNET_CMD_OUTPUT_ENABLE                0x7080
-//#define ETM_CAN_REGISTER_HEATER_MAGNET_CMD_OUTPUT_DISABLE               0x7081
-
 
 #define ETM_CAN_REGISTER_GUN_DRIVER_SET_1_GRID_TOP_SET_POINT            0x8100
 #define ETM_CAN_REGISTER_GUN_DRIVER_SET_1_HEATER_CATHODE_SET_POINT      0x8101
-//#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_ENABLE_HEATER                   0x8080
-//#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_DISABLE_HEATER                  0x8081
-//#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_ENABLE_TRIGGER                  0x8082
-//#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_DISABLE_TRIGGER                 0x8083
-//#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_ENABLE_PULSE_TOP                0x8084
-//#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_DISABLE_PULSE_TOP               0x8085
-//#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_ENABLE_HV                       0x8086
-//#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_DISABLE_HV                      0x8087
-//#define ETM_CAN_REGISTER_GUN_DRIVER_CMD_ZERO_HEATER_TIME_DELAY          0x8088
 
 #define ETM_CAN_REGISTER_PULSE_SYNC_SET_1_HIGH_ENERGY_TIMING_REG_0      0x3100
 #define ETM_CAN_REGISTER_PULSE_SYNC_SET_1_HIGH_ENERGY_TIMING_REG_1      0x3101
 #define ETM_CAN_REGISTER_PULSE_SYNC_SET_1_LOW_ENERGY_TIMING_REG_0       0x3102
 #define ETM_CAN_REGISTER_PULSE_SYNC_SET_1_LOW_ENERGY_TIMING_REG_1       0x3103
-//#define ETM_CAN_REGISTER_PULSE_SYNC_SET_1_CUSTOMER_LED_OUTPUT           0x3110
-//#define ETM_CAN_REGISTER_PULSE_SYNC_REQUEST_PERSONALITY_MODULE          0x3120
-//#define ETM_CAN_REGISTER_PULSE_SYNC_CMD_ENABLE_PULSES                   0x3080
-//#define ETM_CAN_REGISTER_PULSE_SYNC_CMD_DISABLE_PULSES                  0x3081
-
+#define ETM_CAN_REGISTER_PULSE_SYNC_SET_1_CUSTOMER_LED_OUTPUT           0x3104
 
 #define ETM_CAN_REGISTER_ECB_SET_2_HIGH_ENERGY_TARGET_CURRENT_MON       0xE100
 #define ETM_CAN_REGISTER_ECB_SET_2_LOW_ENERGY_TARGET_CURRENT_MON        0xE101
-//#define ETM_CAN_REGISTER_ECB_SET_2_PERSONAILITY_MODULE                  ETM_CAN_REGISTER_PULSE_SYNC_REQUEST_PERSONALITY_MODULE
 
 
 //------------------ DATA LOGGING REGISTERS --------------------------//
@@ -447,11 +360,6 @@ void ETMCanReturnValueBoardSpecific(ETMCanMessage* message_ptr);
 #define ETM_CAN_DATA_LOG_REGISTER_PULSE_SYNC_SLOW_TIMING_DATA_0         0x3D
 #define ETM_CAN_DATA_LOG_REGISTER_PULSE_SYNC_SLOW_TIMING_DATA_1         0x3E
 #define ETM_CAN_DATA_LOG_REGISTER_PULSE_SYNC_SLOW_TIMING_DATA_2         0x3F
-
-
-
-
-
 
 
 // This allows the module to be configured to use CAN1 or CAN2

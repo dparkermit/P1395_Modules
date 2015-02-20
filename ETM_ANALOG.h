@@ -3,6 +3,7 @@
 #include "ETM_SCALE.h"
 
 
+
 /*
   Possible faults on analog input
   
