@@ -1,7 +1,7 @@
-#ifndef __ETM_CAN_PUBLIC_H
-#define __ETM_CAN_PUBLIC_H
+#ifndef __P1395_CAN_CORE_H
+#define __P1395_CAN_CORE_H
 
-#include "P1395_MODULE_CONFIG.h"
+// ---------------------- STATUS REGISTER DEFFENITIONS   ------------------------- //
 
 typedef struct {
   unsigned control_0_not_ready:1;
@@ -23,8 +23,6 @@ typedef struct {
   unsigned status_7:1;
 } ETMCanStatusRegisterStatusBits;
 
-
-
 typedef struct {
   unsigned fault_0:1;
   unsigned fault_1:1;
@@ -45,7 +43,6 @@ typedef struct {
 } ETMCanStatusRegisterFaultBits;
 
 
-
 typedef struct {
   ETMCanStatusRegisterStatusBits status_bits;  // 16 bits
   ETMCanStatusRegisterFaultBits  fault_bits;   // 16 bits
@@ -57,7 +54,6 @@ typedef struct {
 } ETMCanStatusRegister;
 
 extern ETMCanStatusRegister  etm_can_status_register;
-
 
 #define _CONTROL_NOT_READY            etm_can_status_register.status_bits.control_0_not_ready
 #define _CONTROL_CAN_COM_LOSS         etm_can_status_register.status_bits.control_1_can_status
@@ -97,69 +93,105 @@ extern ETMCanStatusRegister  etm_can_status_register;
 
 
 
+
+
+
+
+
+
+// -----------------------  DEBUG REGISTERS DEFFENTITIONS --------------------- //
+
+
 typedef struct {
+  unsigned st_5V_over_voltage:1;
+  unsigned st_5V_under_voltage:1;
+  unsigned st_15V_over_voltage:1;
+  unsigned st_15V_under_voltage:1;
+  unsigned st_N15V_over_voltage:1;
+  unsigned st_N15V_under_voltage:1;
+  unsigned st_ADC_over_voltage:1;
+  unsigned st_ADC_under_voltage:1;
+  unsigned st_ADC_EXT:1;
+  unsigned st__EEPROM:1;
+  unsigned st_DAC:1;
+  unsigned st_spare_4:1;
+  unsigned st_spare_3:1;
+  unsigned st_spare_2:1;
+  unsigned st_spare_1:1;
+  unsigned st_spare_0:1;
+  
+} ETMCanSelfTestRegister;
+
+// DPARKER - FIGURE OUT BETTER USE Of FIRST 8 words of debug register
+typedef struct {
+  // Log Message 0x0 
   unsigned int i2c_bus_error_count;
   unsigned int spi_bus_error_count;
   unsigned int can_bus_error_count;
   unsigned int scale_error_count;
-
+  // Log Message 0x1
   unsigned int reset_count;
-  unsigned int self_test_result_register;
+  ETMCanSelfTestRegister self_test_results;
+  unsigned int reserved_1; 
   unsigned int reserved_0;
-  unsigned int reserved_1;           // This is reserved by the ECB to Indicate if the board is connected so it can be displayed on the GUI.  If the board is NOT CONNECTED this will be 1 (Zero if connected)
-
+  // Log Message 0x2
   unsigned int debug_0;
   unsigned int debug_1;
   unsigned int debug_2;
   unsigned int debug_3;
-
+  // Log Message 0x3
   unsigned int debug_4;
   unsigned int debug_5;
   unsigned int debug_6;
   unsigned int debug_7;
-
+  // Log Message 0x4
   unsigned int debug_8;
   unsigned int debug_9;
   unsigned int debug_A;
   unsigned int debug_B;
-
+  // Log Message 0x5
   unsigned int debug_C;
   unsigned int debug_D;
   unsigned int debug_E;
   unsigned int debug_F;
-
 } ETMCanSystemDebugData;
 
-// Self test register BIT Deffinitions  
-#define SELF_TEST_5V_OV             0x0001
-#define SELF_TEST_5V_UV             0x0002
-#define SELF_TEST_15V_OV            0x0004
-#define SELF_TEST_15V_UV            0x0008
-#define SELF_TEST_N15V_OV           0x0010
-#define SELF_TEST_N15V_UV           0x0020
-#define SELF_TEST_ADC_OV            0x0040
-#define SELF_TEST_ADC_UV            0x0080
-#define SELF_TEST_ADC_EXT           0x0100
-#define SELF_TEST_EEPROM            0x0200
-#define SELF_TEST_DAC               0x0400
+extern ETMCanSystemDebugData local_debug_data;  
 
 
+
+
+
+
+
+
+
+
+
+// -------------- AGILE CONFIGURATION DEFFENITION --------------------- //
 
 typedef struct {
-  // Configuration 0
+  // Log Message 0x6
   unsigned int  agile_number_high_word;
   unsigned int  agile_number_low_word;
   unsigned int  agile_dash;
   unsigned int  agile_rev_ascii;
-
-  // Configuarion 1
+  // Log Message 0x7
   unsigned int  serial_number;
   unsigned int  firmware_branch;
   unsigned int  firmware_major_rev;
   unsigned int  firmware_minor_rev;
-
 } ETMCanAgileConfig;
 
+extern ETMCanAgileConfig     etm_can_my_configuration;
+
+
+
+
+
+
+
+// -------------------------  SYNC MESSAGE DEFFENITIONS ----------------------- //
 
 typedef struct {
   unsigned sync_0_reset_enable:1;
@@ -187,7 +219,6 @@ typedef struct {
   unsigned int sync_1;
   unsigned int sync_2;
   unsigned int sync_3;
-
 } ETMCanSyncMessage;
 
 extern ETMCanSyncMessage     etm_can_sync_message;
@@ -203,85 +234,11 @@ extern ETMCanSyncMessage     etm_can_sync_message;
 
 
 
-typedef struct {
-  unsigned sync_0_logging_enable:1;
-  unsigned sync_1_reset_faults:1;
-  unsigned sync_2_pulse_sync_disable_HV:1;
-  unsigned sync_3_pulse_sync_disable_XRAY:1;
-  unsigned sync_4_cooling_fault:1;
-  unsigned sync_5_can_timeout_sum:1;
-  unsigned sync_6_operate_sum:1;
-  unsigned sync_7_gun_HV_disable:1;
-  unsigned sync_8_lambda_disable:1;
-  unsigned sync_9_unused:1;
-  unsigned sync_A_unused:1;
-  unsigned sync_B_unused:1;
-  unsigned sync_C_unused:1;
-  unsigned sync_D_unused:1;
-  unsigned sync_E_unused:1;
-  unsigned sync_F_unused:1;
-} ETMCanSyncMessageNew;
-
-
-
-#define ETM_CAN_HIGH_ENERGY           1
-#define ETM_CAN_LOW_ENERGY            0
-
 // Public Variables
 extern unsigned int etm_can_next_pulse_level;  // This value will get updated in RAM as when a next pulse level command is received
 extern unsigned int etm_can_next_pulse_count;  // This value will get updated in RAM as when a next pulse level command is received
-
-// Public Debug and Status registers
-extern ETMCanSystemDebugData local_debug_data;  
-extern ETMCanAgileConfig     etm_can_my_configuration;
-/*
-  DPARKER provide more description here.  How is it used.  What bits to set and what affect will setting them have
-  This is the status register for this board.  Word0 bits (0,1) and Word1 bits (0) are mangaged by the Can module
-*/
-
-// Public Functions
-void ETMCanSlaveDoCan(void);
-/*
-  This function should be called every time through the processor execution loop (which should be on the order of 10-100s of uS)
-  If will do the following
-  1) Look for an execute can commands
-  2) Look for changes in status bits, update the Fault/Inhibit bits and send out a new status command if nessesary
-  3) Send out regularly schedule communication (On slaves this is status update and logging data)
-*/
-
-void ETMCanSlaveInitialize(void);
-/*
-  This is called once when the processor starts up to initialize the can bus and all of the can variables
-*/
-
-
-//void ETMCanSetBit(unsigned int* int_ptr, unsigned int bit_mask);
-//void ETMCanClearBit(unsigned int* int_ptr, unsigned int bit_mask);
-//unsigned int ETMCanCheckBit(unsigned int data, unsigned int bit_mask);
-
-
-#ifndef __ETM_CAN_MASTER_MODULE
-void ETMCanLogCustomPacketC(void);
-void ETMCanLogCustomPacketD(void);
-void ETMCanLogCustomPacketE(void);
-void ETMCanLogCustomPacketF(void);
-#endif
-
-
-#ifdef __A36487
-// Only for Pulse Sync Board
-void ETMCanPulseSyncSendNextPulseLevel(unsigned int next_pulse_level, unsigned int next_pulse_count);
-#endif
-
-
-#ifdef __A63417
-// Only for Ion Pump Board
-void ETMCanIonPumpSendTargetCurrentReading(unsigned int target_current_reading, unsigned int energy_level, unsigned int pulse_count);
-#endif
-
-
-extern unsigned int global_reset_faults;
-
+#define ETM_CAN_HIGH_ENERGY           1
+#define ETM_CAN_LOW_ENERGY            0
 
 
 #endif

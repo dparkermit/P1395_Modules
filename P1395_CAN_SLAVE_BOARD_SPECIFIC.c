@@ -1,4 +1,5 @@
-#include "ETM_CAN.h"
+#include "P1395_CAN_SLAVE.h"
+#include "P1395_CAN_CORE_PRIVATE.h"
 
 #ifdef __A36224_500
 #include "A36224_500.h"
@@ -21,6 +22,10 @@
 #include "A36582.h"
 #endif
 
+
+
+void ETMCanSlaveExecuteCMDBoardSpecific(ETMCanMessage* message_ptr);
+void ETMCanSlaveLogData(unsigned int packet_id, unsigned int word3, unsigned int word2, unsigned int word1, unsigned int word0);
 
 void ETMCanSlaveExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
   unsigned int index_word;
@@ -144,7 +149,7 @@ void ETMCanSlaveExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
 }
 
 
-void ETMCanLogCustomPacketC(void) {
+void ETMCanSlaveLogCustomPacketC(void) {
   /* 
      Use this to log Board specific data packet
      This will get executed once per update cycle (1.6 seconds) and will be spaced out in time from the other log data
@@ -200,7 +205,7 @@ void ETMCanLogCustomPacketC(void) {
 
 }
 
-void ETMCanLogCustomPacketD(void) {
+void ETMCanSlaveLogCustomPacketD(void) {
   /* 
      Use this to log Board specific data packet
      This will get executed once per update cycle (1.6 seconds) and will be spaced out in time from the other log data
@@ -259,7 +264,7 @@ void ETMCanLogCustomPacketD(void) {
 
 }
 
-void ETMCanLogCustomPacketE(void) {
+void ETMCanSlaveLogCustomPacketE(void) {
   /* 
      Use this to log Board specific data packet
      This will get executed once per update cycle (1.6 seconds) and will be spaced out in time from the other log data
@@ -295,7 +300,7 @@ void ETMCanLogCustomPacketE(void) {
 #endif
 }
 
-void ETMCanLogCustomPacketF(void) {
+void ETMCanSlaveLogCustomPacketF(void) {
   /* 
      Use this to log Board specific data packet
      This will get executed once per update cycle (1.6 seconds) and will be spaced out in time from the other log data

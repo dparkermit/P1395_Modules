@@ -1,5 +1,3 @@
-#ifndef __ETM_CAN_P
-
 
 typedef struct {
   unsigned int pulse_count;

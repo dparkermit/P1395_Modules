@@ -1,8 +1,6 @@
 #ifndef __P1395_MODULE_CONFIG_H
 #define __P1395_MODULE_CONFIG_H
 
-#include "ETM_CAN_BOARD_SELECT.h"
-
 #ifdef __A36444
 #define __USE_CAN_1
 #define __USE_INTERNAL_EEPROM

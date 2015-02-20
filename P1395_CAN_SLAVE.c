@@ -1,8 +1,36 @@
-#include "ETM_CAN.h"
+#include <xc.h>
+#include <timer.h>
+#include "P1395_CAN_SLAVE.h"
+#include "P1395_CAN_CORE_PRIVATE.h"
+#include "P1395_MODULE_CONFIG.h"
 
+
+// ----------- Can Timers T2 & T3 Configuration ----------- //
+// DPARKER ADD Description of what T2 and T3 are used for
+#define T2_FREQUENCY_HZ          10  // This is 100mS rate
+#define T3_FREQUENCY_HZ          4   // This is 250ms rate
+
+// DPARKER remove the need for timers.h here
+#define T2CON_VALUE              (T2_OFF & T2_IDLE_CON & T2_GATE_OFF & T2_PS_1_256 & T2_32BIT_MODE_OFF & T2_SOURCE_INT)
+#define PR2_VALUE                (unsigned int)(FCY_CLK/256/T2_FREQUENCY_HZ)
+
+// DPARKER consider moving T3 to 
+#define T3CON_VALUE              (T3_OFF & T3_IDLE_CON & T3_GATE_OFF & T3_PS_1_256 & T3_SOURCE_INT)
+#define PR3_VALUE                (unsigned int)(FCY_CLK/256/T3_FREQUENCY_HZ)
+
+
+
+
+void ETMCanSlaveExecuteCMDBoardSpecific(ETMCanMessage* message_ptr);
+void ETMCanSlaveLogData(unsigned int packet_id, unsigned int word3, unsigned int word2, unsigned int word1, unsigned int word0);
 
 
 // void ETMCanSlaveDoCan(void) - PUBLIC
+
+
+// Adding a testing comment
+
+// Here I am adding another comment
 
 
 void ETMCanSlaveProcessMessage(void);
@@ -270,7 +298,7 @@ void ETMCanSlaveTimedTransmit(void) {
       case 0x1:
 	ETMCanSlaveLogData(ETM_CAN_DATA_LOG_REGISTER_DEFAULT_ERROR_1, 
 			   local_debug_data.reset_count, 
-			   local_debug_data.self_test_result_register, 
+			   *(unsigned int*)&local_debug_data.self_test_results, 
 			   0, 
 			   0);
 	break;
@@ -356,19 +384,19 @@ void ETMCanSlaveTimedTransmit(void) {
 	break;
 	
       case 0xC:
-	ETMCanLogCustomPacketC();
+	ETMCanSlaveLogCustomPacketC();
 	break;
 	
       case 0xD:
-	ETMCanLogCustomPacketD();
+	ETMCanSlaveLogCustomPacketD();
 	break;
 
       case 0xE:
-	ETMCanLogCustomPacketE();
+	ETMCanSlaveLogCustomPacketE();
 	break;
 
       case 0xF:
-	ETMCanLogCustomPacketF();
+	ETMCanSlaveLogCustomPacketF();
 	break;
       }
   }

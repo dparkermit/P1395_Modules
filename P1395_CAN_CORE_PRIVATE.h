@@ -1,26 +1,9 @@
-#ifndef __ETM_CAN_H
-#define __ETM_CAN_H
-#include <xc.h>
-#include "P1395_MODULE_CONFIG.h"
-#include "ETM_CAN_PUBLIC.h"
-#include "timer.h"  // DPARKER remove the requirement for this
+#ifndef __P1395_CAN_CORE_PRIVATE_H
+#define __P1393_CAN_CORE_PRIVATE_H
 
-
+#include "P1395_MODULE_CONFIG.H"
 /*
-  Can Resources
-  SEE : https://docs.google.com/document/d/14kmzLJehUPtInFK_YBGFBER4PMTn6awV25-DqEolBPY/edit
-*/
-
-/*
-  X = Not Implimented (Don't Care)
-  C = Command
-  A = Address
-
-  SID REGISTER
-
-  RECEIVE MODE                                  0bXXXCCCCCCAAAAMX0
-  TRANSMIT MODE                                 0bCCCCCXXXCAAAAMX0
-
+  This requries FCY_CLK to be defined
 */
 
 typedef struct {
@@ -39,6 +22,11 @@ typedef struct {
   unsigned int message_overwrite_count;
   ETMCanMessage message_data[16];
 } ETMCanMessageBuffer;
+
+
+// Can Module Buffers
+extern ETMCanMessageBuffer etm_can_rx_message_buffer;
+extern ETMCanMessageBuffer etm_can_tx_message_buffer;
 
 
 
@@ -118,22 +106,6 @@ unsigned int ETMCanBufferNotEmpty(ETMCanMessageBuffer* buffer_ptr);
 */
 
 
-// ----------- Can Timers T2 & T3 Configuration ----------- //
-#ifdef __ETM_CAN_MASTER_MODULE
-#define T2_FREQUENCY_HZ          40  // This is 25mS rate
-#else
-#define T2_FREQUENCY_HZ          10  // This is 100mS rate
-#endif
-
-#define T3_FREQUENCY_HZ          4   // This is 250ms rate
-
-// DPARKER remove the need for timers.h here
-#define T2CON_VALUE              (T2_OFF & T2_IDLE_CON & T2_GATE_OFF & T2_PS_1_256 & T2_32BIT_MODE_OFF & T2_SOURCE_INT)
-#define PR2_VALUE                (FCY_CLK/256/T2_FREQUENCY_HZ)
-
-#define T3CON_VALUE              (T3_OFF & T3_IDLE_CON & T3_GATE_OFF & T3_PS_1_256 & T3_SOURCE_INT)
-#define PR3_VALUE                (FCY_CLK/256/T3_FREQUENCY_HZ)
-
 
 // Define RX SID Masks
 // RECEIVE MODE                                  0bXXXCCCCCCAAAAMX0
@@ -185,7 +157,6 @@ unsigned int ETMCanBufferNotEmpty(ETMCanMessageBuffer* buffer_ptr);
 #define CXCFG1_20MHZ_FCY_VALUE                   0b0000000000000011      // This sets TQ to 8/Fcan
 #define CXCFG1_25MHZ_FCY_VALUE                   0b0000000000000100      // This sets TQ to 10/Fcan
 
-
 #if FCY_CLK == 25000000
 #define ETM_CAN_CXCFG1_VALUE                CXCFG1_25MHZ_FCY_VALUE
 #elif FCY_CLK == 20000000
@@ -195,9 +166,6 @@ unsigned int ETMCanBufferNotEmpty(ETMCanMessageBuffer* buffer_ptr);
 #else
 #define ETM_CAN_CXCFG1_VALUE                COMPILE_ERROR_YOU_SHOULD_FIX_THIS
 #endif
-
-
-
 
 #define CXCFG2_VALUE                             0b0000001110010001      // This will created a bit timing of 10x TQ
 
@@ -235,25 +203,9 @@ typedef struct {
 
 } ETMCanCanStatus;
 
-
-
-// Can Module Buffers
-extern ETMCanMessageBuffer etm_can_rx_message_buffer;
-extern ETMCanMessageBuffer etm_can_tx_message_buffer;
-
-
 // Can Module Debug and Status registers
 extern ETMCanCanStatus       local_can_errors;
 
-// Can Module Functions
-void ETMCanSetValueBoardSpecific(ETMCanMessage* message_ptr);
-
-
-#ifndef __ETM_CAN_MASTER_MODULE
-void ETMCanSlaveLogData(unsigned int packet_id, unsigned int word3, unsigned int word2, unsigned int word1, unsigned int word0);
-void ETMCanSlaveExecuteCMDBoardSpecific(ETMCanMessage* message_ptr);
-void ETMCanReturnValueBoardSpecific(ETMCanMessage* message_ptr);
-#endif
 
 //------------------------------- Specific Board and Command Defines -------------------------- // 
 
@@ -440,9 +392,7 @@ void ETMCanReturnValueBoardSpecific(ETMCanMessage* message_ptr);
 #endif
 
 
-
 #define MacroETMCanCheckTXBuffer() if (!CXTX0CONbits.TXREQ) { _CXIF = 1; }
-
 
 
 #endif
