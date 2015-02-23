@@ -1,3 +1,8 @@
+#ifndef __P1395_CAN_MASTER_H
+#define __P1395_CAN_MASTER_H
+
+#include "P1395_CAN_CORE.h"
+#include "P1395_CAN_CORE_PRIVATE.h"
 
 typedef struct {
   unsigned int pulse_count;
@@ -83,8 +88,8 @@ typedef struct {
   ETMCanAgileConfig     configuration;
   
   // Values that the Ethernet control board sets on HV Lambda
-  unsigned int gui_high_set_point;
-  unsigned int gui_low_set_point;
+  unsigned int ecb_high_set_point;
+  unsigned int ecb_low_set_point;
 
   // "SLOW" Data that the Ethernet control board reads back from HV Lambda
   unsigned int eoc_not_reached_count;
@@ -95,19 +100,19 @@ typedef struct {
   // DPARKER still need to add this data to Ethernet Interface
   unsigned int readback_high_vprog;
   unsigned int readback_low_vprog;
-  unsigned int hvlambda_readback_peak_lambda_voltage;
+  unsigned int readback_peak_lambda_voltage;
 
-  unsigned int high_vprog;
-  unsigned int low_vprog;
+  //unsigned int high_vprog;
+  //unsigned int low_vprog;
 
 
 } ETMCanRamMirrorHVLambda;
 
-extern ETMCanRamMirrorHVLambda          etm_can_hv_lamdba_mirror;
+extern ETMCanRamMirrorHVLambda          etm_can_hv_lambda_mirror;
 
-#define _HV_LAMBDA_NOT_CONFIGURED          etm_can_hv_lamdba_mirror.status_data.status_bits.control_2_not_configured
-#define _HV_LAMBDA_NOT_CONNECTED           etm_can_hv_lamdba_mirror.status_data.status_bits.control_7_ecb_can_not_active
-#define _HV_LAMBDA_NOT_READY               etm_can_hv_lamdba_mirror.status_data.status_bits.control_0_not_ready
+#define _HV_LAMBDA_NOT_CONFIGURED          etm_can_hv_lambda_mirror.status_data.status_bits.control_2_not_configured
+#define _HV_LAMBDA_NOT_CONNECTED           etm_can_hv_lambda_mirror.status_data.status_bits.control_7_ecb_can_not_active
+#define _HV_LAMBDA_NOT_READY               etm_can_hv_lambda_mirror.status_data.status_bits.control_0_not_ready
 
 
 typedef struct {
@@ -375,6 +380,9 @@ extern ETMCanRamMirrorPulseSync         etm_can_pulse_sync_mirror;
 extern ETMCanHighSpeedData              etm_can_high_speed_data_test;
 
 
+void ETMCanMasterDoCan(void);
+void ETMCanMasterInitialize(void);
+
 
 
 // Can Module Buffers
@@ -386,3 +394,14 @@ extern ETMCanMessageBuffer etm_can_rx_data_log_buffer;
 //unsigned int ETMCanMasterReadyToPulse(void);
 
 
+
+void SendCalibrationSetPointToSlave(unsigned int index, unsigned int data_1, unsigned int data_0);
+
+void ReadCalibrationSetPointFromSlave(unsigned int index);
+
+void SendSlaveLoadDefaultEEpromData(unsigned int board_id);
+
+
+
+
+#endif

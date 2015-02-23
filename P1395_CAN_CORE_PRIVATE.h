@@ -3,7 +3,7 @@
 
 #include "P1395_MODULE_CONFIG.H"
 /*
-  This requries FCY_CLK to be defined
+  This requries FCY_CLK to be defined in order to figure out the CAN clock multiplier
 */
 
 typedef struct {
@@ -219,7 +219,26 @@ extern ETMCanCanStatus       local_can_errors;
 #define ETM_CAN_ADDR_HEATER_MAGNET_BOARD                                7
 #define ETM_CAN_ADDR_GUN_DRIVER_BOARD                                   8
 
+typedef struct {
+  unsigned unused_0:1;
+  unsigned ion_pump_board:1;
+  unsigned magnetron_current_board:1;
+  unsigned pulse_sync_board:1;
+  unsigned hv_lambda_board:1;
+  unsigned afc_board:1;
+  unsigned cooling_interface_board:1;
+  unsigned heater_magnet_board:1;
+  unsigned gun_driver_board:1;
+  unsigned unused_9:1;
+  unsigned unused_10:1;
+  unsigned unused_11:1;
+  unsigned unused_12:1;
+  unsigned unused_13:1;
+  unsigned ethernet_board:1;
+  unsigned unused_15:1;
+} P1395BoardBits;
 
+/*
 #define ETM_CAN_BIT_ETHERNET_BOARD                                      0b0100000000000000
 #define ETM_CAN_BIT_ION_PUMP_BOARD                                      0b0000000000000010
 #define ETM_CAN_BIT_MAGNETRON_CURRENT_BOARD                             0b0000000000000100
@@ -229,7 +248,7 @@ extern ETMCanCanStatus       local_can_errors;
 #define ETM_CAN_BIT_COOLING_INTERFACE_BOARD                             0b0000000001000000
 #define ETM_CAN_BIT_HEATER_MAGNET_BOARD                                 0b0000000010000000
 #define ETM_CAN_BIT_GUN_DRIVER_BOARD                                    0b0000000100000000
-
+*/
 
 // Default Register Locations
 #define ETM_CAN_REGISTER_DEFAULT_CMD_RESET_MCU                          0x001
@@ -237,32 +256,32 @@ extern ETMCanCanStatus       local_can_errors;
 
 
 // Board Specific Register Locations
-#define ETM_CAN_REGISTER_HV_LAMBDA_SET_1_LAMBDA_SET_POINT               0x4100
+#define ETM_CAN_REGISTER_HV_LAMBDA_SET_1_LAMBDA_SET_POINT               0x4200
 
-#define ETM_CAN_REGISTER_AFC_SET_1_HOME_POSITION_AND_OFFSET             0x5100
-#define ETM_CAN_REGISTER_AFC_CMD_DO_AUTO_ZERO                           0x5101
-#define ETM_CAN_REGISTER_AFC_CMD_ENTER_AFC_MODE                         0x5102
-#define ETM_CAN_REGISTER_AFC_CMD_ENTER_MANUAL_MODE                      0x5103
-#define ETM_CAN_REGISTER_AFC_CMD_SET_TARGET_POSITION                    0x5104
-#define ETM_CAN_REGISTER_AFC_CMD_DO_RELATIVE_MOVE                       0x5105
+#define ETM_CAN_REGISTER_AFC_SET_1_HOME_POSITION_AND_OFFSET             0x5200
+#define ETM_CAN_REGISTER_AFC_CMD_DO_AUTO_ZERO                           0x5201
+#define ETM_CAN_REGISTER_AFC_CMD_ENTER_AFC_MODE                         0x5202
+#define ETM_CAN_REGISTER_AFC_CMD_ENTER_MANUAL_MODE                      0x5203
+#define ETM_CAN_REGISTER_AFC_CMD_SET_TARGET_POSITION                    0x5204
+#define ETM_CAN_REGISTER_AFC_CMD_DO_RELATIVE_MOVE                       0x5205
 
-#define ETM_CAN_REGISTER_COOLING_CMD_SF6_PULSE_LIMIT_OVERRIDE           0x6100
-#define ETM_CAN_REGISTER_COOLING_CMD_SF6_LEAK_LIMIT_OVERRIDE            0x6101
-#define ETM_CAN_REGISTER_COOLING_CMD_RESET_BOTTLE_COUNT                 0x6102
+#define ETM_CAN_REGISTER_COOLING_CMD_SF6_PULSE_LIMIT_OVERRIDE           0x6200
+#define ETM_CAN_REGISTER_COOLING_CMD_SF6_LEAK_LIMIT_OVERRIDE            0x6201
+#define ETM_CAN_REGISTER_COOLING_CMD_RESET_BOTTLE_COUNT                 0x6202
 
-#define ETM_CAN_REGISTER_HEATER_MAGNET_SET_1_CURRENT_SET_POINT          0x7100
+#define ETM_CAN_REGISTER_HEATER_MAGNET_SET_1_CURRENT_SET_POINT          0x7200
 
-#define ETM_CAN_REGISTER_GUN_DRIVER_SET_1_GRID_TOP_SET_POINT            0x8100
-#define ETM_CAN_REGISTER_GUN_DRIVER_SET_1_HEATER_CATHODE_SET_POINT      0x8101
+#define ETM_CAN_REGISTER_GUN_DRIVER_SET_1_GRID_TOP_SET_POINT            0x8200
+#define ETM_CAN_REGISTER_GUN_DRIVER_SET_1_HEATER_CATHODE_SET_POINT      0x8201
 
-#define ETM_CAN_REGISTER_PULSE_SYNC_SET_1_HIGH_ENERGY_TIMING_REG_0      0x3100
-#define ETM_CAN_REGISTER_PULSE_SYNC_SET_1_HIGH_ENERGY_TIMING_REG_1      0x3101
-#define ETM_CAN_REGISTER_PULSE_SYNC_SET_1_LOW_ENERGY_TIMING_REG_0       0x3102
-#define ETM_CAN_REGISTER_PULSE_SYNC_SET_1_LOW_ENERGY_TIMING_REG_1       0x3103
-#define ETM_CAN_REGISTER_PULSE_SYNC_SET_1_CUSTOMER_LED_OUTPUT           0x3104
+#define ETM_CAN_REGISTER_PULSE_SYNC_SET_1_HIGH_ENERGY_TIMING_REG_0      0x3200
+#define ETM_CAN_REGISTER_PULSE_SYNC_SET_1_HIGH_ENERGY_TIMING_REG_1      0x3201
+#define ETM_CAN_REGISTER_PULSE_SYNC_SET_1_LOW_ENERGY_TIMING_REG_0       0x3202
+#define ETM_CAN_REGISTER_PULSE_SYNC_SET_1_LOW_ENERGY_TIMING_REG_1       0x3203
+#define ETM_CAN_REGISTER_PULSE_SYNC_SET_1_CUSTOMER_LED_OUTPUT           0x3204
 
-#define ETM_CAN_REGISTER_ECB_SET_2_HIGH_ENERGY_TARGET_CURRENT_MON       0xE100
-#define ETM_CAN_REGISTER_ECB_SET_2_LOW_ENERGY_TARGET_CURRENT_MON        0xE101
+#define ETM_CAN_REGISTER_ECB_SET_2_HIGH_ENERGY_TARGET_CURRENT_MON       0xE200
+#define ETM_CAN_REGISTER_ECB_SET_2_LOW_ENERGY_TARGET_CURRENT_MON        0xE201
 
 
 //------------------ DATA LOGGING REGISTERS --------------------------//

@@ -3,7 +3,8 @@
 #include "P1395_CAN_SLAVE.h"
 #include "P1395_CAN_CORE_PRIVATE.h"
 #include "P1395_MODULE_CONFIG.h"
-
+#include "ETM_EEPROM.h"
+#include "ETM_ANALOG.h"
 
 // ----------- Can Timers T2 & T3 Configuration ----------- //
 // DPARKER ADD Description of what T2 and T3 are used for
@@ -231,7 +232,7 @@ void ETMCanSlaveExecuteCMDCommon(ETMCanMessage* message_ptr) {
     break;
 
   case ETM_CAN_REGISTER_DEFAULT_CMD_RESET_ANALOG_CALIBRATION:
-    //ETMCanLoadDefaultAnalogCalibration();  // DPARKER Change to load default EEPROM
+    ETMAnalogLoadDefaultCalibration();
     break;
  
   default:
@@ -243,36 +244,61 @@ void ETMCanSlaveExecuteCMDCommon(ETMCanMessage* message_ptr) {
 
 
 void ETMCanSlaveSetCalibrationPair(ETMCanMessage* message_ptr) {
+  /*
+    word 0 is offset data, this is stored at the register address (even)
+    word 1 is scale data, this is stored at the register address + 1 (odd)
+  */
+
+  unsigned int eeprom_register;
+  eeprom_register = message_ptr->word3;
+  eeprom_register &= 0x0FFF;
+  ETMEEPromWriteWord(eeprom_register, message_ptr->word0);
+  ETMEEPromWriteWord(eeprom_register + 1, message_ptr->word1);
+  Nop();
+  Nop();
+  Nop();
+  Nop();
+
 }
 
 void ETMCanSlaveReturnCalibrationPair(ETMCanMessage* message_ptr) {
   ETMCanMessage return_msg;
-  unsigned int eeprom_register;
+  unsigned int index_word;
+  index_word = message_ptr->word3;
   
-  if ((message_ptr->word3 & 0xF000) != (ETM_CAN_MY_ADDRESS << 12)) {
+  if ((index_word & 0xF000) != (ETM_CAN_MY_ADDRESS << 12)) {
     // The index is not addressed to this board
     local_can_errors.invalid_index++;
     return;
   }
   
-  eeprom_register = (message_ptr->word3 & 0x0FFF);
-  if ((eeprom_register < 0x0100) || (eeprom_register >= 0x200)) {
-    // The eeprom_register is not a valid calibration point
+  index_word &= 0x0FFF;
+  
+  if ((index_word < 0x0900) || (index_word >= 0x0A00)) {
+    // this is not a valid calibration request index
     local_can_errors.invalid_index++;
-    return;    
+    return;
   }
   
+  index_word -= 0x0800;
   // The request is valid, return the data stored in eeprom
-  return_msg.word3 = message_ptr->word3;
+  return_msg.identifier = ETM_CAN_MSG_SET_2_TX | (ETM_CAN_MY_ADDRESS << 3);
+  return_msg.word3 = message_ptr->word3 - 0x0800;
   return_msg.word2 = 0;
-  //return_msg.word1 = ETMEEPromReadWord(eeprom_register + 1);  // DPARKER need to make eepromreadword generic for all processors/eeprom type
-  //return_msg.word0 = ETMEEPromReadWord(eeprom_register);      // DPARKER need to make eepromreadword generic for all processors/eeprom type
-  
+  return_msg.word1 = ETMEEPromReadWord(index_word + 1);
+  return_msg.word0 = ETMEEPromReadWord(index_word);
+  Nop();
+  Nop();
+  Nop();
   // Send Message Back to ECB with data
   ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &return_msg);
   MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
 }
 
+
+void ETMCanSlaveLoadDefaultEEpromValues(void) {
+  
+}
 
 void ETMCanSlaveTimedTransmit(void) {
   // Sends the debug information up as log data  

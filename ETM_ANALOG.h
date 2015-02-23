@@ -71,11 +71,28 @@ typedef struct {
 } AnalogOutput;
 
 
-void ETMAnalogInitializeInput(AnalogInput* ptr_analog_input, unsigned int fixed_scale, signed int fixed_offset, unsigned char analog_port, unsigned int over_trip_point_absolute, unsigned int under_trip_point_absolute, unsigned int relative_trip_point_scale, unsigned int relative_trip_point_floor, unsigned int relative_counter_fault_limit);
+void ETMAnalogInitializeInput(AnalogInput* ptr_analog_input,
+			      unsigned int fixed_scale,
+			      signed int fixed_offset,
+			      unsigned char analog_port,
+			      unsigned int over_trip_point_absolute,
+			      unsigned int under_trip_point_absolute,
+			      unsigned int relative_trip_point_scale,
+			      unsigned int relative_trip_point_floor,
+			      unsigned int relative_counter_fault_limit);
 
-void ETMAnalogInitializeOutput(AnalogOutput* ptr_analog_output, unsigned int fixed_scale, signed int fixed_offset, unsigned char analog_port, unsigned int max_set_point, unsigned int min_set_point, unsigned int disabled_dac_set_point);
+void ETMAnalogInitializeOutput(AnalogOutput* ptr_analog_output,
+			       unsigned int fixed_scale,
+			       signed int fixed_offset,
+			       unsigned char analog_port,
+			       unsigned int max_set_point,
+			       unsigned int min_set_point,
+			       unsigned int disabled_dac_set_point);
 
-
+void ETMAnalogLoadDefaultCalibration(void);
+/*
+  This loads default values into the EEPROM
+*/
 
 
 void ETMAnalogScaleCalibrateDACSetting(AnalogOutput* ptr_analog_output);
