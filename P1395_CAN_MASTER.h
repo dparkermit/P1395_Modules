@@ -401,6 +401,7 @@ void ReadCalibrationSetPointFromSlave(unsigned int index);
 
 void SendSlaveLoadDefaultEEpromData(unsigned int board_id);
 
+void SendSlaveReset(unsigned int board_id);
 
 
 

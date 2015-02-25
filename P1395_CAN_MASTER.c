@@ -1150,3 +1150,15 @@ void SendSlaveLoadDefaultEEpromData(unsigned int board_id) {
   ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &can_message);
   MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()  
 }
+
+void SendSlaveReset(unsigned int board_id) {
+  ETMCanMessage can_message;
+  board_id &= 0x000F;
+  can_message.identifier = (ETM_CAN_MSG_CMD_TX | (board_id << 3));
+  can_message.word3 = (board_id << 12) + ETM_CAN_REGISTER_DEFAULT_CMD_RESET_MCU;
+  can_message.word2 = 0;
+  can_message.word1 = 0;
+  can_message.word0 = 0;
+  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &can_message);
+  MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()  
+}

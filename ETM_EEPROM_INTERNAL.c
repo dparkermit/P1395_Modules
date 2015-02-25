@@ -47,6 +47,24 @@ unsigned int ETMEEPromReadWord(unsigned int register_location) {
 
 void ETMEEPromWritePage(unsigned int page_number, unsigned int words_to_write, unsigned int *data) {
   _prog_addressT write_address;
+  int data_ram[16];
+  
+  data_ram[0] = (int)data[0];
+  data_ram[1] = (int)data[1];
+  data_ram[2] = (int)data[2];
+  data_ram[3] = (int)data[3];
+  data_ram[4] = (int)data[4];
+  data_ram[5] = (int)data[5];
+  data_ram[6] = (int)data[6];
+  data_ram[7] = (int)data[7];
+  data_ram[8] = (int)data[8];
+  data_ram[9] = (int)data[9];
+  data_ram[10] = (int)data[10];
+  data_ram[11] = (int)data[11];
+  data_ram[12] = (int)data[12];
+  data_ram[13] = (int)data[13];
+  data_ram[14] = (int)data[14];
+  data_ram[15] = (int)data[15];
 
   if (page_number < (INTERNAL_EEPROM_SIZE_WORDS >> 4)) {
     write_address = __builtin_tbladdress(internal_eeprom);
@@ -55,7 +73,7 @@ void ETMEEPromWritePage(unsigned int page_number, unsigned int words_to_write, u
     _wait_eedata();
     _erase_eedata(write_address, _EE_ROW);
     _wait_eedata();
-    _write_eedata_row(write_address, (int*)data);
+    _write_eedata_row(write_address, data_ram);
   }
 }
 

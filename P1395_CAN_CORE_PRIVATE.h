@@ -167,7 +167,33 @@ unsigned int ETMCanBufferNotEmpty(ETMCanMessageBuffer* buffer_ptr);
 #define ETM_CAN_CXCFG1_VALUE                COMPILE_ERROR_YOU_SHOULD_FIX_THIS
 #endif
 
-#define CXCFG2_VALUE                             0b0000001110010001      // This will created a bit timing of 10x TQ
+/*
+  Can Bit Timing
+  Syncchronization segment     - 1xTq
+  Propagation Time Segments    - 2xTq
+  Phase Buffer Segment 1       - 3xTq
+  Sample Type                  - Single Sample
+  Phase Buffer Segment 2       - 4xTq
+  Maximum Jump Width(CXCFG1)   - 1xTq
+
+*/
+//#define CXCFG2_VALUE                             0b0000001110010001      // This will created a bit timing of 10x TQ
+
+
+/*
+  Can Bit Timing
+  Syncchronization segment     - 1xTq
+  Propagation Time Segments    - 3xTq
+  Phase Buffer Segment 1       - 4xTq
+  Sample Type                  - Single Sample
+  Phase Buffer Segment 2       - 4xTq
+  Maximum Jump Width(CXCFG1)   - 1xTq
+
+*/
+#define CXCFG2_VALUE                             0b0000001110011010      // This will created a bit timing of 12x TQ
+
+
+
 
 #define CXTXXCON_VALUE_HIGH_PRIORITY             0b0000000000000011
 #define CXTXXCON_VALUE_MEDIUM_PRIORITY           0b0000000000000010
