@@ -22,6 +22,9 @@
 #include "A36582.h"
 #endif
 
+#ifdef __A35975
+#include "A35975.h"
+#endif
 
 
 void ETMCanSlaveExecuteCMDBoardSpecific(ETMCanMessage* message_ptr);
@@ -29,6 +32,9 @@ void ETMCanSlaveLogData(unsigned int packet_id, unsigned int word3, unsigned int
 
 void ETMCanSlaveExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
   unsigned int index_word;
+  #ifdef __A35975
+  unsigned int value;
+  #endif
   index_word = message_ptr->word3;
   switch (index_word) 
     {
@@ -141,6 +147,26 @@ void ETMCanSlaveExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
       break;
 #endif
       
+#ifdef __A35975	  // Gun Driver
+  case ETM_CAN_REGISTER_GUN_DRIVER_SET_1_GRID_TOP_SET_POINT:
+    value = ETMScaleFactor16(message_ptr->word1, CAN_scale_table[CAN_SET_EGSET].fixed_scale, 
+  				0);            
+    SetEg(value);    
+    // word0 for low Eg, not used 
+    _CONTROL_NOT_CONFIGURED = AreAnyReferenceNotConfigured();
+    break;
+
+  case ETM_CAN_REGISTER_GUN_DRIVER_SET_1_HEATER_CATHODE_SET_POINT:
+    value = ETMScaleFactor16(message_ptr->word1, CAN_scale_table[CAN_SET_EKSET].fixed_scale, 
+  				0);            
+    SetEk(value);    
+    value = ETMScaleFactor16(message_ptr->word0, CAN_scale_table[CAN_SET_EFSET].fixed_scale, 
+  				0);            
+    SetEf(value);    
+    _CONTROL_NOT_CONFIGURED = AreAnyReferenceNotConfigured();    
+    break;
+
+#endif
       
     default:
       local_can_errors.invalid_index++;
@@ -203,6 +229,19 @@ void ETMCanSlaveLogCustomPacketC(void) {
 		     );
 #endif
 
+#ifdef __A35975
+  unsigned int word3 = ETMScaleFactor2(analog_reads[ANA_RD_EG].read_cur, CAN_scale_table[CAN_RD_EG].fixed_scale, 
+  				CAN_scale_table[CAN_RD_EG].fixed_offset);
+  unsigned int word2 = 0; // low energy Eg((faults_from_ADC << 8) | control_state);        
+  unsigned int word1 = ETMScaleFactor16(analog_reads[ANA_RD_EK].read_cur, CAN_scale_table[CAN_RD_EK].fixed_scale, 
+  				CAN_scale_table[CAN_RD_EK].fixed_offset);
+  unsigned int word0 = ETMScaleFactor16(analog_reads[ANA_RD_IKP].read_cur, CAN_scale_table[CAN_RD_IKP].fixed_scale, 
+  				CAN_scale_table[CAN_RD_IKP].fixed_offset);
+
+  ETMCanSlaveLogData(
+		ETM_CAN_DATA_LOG_REGISTER_GUN_DRIVER_SLOW_PULSE_TOP_MON, word3, word2, word1, word0);
+
+#endif
 }
 
 void ETMCanSlaveLogCustomPacketD(void) {
@@ -261,6 +300,19 @@ void ETMCanSlaveLogCustomPacketD(void) {
 		     );
 #endif
 
+#ifdef __A35975	  // Gun Driver
+  unsigned int word3 = ETMScaleFactor16(analog_reads[ANA_RD_EF].read_cur, CAN_scale_table[CAN_RD_EF].fixed_scale, 
+  				CAN_scale_table[CAN_RD_EF].fixed_offset);
+  unsigned int word2 = ETMScaleFactor2(analog_reads[ANA_RD_IF].read_cur, CAN_scale_table[CAN_RD_IF].fixed_scale, 
+  				CAN_scale_table[CAN_RD_IF].fixed_offset);
+  unsigned int word1 = 0; // htd remaining 
+  unsigned int word0 = ETMScaleFactor2(analog_reads[ANA_RD_TEMP].read_cur, CAN_scale_table[CAN_RD_TEMP].fixed_scale, 
+  				CAN_scale_table[CAN_RD_TEMP].fixed_offset);
+
+  ETMCanSlaveLogData(
+		ETM_CAN_DATA_LOG_REGISTER_GUN_DRIVER_SLOW_HEATER_MON, word3, word2, word1, word0);
+
+#endif
 
 }
 
@@ -298,6 +350,21 @@ void ETMCanSlaveLogCustomPacketE(void) {
 		     *((unsigned int*)&global_data_A36582.pulse_this_hv_on)        // This is the high word
 		     );
 #endif
+
+#ifdef __A35975
+  unsigned int word3 = ETMScaleFactor2(analog_sets[ANA_SET_EG].ip_set, CAN_scale_table[CAN_RD_EGSET].fixed_scale, 
+  				CAN_scale_table[CAN_RD_EGSET].fixed_offset);
+  unsigned int word2 = 0; // low energy Eg set
+  unsigned int word1 = ETMScaleFactor2(analog_sets[ANA_SET_EF].ip_set, CAN_scale_table[CAN_RD_EFSET].fixed_scale, 
+  				CAN_scale_table[CAN_RD_EFSET].fixed_offset);
+  unsigned int word0 = ETMScaleFactor2(analog_sets[ANA_SET_EK].ip_set, CAN_scale_table[CAN_RD_EKSET].fixed_scale, 
+  				CAN_scale_table[CAN_RD_EKSET].fixed_offset);
+
+  ETMCanSlaveLogData(
+		ETM_CAN_DATA_LOG_REGISTER_GUN_DRIVER_SLOW_SET_POINTS, word3, word2, word1, word0);
+
+#endif				 
+
 }
 
 void ETMCanSlaveLogCustomPacketF(void) {
@@ -325,6 +392,16 @@ void ETMCanSlaveLogCustomPacketF(void) {
 		     *((unsigned int*)&global_data_A36582.pulse_total + 1),        
 		     *((unsigned int*)&global_data_A36582.pulse_total)             // This is the least significant word
 		     );
+#endif
+
+#ifdef __A35975	 // Gun Driver
+  ETMCanSlaveLogData(
+		ETM_CAN_DATA_LOG_REGISTER_GUN_DRIVER_FPGA_DATA,
+		fpga_ASDR,
+		faults_from_ADC,
+        control_state,
+		ETMScaleFactor2(analog_reads[ANA_RD_EC].read_cur, CAN_scale_table[CAN_RD_EC].fixed_scale, 0));
+
 #endif
 
 }
