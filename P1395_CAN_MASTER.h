@@ -35,16 +35,7 @@ typedef struct {
   unsigned char psync_readback_low_energy_grid_delay;
   
 } ETMCanHighSpeedData;
-// 22 words
-
-extern ETMCanHighSpeedData high_speed_data_buffer_a[32];
-extern ETMCanHighSpeedData high_speed_data_buffer_b[32];
-extern unsigned int high_speed_data_buffer_a_full;
-extern unsigned int high_speed_data_buffer_b_full;
-
-// internal use only
-// a pointer to the buffer that we are currently writing too.
-
+// 19 words
 
 
 
@@ -67,7 +58,7 @@ typedef struct {
   unsigned int           mirror_magnetron_heater_warmup_counter_seconds;
   unsigned int           mirror_gun_driver_heater_warmup_counter_seconds;
 
-  unsigned int           unused_1; //pulse_inhibit_status_bits;
+  unsigned int           mirror_sync_0_control_word; //pulse_inhibit_status_bits;
   unsigned int           unused_2; //software_pulse_enable;
   unsigned int           unused_3; //pulse_sync_disable_requested; // This is used by the CAN interrupt to signal that we need to send a pulse_sync_disable message
   unsigned int           unused_4; //status_connected_boards;   // This register indicates which boards are connected.

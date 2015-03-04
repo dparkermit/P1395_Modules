@@ -40,7 +40,7 @@ void ETMCanSlaveLogCustomPacketF(void);
 
 #ifdef __A36487
 // Only for Pulse Sync Board
-void ETMCanPulseSyncSendNextPulseLevel(unsigned int next_pulse_level, unsigned int next_pulse_count);
+void ETMCanSlavePulseSyncSendNextPulseLevel(unsigned int next_pulse_level, unsigned int next_pulse_count);
 #endif
 
 

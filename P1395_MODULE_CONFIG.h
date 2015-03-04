@@ -16,6 +16,23 @@
 #define ETM_CAN_SERIAL_NUMBER               100 // DPARKER need to figure out how to set this in FLASH when programming
 #endif
 
+
+#ifdef __A36444_500
+#define __USE_CAN_1
+#define __USE_INTERNAL_EEPROM
+#define FCY_CLK                             10000000      // 10 MHz
+#define FCY_CLK_MHZ                         10.000        // 10 MHz
+#define ETM_CAN_MY_ADDRESS                  ETM_CAN_ADDR_HEATER_MAGNET_BOARD
+#define PIN_CAN_OPERATION_LED               _LATG13
+#define ETM_CAN_INTERRUPT_PRIORITY          4
+#define ETM_CAN_AGILE_ID_HIGH               0
+#define ETM_CAN_AGILE_ID_LOW                36444
+#define ETM_CAN_AGILE_DASH                  500
+#define ETM_CAN_AGILE_REV                   'A' 
+#define ETM_CAN_SERIAL_NUMBER               101 // DPARKER need to figure out how to set this in FLASH when programming
+#endif
+
+
 #ifdef __A36417
 #define __USE_CAN_1
 #define FCY_CLK                             10000000      // 10 MHz
@@ -109,6 +126,21 @@
 #define ETM_CAN_INTERRUPT_PRIORITY          4
 #define ETM_CAN_AGILE_ID_HIGH               0
 #define ETM_CAN_AGILE_ID_LOW                36582
+#define ETM_CAN_AGILE_DASH                  0
+#define ETM_CAN_AGILE_REV                   'A'
+#define ETM_CAN_SERIAL_NUMBER               100 // DPARKER need to figure out how to set this in FLASH when programming
+#endif
+
+
+#ifdef __A36465
+#define __USE_CAN_1
+#define FCY_CLK                             10000000      // 10 MHz
+#define FCY_CLK_MHZ                         10.000        // 10 MHz
+#define ETM_CAN_MY_ADDRESS                  ETM_CAN_ADDR_AFC_CONTROL_BOARD
+#define PIN_CAN_OPERATION_LED               _LATG9
+#define ETM_CAN_INTERRUPT_PRIORITY          4
+#define ETM_CAN_AGILE_ID_HIGH               0
+#define ETM_CAN_AGILE_ID_LOW                36465
 #define ETM_CAN_AGILE_DASH                  0
 #define ETM_CAN_AGILE_REV                   'A'
 #define ETM_CAN_SERIAL_NUMBER               100 // DPARKER need to figure out how to set this in FLASH when programming

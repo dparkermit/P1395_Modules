@@ -92,11 +92,11 @@ void ETMCanSlaveDoSync(ETMCanMessage* message_ptr);
 //void ETMCanReturnEEPromRegister(ETMCanMessage* message_ptr);
 
 
+void ETMCanSlaveClearDebug(void);
 
 
 
-
-// void ETMCanInitialize(void) // Public Function
+// void ETMCanSlaveInitialize(void) // Public Function
 
 
 // local variables
@@ -137,6 +137,9 @@ void ETMCanSlaveDoCan(void) {
   ETMCanSlaveTimedTransmit();
   ETMCanSlaveCheckForTimeOut();
   ETMCanSlaveSendUpdateIfNewNotReady();
+  if (_SYNC_CONTROL_CLEAR_DEBUG_DATA) {
+    ETMCanSlaveClearDebug();
+  }
 
 
   local_debug_data.can_bus_error_count = local_can_errors.timeout;
@@ -519,7 +522,64 @@ void ETMCanSlaveDoSync(ETMCanMessage* message_ptr) {
 }
 
 
+void ETMCanSlaveClearDebug(void) {
+  etm_can_tx_message_buffer.message_overwrite_count = 0;
+  etm_can_rx_message_buffer.message_overwrite_count = 0;
+  etm_can_persistent_data.reset_count = 0;
+  etm_can_persistent_data.can_timeout_count = 0;
 
+  local_debug_data.i2c_bus_error_count = 0;
+  local_debug_data.spi_bus_error_count = 0;
+  local_debug_data.can_bus_error_count = 0;
+  local_debug_data.scale_error_count   = 0;
+  
+  local_debug_data.reset_count         = 0;
+  //
+  local_debug_data.reserved_1          = 0;
+  local_debug_data.reserved_0          = 0;
+
+  local_debug_data.debug_0             = 0;
+  local_debug_data.debug_1             = 0;
+  local_debug_data.debug_2             = 0;
+  local_debug_data.debug_3             = 0;
+
+  local_debug_data.debug_4             = 0;
+  local_debug_data.debug_5             = 0;
+  local_debug_data.debug_6             = 0;
+  local_debug_data.debug_7             = 0;
+
+  local_debug_data.debug_8             = 0;
+  local_debug_data.debug_9             = 0;
+  local_debug_data.debug_A             = 0;
+  local_debug_data.debug_B             = 0;
+
+  local_debug_data.debug_C             = 0;
+  local_debug_data.debug_D             = 0;
+  local_debug_data.debug_E             = 0;
+  local_debug_data.debug_F             = 0;
+
+  local_can_errors.CXEC_reg            = 0;
+  local_can_errors.error_flag          = 0;
+  local_can_errors.tx_1                = 0;
+  local_can_errors.tx_2                = 0;
+  
+  local_can_errors.rx_0_filt_0         = 0;
+  local_can_errors.rx_0_filt_1         = 0;
+  local_can_errors.rx_1_filt_2         = 0;
+  local_can_errors.isr_entered         = 0;
+
+  local_can_errors.unknown_message_identifier  = 0;
+  local_can_errors.invalid_index       = 0;
+  local_can_errors.address_error       = 0;
+  local_can_errors.tx_0                = 0;
+
+  local_can_errors.message_tx_buffer_overflow  = 0;
+  local_can_errors.message_rx_buffer_overflow  = 0;
+  local_can_errors.data_log_rx_buffer_overflow = 0;
+  local_can_errors.timeout             = 0;
+
+
+}
 
 void ETMCanSlaveInitialize(void) {
   if (_POR || _BOR) {
@@ -649,8 +709,8 @@ void __attribute__((interrupt(__save__(CORCON,SR)), no_auto_psv)) _CXInterrupt(v
       // It is a Next Pulse Level Command
       local_can_errors.rx_0_filt_0++;
       ETMCanRXMessage(&can_message, &CXRX0CON);
-      etm_can_next_pulse_level = can_message.word2;
-      etm_can_next_pulse_count = can_message.word3;
+      etm_can_next_pulse_level = can_message.word1;
+      etm_can_next_pulse_count = can_message.word0;
     } else {
       // The commmand was received by Filter 1
       // The command is a sync command.
@@ -697,3 +757,18 @@ void __attribute__((interrupt(__save__(CORCON,SR)), no_auto_psv)) _CXInterrupt(v
   local_can_errors.CXEC_reg = CXEC;
 }
 
+void ETMCanSlavePulseSyncSendNextPulseLevel(unsigned int next_pulse_level, unsigned int next_pulse_count) {
+  ETMCanMessage message;
+  message.identifier = ETM_CAN_MSG_LVL_TX | (ETM_CAN_MY_ADDRESS << 3); 
+  message.word0      = next_pulse_count;
+  if (next_pulse_level) {
+    message.word1    = 0xFFFF;
+  } else {
+    message.word1    = 0;
+  }
+
+  ETMCanTXMessage(&message, &CXTX2CON);
+  local_can_errors.tx_2++;
+  
+
+}

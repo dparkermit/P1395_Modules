@@ -56,7 +56,10 @@ void ETMCanMasterProcessMessage(void);
 void ETMCanMasterCheckForTimeOut(void);
 
 
-
+ETMCanHighSpeedData high_speed_data_buffer_a[16];
+ETMCanHighSpeedData high_speed_data_buffer_b[16];
+unsigned int high_speed_data_buffer_a_full;
+unsigned int high_speed_data_buffer_b_full;
 
 
 
@@ -69,7 +72,6 @@ ETMCanRamMirrorHeaterMagnet      etm_can_heater_magnet_mirror;
 ETMCanRamMirrorGunDriver         etm_can_gun_driver_mirror;
 ETMCanRamMirrorMagnetronCurrent  etm_can_magnetron_current_mirror;
 ETMCanRamMirrorPulseSync         etm_can_pulse_sync_mirror;
-ETMCanHighSpeedData              etm_can_high_speed_data_test;
 
 ETMCanRamMirrorEthernetBoard     etm_can_ethernet_board_data;
 
@@ -130,6 +132,7 @@ void ETMCanMasterProcessLogData(void);
 */
 
 
+void ETMCanMasterClearDebug(void);
 
 void ETMCanMasterInitialize(void) {
   if (_POR || _BOR) {
@@ -255,6 +258,9 @@ void ETMCanMasterDoCan(void) {
   ETMCanMasterTimedTransmit();
   ETMCanMasterProcessLogData();
   ETMCanMasterCheckForTimeOut();
+  if (_SYNC_CONTROL_CLEAR_DEBUG_DATA) {
+    ETMCanMasterClearDebug();
+  }
 
   local_debug_data.can_bus_error_count = local_can_errors.timeout;
   local_debug_data.can_bus_error_count += local_can_errors.message_tx_buffer_overflow;
@@ -672,6 +678,11 @@ void ETMCanMasterProcessLogData(void) {
   ETMCanAgileConfig*     config_data_ptr;
   ETMCanCanStatus*       can_status_ptr;
 
+  unsigned int           fast_log_buffer_index;
+  ETMCanHighSpeedData*   ptr_high_speed_data;
+
+
+
   while (ETMCanBufferNotEmpty(&etm_can_rx_data_log_buffer)) {
     ETMCanReadMessageFromBuffer(&etm_can_rx_data_log_buffer, &next_message);
     data_log_index = next_message.identifier;
@@ -830,13 +841,23 @@ void ETMCanMasterProcessLogData(void) {
 
     } else {
       // It is board specific logging data
+
+      // Figure out where to store high speed logging data (this will only be used if it IS high speed data logging)
+      // But I'm going to go ahead and calculate where to store it for all messages
+      fast_log_buffer_index = next_message.word3 & 0x000F;
+      if (next_message.word3 & 0x0010) {
+	ptr_high_speed_data = &high_speed_data_buffer_a[fast_log_buffer_index];
+      } else {
+	ptr_high_speed_data = &high_speed_data_buffer_b[fast_log_buffer_index];
+      }
+      
       switch (data_log_index) 
 	{
 	case ETM_CAN_DATA_LOG_REGISTER_HV_LAMBDA_FAST_PROGRAM_VOLTAGE:
-	  etm_can_high_speed_data_test.pulse_count = next_message.word3;
-	  etm_can_high_speed_data_test.hvlambda_readback_high_energy_lambda_program_voltage = next_message.word2;
-	  etm_can_high_speed_data_test.hvlambda_readback_low_energy_lambda_program_voltage = next_message.word1;
-	  etm_can_high_speed_data_test.hvlambda_readback_peak_lambda_voltage = next_message.word0;
+	  // Update the high speed data table
+	  ptr_high_speed_data->hvlambda_readback_high_energy_lambda_program_voltage = next_message.word2;
+	  ptr_high_speed_data->hvlambda_readback_low_energy_lambda_program_voltage = next_message.word1;
+	  ptr_high_speed_data->hvlambda_readback_peak_lambda_voltage = next_message.word0;
 	  
 	  etm_can_hv_lambda_mirror.readback_high_vprog = next_message.word2;
 	  etm_can_hv_lambda_mirror.readback_low_vprog = next_message.word1;
@@ -860,16 +881,16 @@ void ETMCanMasterProcessLogData(void) {
 
 
 	case ETM_CAN_DATA_LOG_REGISTER_AFC_FAST_POSITION:
-	  etm_can_high_speed_data_test.pulse_count = next_message.word3;
-	  etm_can_high_speed_data_test.afc_readback_current_position = next_message.word2;
-	  etm_can_high_speed_data_test.afc_readback_target_position = next_message.word1;
+	  //etm_can_high_speed_data_test.pulse_count = next_message.word3;
+	  //etm_can_high_speed_data_test.afc_readback_current_position = next_message.word2;
+	  //etm_can_high_speed_data_test.afc_readback_target_position = next_message.word1;
 	  break;
 
 	case ETM_CAN_DATA_LOG_REGISTER_AFC_FAST_READINGS:
-	  etm_can_high_speed_data_test.pulse_count = next_message.word3;
-	  etm_can_high_speed_data_test.afc_readback_a_input = next_message.word2;
-	  etm_can_high_speed_data_test.afc_readback_b_input = next_message.word1;
-	  etm_can_high_speed_data_test.afc_readback_filtered_error_reading = next_message.word0;
+	  //etm_can_high_speed_data_test.pulse_count = next_message.word3;
+	  //etm_can_high_speed_data_test.afc_readback_a_input = next_message.word2;
+	  //etm_can_high_speed_data_test.afc_readback_b_input = next_message.word1;
+	  //etm_can_high_speed_data_test.afc_readback_filtered_error_reading = next_message.word0;
 	  break;
 
 	case ETM_CAN_DATA_LOG_REGISTER_AFC_SLOW_SETTINGS:
@@ -880,6 +901,17 @@ void ETMCanMasterProcessLogData(void) {
 
 
 	case ETM_CAN_DATA_LOG_REGISTER_MAGNETRON_MON_FAST_PREVIOUS_PULSE:
+	  // Update the high speed data table
+	  ptr_high_speed_data->magmon_readback_magnetron_high_energy_current = next_message.word2;
+	  ptr_high_speed_data->magmon_readback_magnetron_high_energy_current = next_message.word1;
+	  if (next_message.word0) {
+	    // Set the arc this pulse bit
+	    // DPARKER - need to do better job of this
+	    ptr_high_speed_data->status_bits |= 0x0001; 
+	  } else {
+	    // Clear the arc this pulse bit
+	    ptr_high_speed_data->status_bits &= 0b1111111111111110;
+	  }
 	  break;
 
 	case ETM_CAN_DATA_LOG_REGISTER_MAGNETRON_MON_SLOW_FILTERED_PULSE:
@@ -998,6 +1030,7 @@ void ETMCanMasterProcessLogData(void) {
 
 void __attribute__((interrupt(__save__(CORCON,SR)), no_auto_psv)) _CXInterrupt(void) {
   ETMCanMessage can_message;
+  unsigned int fast_log_buffer_index;
   
   _CXIF = 0;
   local_can_errors.isr_entered++;
@@ -1011,8 +1044,21 @@ void __attribute__((interrupt(__save__(CORCON,SR)), no_auto_psv)) _CXInterrupt(v
       local_can_errors.rx_0_filt_0++;
       // It is a Next Pulse Level Command
       ETMCanRXMessage(&can_message, &CXRX0CON);
-      etm_can_next_pulse_level = can_message.word2;
-      etm_can_next_pulse_count = can_message.word3;
+      etm_can_next_pulse_level = can_message.word1;
+      etm_can_next_pulse_count = can_message.word0;
+
+      fast_log_buffer_index = etm_can_next_pulse_count & 0x000F;
+      if (etm_can_next_pulse_count & 0x0010) {
+	high_speed_data_buffer_a[fast_log_buffer_index].x_ray_on_seconds_lsw = global_data_A36507.time_seconds_now;
+	high_speed_data_buffer_a[fast_log_buffer_index].x_ray_on_milliseconds = global_data_A36507.millisecond_counter;
+	high_speed_data_buffer_a[fast_log_buffer_index].x_ray_on_milliseconds += TMR5>>10;  // Need to divide by 1250 to get milliseconds
+	high_speed_data_buffer_a[fast_log_buffer_index].pulse_count = etm_can_next_pulse_count;
+      } else {
+	high_speed_data_buffer_b[fast_log_buffer_index].x_ray_on_seconds_lsw = global_data_A36507.time_seconds_now;
+	high_speed_data_buffer_b[fast_log_buffer_index].x_ray_on_milliseconds = global_data_A36507.millisecond_counter;
+	high_speed_data_buffer_b[fast_log_buffer_index].x_ray_on_milliseconds += TMR5>>10;  // Need to divide by 1250 to get milliseconds
+	high_speed_data_buffer_b[fast_log_buffer_index].pulse_count = etm_can_next_pulse_count;
+      }
     } else {
       // The commmand was received by Filter 1
       local_can_errors.rx_0_filt_1++;
@@ -1102,7 +1148,34 @@ void ETMCanMasterCheckForTimeOut(void) {
     _HEATER_MAGNET_NOT_CONNECTED   = !board_status_received.heater_magnet_board;
     _GUN_DRIVER_NOT_CONNECTED      = !board_status_received.gun_driver_board;
 
+    if (!board_status_received.ion_pump_board) {
+      global_data_A36507.no_connect_count_ion_pump_board++;
+    }
+    if (!board_status_received.magnetron_current_board) {
+      global_data_A36507.no_connect_count_magnetron_current_board++;
+    }
+    if (!board_status_received.pulse_sync_board) {
+      global_data_A36507.no_connect_count_pulse_sync_board++;
+    }
+    if (!board_status_received.hv_lambda_board) {
+      global_data_A36507.no_connect_count_hv_lambda_board++;
+    }
+    if (!board_status_received.afc_board) {
+      global_data_A36507.no_connect_count_afc_board++;
+    }
+    if (!board_status_received.cooling_interface_board) {
+      global_data_A36507.no_connect_count_cooling_interface_board++;
+    }
+    if (!board_status_received.heater_magnet_board) {
+      global_data_A36507.no_connect_count_heater_magnet_board++;
+    }
+    if (!board_status_received.gun_driver_board) {
+      global_data_A36507.no_connect_count_gun_driver_board++;
+    }
+    
+
     etm_can_ethernet_board_data.status_received_register = 0x0000;
+    
   }
 }
 
@@ -1161,4 +1234,84 @@ void SendSlaveReset(unsigned int board_id) {
   can_message.word0 = 0;
   ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &can_message);
   MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()  
+}
+
+
+void ETMCanMasterClearDebug(void) {
+  etm_can_tx_message_buffer.message_overwrite_count = 0;
+  etm_can_rx_message_buffer.message_overwrite_count = 0;
+  etm_can_rx_data_log_buffer.message_overwrite_count = 0;
+  etm_can_persistent_data.reset_count = 0;
+  etm_can_persistent_data.can_timeout_count = 0;
+
+  global_data_A36507.no_connect_count_ion_pump_board = 0;
+  global_data_A36507.no_connect_count_magnetron_current_board = 0;
+  global_data_A36507.no_connect_count_pulse_sync_board = 0;
+  global_data_A36507.no_connect_count_hv_lambda_board = 0;
+  global_data_A36507.no_connect_count_afc_board = 0;
+  global_data_A36507.no_connect_count_cooling_interface_board = 0;
+  global_data_A36507.no_connect_count_heater_magnet_board = 0;
+  global_data_A36507.no_connect_count_gun_driver_board = 0;
+ 
+  local_debug_data.i2c_bus_error_count = 0;
+  local_debug_data.spi_bus_error_count = 0;
+  local_debug_data.can_bus_error_count = 0;
+  local_debug_data.scale_error_count   = 0;
+  
+  local_debug_data.reset_count         = 0;
+  //
+  local_debug_data.reserved_1          = 0;
+  local_debug_data.reserved_0          = 0;
+
+  local_debug_data.debug_0             = 0;
+  local_debug_data.debug_1             = 0;
+  local_debug_data.debug_2             = 0;
+  local_debug_data.debug_3             = 0;
+
+  local_debug_data.debug_4             = 0;
+  local_debug_data.debug_5             = 0;
+  local_debug_data.debug_6             = 0;
+  local_debug_data.debug_7             = 0;
+
+  local_debug_data.debug_8             = 0;
+  local_debug_data.debug_9             = 0;
+  local_debug_data.debug_A             = 0;
+  local_debug_data.debug_B             = 0;
+
+  local_debug_data.debug_C             = 0;
+  local_debug_data.debug_D             = 0;
+  local_debug_data.debug_E             = 0;
+  local_debug_data.debug_F             = 0;
+
+  local_can_errors.CXEC_reg            = 0;
+  local_can_errors.error_flag          = 0;
+  local_can_errors.tx_1                = 0;
+  local_can_errors.tx_2                = 0;
+  
+  local_can_errors.rx_0_filt_0         = 0;
+  local_can_errors.rx_0_filt_1         = 0;
+  local_can_errors.rx_1_filt_2         = 0;
+  local_can_errors.isr_entered         = 0;
+
+  local_can_errors.unknown_message_identifier  = 0;
+  local_can_errors.invalid_index       = 0;
+  local_can_errors.address_error       = 0;
+  local_can_errors.tx_0                = 0;
+
+  local_can_errors.message_tx_buffer_overflow  = 0;
+  local_can_errors.message_rx_buffer_overflow  = 0;
+  local_can_errors.data_log_rx_buffer_overflow = 0;
+  local_can_errors.timeout             = 0;
+
+
+  global_data_A36507.no_connect_count_ion_pump_board = 0;
+  global_data_A36507.no_connect_count_magnetron_current_board = 0;
+  global_data_A36507.no_connect_count_pulse_sync_board = 0;
+  global_data_A36507.no_connect_count_hv_lambda_board = 0;
+  global_data_A36507.no_connect_count_afc_board = 0;
+  global_data_A36507.no_connect_count_cooling_interface_board = 0;
+  global_data_A36507.no_connect_count_heater_magnet_board = 0;
+  global_data_A36507.no_connect_count_gun_driver_board = 0;
+
+
 }

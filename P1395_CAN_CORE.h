@@ -210,7 +210,7 @@ typedef struct {
   unsigned sync_C_unused:1;
   unsigned sync_D_unused:1;
   unsigned sync_E_unused:1;
-  unsigned sync_F_unused:1;
+  unsigned sync_F_clear_debug_data:1;
 } ETMCanSyncControlWord;
 
 
@@ -229,6 +229,7 @@ extern ETMCanSyncMessage     etm_can_sync_message;
 #define _SYNC_CONTROL_PULSE_SYNC_DISABLE_HV   etm_can_sync_message.sync_0_control_word.sync_2_pulse_sync_disable_hv
 #define _SYNC_CONTROL_PULSE_SYNC_DISABLE_XRAY etm_can_sync_message.sync_0_control_word.sync_3_pulse_sync_disable_xray
 #define _SYNC_CONTROL_COOLING_FAULT           etm_can_sync_message.sync_0_control_word.sync_4_cooling_fault
+#define _SYNC_CONTROL_CLEAR_DEBUG_DATA        etm_can_sync_message.sync_0_control_word.sync_F_clear_debug_data
 
 #define _SYNC_CONTROL_WORD                 *(unsigned int*)&etm_can_sync_message.sync_0_control_word
 

@@ -5,6 +5,9 @@
 #include "A36224_500.h"
 #endif
 
+#ifdef __A36444_500
+#include "A36444_500.h"
+#endif
 
 #ifdef __A36444
 #include "A36444.h"
@@ -22,6 +25,9 @@
 #include "A36582.h"
 #endif
 
+#ifdef __A36465
+#include "A36465.h"
+#endif
 
 
 void ETMCanSlaveExecuteCMDBoardSpecific(ETMCanMessage* message_ptr);
@@ -58,8 +64,16 @@ void ETMCanSlaveExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
       ETMAnalogSetOutput(&global_data_A36224_500.analog_output_electromagnet_current, message_ptr->word0);
       _CONTROL_NOT_CONFIGURED = 0;
       break;
-      
 #endif
+
+#ifdef __A36444_500
+    case ETM_CAN_REGISTER_HEATER_MAGNET_SET_1_CURRENT_SET_POINT:
+      ETMAnalogSetOutput(&global_data_A36444_500.analog_output_heater_current, message_ptr->word1);
+      ETMAnalogSetOutput(&global_data_A36444_500.analog_output_electromagnet_current, message_ptr->word0);
+      _CONTROL_NOT_CONFIGURED = 0;
+      break;
+#endif
+
       
 #ifdef __A36444
     case ETM_CAN_REGISTER_HV_LAMBDA_SET_1_LAMBDA_SET_POINT:
@@ -140,7 +154,12 @@ void ETMCanSlaveExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
       psb_data.led_state = message_ptr->word0;
       break;
 #endif
-      
+
+
+#ifdef __A36465
+      case ETM_CAN_REGISTER_AFC_SET_1_HOME_POSITION_AND_OFFSET:
+      break;
+#endif      
       
     default:
       local_can_errors.invalid_index++;
@@ -163,6 +182,7 @@ void ETMCanSlaveLogCustomPacketC(void) {
 		     global_data_A36224_000.analog_input_flow_2.reading_scaled_and_calibrated     //Circulator
 		     );
 #endif
+
 #ifdef __A36224_500
   ETMCanSlaveLogData(
 		     ETM_CAN_DATA_LOG_REGISTER_HEATER_MAGNET_SLOW_READINGS, 
@@ -173,6 +193,15 @@ void ETMCanSlaveLogCustomPacketC(void) {
 		     );
 #endif
 
+#ifdef __A36444_500
+  ETMCanSlaveLogData(
+		     ETM_CAN_DATA_LOG_REGISTER_HEATER_MAGNET_SLOW_READINGS, 
+		     global_data_A36444_500.analog_input_heater_current.reading_scaled_and_calibrated,
+		     global_data_A36444_500.analog_input_heater_voltage.reading_scaled_and_calibrated,
+		     global_data_A36444_500.analog_input_electromagnet_current.reading_scaled_and_calibrated,
+		     global_data_A36444_500.analog_input_electromagnet_voltage.reading_scaled_and_calibrated
+		     );
+#endif
 
 #ifdef __A36444
   ETMCanSlaveLogData(
@@ -203,6 +232,18 @@ void ETMCanSlaveLogCustomPacketC(void) {
 		     );
 #endif
 
+#ifdef __A36465
+  ETMCanSlaveLogData(
+		     ETM_CAN_DATA_LOG_REGISTER_AFC_FAST_POSITION,
+		     0,
+		     0,
+		     0,
+		     0
+		     );
+
+#endif
+
+
 }
 
 void ETMCanSlaveLogCustomPacketD(void) {
@@ -230,6 +271,15 @@ void ETMCanSlaveLogCustomPacketD(void) {
 		     );
 #endif
 
+#ifdef __A36444_500
+  ETMCanSlaveLogData(
+		     ETM_CAN_DATA_LOG_REGISTER_HEATER_MAGNET_SLOW_SET_POINTS, 
+		     global_data_A36444_500.analog_output_heater_current.set_point,
+		     0,
+		     global_data_A36444_500.analog_output_electromagnet_current.set_point,
+		     0
+		     );
+#endif
 
 #ifdef __A36444
   ETMCanSlaveLogData(
@@ -259,6 +309,18 @@ void ETMCanSlaveLogCustomPacketD(void) {
 		     global_data_A36582.filt_int_adc_low,
 		     global_data_A36582.filt_int_adc_high
 		     );
+#endif
+
+
+#ifdef __A36465
+  ETMCanSlaveLogData(
+		     ETM_CAN_DATA_LOG_REGISTER_AFC_FAST_READINGS,
+		     0,
+		     0,
+		     0,
+		     0
+		     );
+
 #endif
 
 
@@ -298,6 +360,19 @@ void ETMCanSlaveLogCustomPacketE(void) {
 		     *((unsigned int*)&global_data_A36582.pulse_this_hv_on)        // This is the high word
 		     );
 #endif
+
+#ifdef __A36465
+  ETMCanSlaveLogData(
+		     ETM_CAN_DATA_LOG_REGISTER_AFC_SLOW_SETTINGS,
+		     0,
+		     0,
+		     0,
+		     0
+		     );
+
+#endif
+
+
 }
 
 void ETMCanSlaveLogCustomPacketF(void) {
