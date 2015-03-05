@@ -232,9 +232,7 @@ void ETMCanSlaveExecuteCMDCommon(ETMCanMessage* message_ptr) {
     break;
 
   case ETM_CAN_REGISTER_DEFAULT_CMD_RESET_ANALOG_CALIBRATION:
-#ifndef __A35975
     ETMAnalogLoadDefaultCalibration();
-#endif
     break;
  
   default:
@@ -250,7 +248,7 @@ void ETMCanSlaveSetCalibrationPair(ETMCanMessage* message_ptr) {
     word 0 is offset data, this is stored at the register address (even)
     word 1 is scale data, this is stored at the register address + 1 (odd)
   */
-#ifndef __A35975
+
   unsigned int eeprom_register;
   eeprom_register = message_ptr->word3;
   eeprom_register &= 0x0FFF;
@@ -260,7 +258,7 @@ void ETMCanSlaveSetCalibrationPair(ETMCanMessage* message_ptr) {
   Nop();
   Nop();
   Nop();
-#endif
+
 }
 
 void ETMCanSlaveReturnCalibrationPair(ETMCanMessage* message_ptr) {
@@ -287,13 +285,8 @@ void ETMCanSlaveReturnCalibrationPair(ETMCanMessage* message_ptr) {
   return_msg.identifier = ETM_CAN_MSG_SET_2_TX | (ETM_CAN_MY_ADDRESS << 3);
   return_msg.word3 = message_ptr->word3 - 0x0800;
   return_msg.word2 = 0;
-#ifndef __A35975
   return_msg.word1 = ETMEEPromReadWord(index_word + 1);
   return_msg.word0 = ETMEEPromReadWord(index_word);
-#else
-   return_msg.word1 = 0;
-   return_msg.word0 = 0;
-#endif
   Nop();
   Nop();
   Nop();

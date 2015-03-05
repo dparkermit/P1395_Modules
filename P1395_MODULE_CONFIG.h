@@ -75,12 +75,12 @@
 #define ETM_CAN_SERIAL_NUMBER               100 // DPARKER need to figure out how to set this in FLASH when programming
 #define __IGNORE_ION_PUMP_MODULE
 #define __IGNORE_AFC_MODULE
-//#define __IGNORE_GUN_DRIVER_MODULE
-#define __IGNORE_COOLING_INTERFACE_MODULE
-#define __IGNORE_HEATER_MAGNET_MODULE
-#define __IGNORE_HV_LAMBDA_MODULE
-#define __IGNORE_PULSE_CURRENT_MODULE
-#define __IGNORE_PULSE_SYNC_MODULE
+#define __IGNORE_GUN_DRIVER_MODULE
+//#define __IGNORE_COOLING_INTERFACE_MODULE
+//#define __IGNORE_HEATER_MAGNET_MODULE
+//#define __IGNORE_HV_LAMBDA_MODULE
+//#define __IGNORE_PULSE_CURRENT_MODULE
+//#define __IGNORE_PULSE_SYNC_MODULE
 #endif
 
 
@@ -115,19 +115,6 @@
 #endif
 
 
-#ifdef __A35975
-#define __USE_CAN_2
-#define FCY_CLK                             10000000      // 10 MHz
-#define FCY_CLK_MHZ                         10.000        // 10 MHz
-#define ETM_CAN_MY_ADDRESS                  ETM_CAN_ADDR_GUN_DRIVER_BOARD
-#define PIN_CAN_OPERATION_LED               _LATC2  // was "last pulse fail"
-#define ETM_CAN_INTERRUPT_PRIORITY          4
-#define ETM_CAN_AGILE_ID_HIGH               0
-#define ETM_CAN_AGILE_ID_LOW                35975
-#define ETM_CAN_AGILE_DASH                  0
-#define ETM_CAN_AGILE_REV                   'A' 
-#define ETM_CAN_SERIAL_NUMBER               100 // DPARKER need to figure out how to set this in FLASH when programming
-#endif
 
 #endif //#ifndef __P1395_MODULE_CONFIG_H
 
