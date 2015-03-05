@@ -204,16 +204,16 @@ unsigned int ETMCanBufferNotEmpty(ETMCanMessageBuffer* buffer_ptr);
 
 typedef struct {
   // Can data log 0
-  unsigned int CXEC_reg;
+  unsigned int CXEC_reg;   // THIS is now the MAX instead of instantaneous value of CXEC
   unsigned int error_flag;
   unsigned int tx_1;
   unsigned int tx_2;
   
   // Can data log 1
-  unsigned int rx_0_filt_0;
+  unsigned int rx_0_filt_0; 
   unsigned int rx_0_filt_1;
-  unsigned int rx_1_filt_2;
-  unsigned int isr_entered;
+  unsigned int rx_1_filt_2;  
+  unsigned int isr_entered;  // THIS IS Now a logical or of the CXINTF register every time the can ISR is entered
 
   // Can data log 2
   unsigned int unknown_message_identifier;

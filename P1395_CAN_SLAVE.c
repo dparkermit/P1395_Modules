@@ -133,6 +133,18 @@ ETMCanSyncMessage     etm_can_sync_message;
 
 
 void ETMCanSlaveDoCan(void) {
+ // Record the max TX counter
+  if ((CXEC & 0xFF00) > (local_can_errors.CXEC_reg & 0xFF00)) {
+    local_can_errors.CXEC_reg &= 0x00FF;
+    local_can_errors.CXEC_reg += (CXEC & 0xFF00);
+  }
+
+  // Record the max RX counter
+  if ((CXEC & 0x00FF) > (local_can_errors.CXEC_reg & 0x00FF)) {
+    local_can_errors.CXEC_reg &= 0xFF00;
+    local_can_errors.CXEC_reg += (CXEC & 0x00FF);
+  }
+
   ETMCanSlaveProcessMessage();
   ETMCanSlaveTimedTransmit();
   ETMCanSlaveCheckForTimeOut();
@@ -578,18 +590,13 @@ void ETMCanSlaveClearDebug(void) {
   local_can_errors.data_log_rx_buffer_overflow = 0;
   local_can_errors.timeout             = 0;
 
+  CXINTF = 0;
 
 }
 
 void ETMCanSlaveInitialize(void) {
-  if (_POR || _BOR) {
-    // This was a power cycle;
-    etm_can_persistent_data.reset_count = 0;
-    etm_can_persistent_data.can_timeout_count = 0;
-  } else {
-    etm_can_persistent_data.reset_count++;
-  }
-
+  etm_can_persistent_data.reset_count++;
+  
   _SYNC_CONTROL_WORD = 0;
   etm_can_sync_message.sync_1 = 1;
   etm_can_sync_message.sync_2 = 2;
@@ -698,8 +705,9 @@ void __attribute__((interrupt(__save__(CORCON,SR)), no_auto_psv)) _CXInterrupt(v
   ETMCanMessage can_message;
     
   _CXIF = 0;
-  local_can_errors.isr_entered++;
-  
+  //local_can_errors.isr_entered++;
+  local_can_errors.isr_entered |= CXINTF;
+    
   if(CXRX0CONbits.RXFUL) {
     /*
       A message has been received in Buffer Zero
@@ -744,6 +752,7 @@ void __attribute__((interrupt(__save__(CORCON,SR)), no_auto_psv)) _CXInterrupt(v
   if (CXINTFbits.ERRIF) {
     // There was some sort of CAN Error
     // DPARKER - figure out which error and fix/reset
+    local_can_errors.data_log_rx_buffer_overflow |= CXINTF;
     local_can_errors.error_flag++;
     CXINTFbits.ERRIF = 0;
   } else {
@@ -754,7 +763,19 @@ void __attribute__((interrupt(__save__(CORCON,SR)), no_auto_psv)) _CXInterrupt(v
       PIN_CAN_OPERATION_LED = 1;
     }
   }
-  local_can_errors.CXEC_reg = CXEC;
+  //local_can_errors.CXEC_reg = CXEC;
+  
+  // Record the max TX counter
+  if ((CXEC & 0xFF00) > (local_can_errors.CXEC_reg & 0xFF00)) {
+    local_can_errors.CXEC_reg &= 0x00FF;
+    local_can_errors.CXEC_reg += (CXEC & 0xFF00);
+  }
+  
+  // Record the max RX counter
+  if ((CXEC & 0x00FF) > (local_can_errors.CXEC_reg & 0x00FF)) {
+    local_can_errors.CXEC_reg &= 0xFF00;
+    local_can_errors.CXEC_reg += (CXEC & 0x00FF);
+  }
 }
 
 void ETMCanSlavePulseSyncSendNextPulseLevel(unsigned int next_pulse_level, unsigned int next_pulse_count) {

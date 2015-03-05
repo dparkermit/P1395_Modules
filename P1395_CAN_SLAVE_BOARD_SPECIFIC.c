@@ -158,7 +158,12 @@ void ETMCanSlaveExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
 
 #ifdef __A36465
       case ETM_CAN_REGISTER_AFC_SET_1_HOME_POSITION_AND_OFFSET:
+	
+	_CONTROL_NOT_CONFIGURED = 0;
       break;
+
+      
+
 #endif      
       
     default:

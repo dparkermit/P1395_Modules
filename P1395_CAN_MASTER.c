@@ -135,14 +135,8 @@ void ETMCanMasterProcessLogData(void);
 void ETMCanMasterClearDebug(void);
 
 void ETMCanMasterInitialize(void) {
-  if (_POR || _BOR) {
-    // This was a power cycle;
-    etm_can_persistent_data.reset_count = 0;
-    etm_can_persistent_data.can_timeout_count = 0;
-  } else {
-    etm_can_persistent_data.reset_count++;
-  }
-
+  etm_can_persistent_data.reset_count++;
+  
   _SYNC_CONTROL_WORD = 0;
   etm_can_sync_message.sync_1 = 1;
   etm_can_sync_message.sync_2 = 2;
@@ -254,6 +248,18 @@ void ETMCanMasterInitialize(void) {
 }
 
 void ETMCanMasterDoCan(void) {
+  // Record the max TX counter
+  if ((CXEC & 0xFF00) > (local_can_errors.CXEC_reg & 0xFF00)) {
+    local_can_errors.CXEC_reg &= 0x00FF;
+    local_can_errors.CXEC_reg += (CXEC & 0xFF00);
+  }
+
+  // Record the max RX counter
+  if ((CXEC & 0x00FF) > (local_can_errors.CXEC_reg & 0x00FF)) {
+    local_can_errors.CXEC_reg &= 0xFF00;
+    local_can_errors.CXEC_reg += (CXEC & 0x00FF);
+  }
+
   ETMCanMasterProcessMessage();
   ETMCanMasterTimedTransmit();
   ETMCanMasterProcessLogData();
@@ -1033,7 +1039,8 @@ void __attribute__((interrupt(__save__(CORCON,SR)), no_auto_psv)) _CXInterrupt(v
   unsigned int fast_log_buffer_index;
   
   _CXIF = 0;
-  local_can_errors.isr_entered++;
+  //local_can_errors.isr_entered++;
+  local_can_errors.isr_entered |= CXINTF;
   
   if(CXRX0CONbits.RXFUL) {
     /*
@@ -1125,7 +1132,22 @@ void __attribute__((interrupt(__save__(CORCON,SR)), no_auto_psv)) _CXInterrupt(v
       PIN_CAN_OPERATION_LED = 1;
     }
   }
-  local_can_errors.CXEC_reg = CXEC;
+
+  //local_can_errors.CXEC_reg = CXEC;
+
+
+  // Record the max TX counter
+  if ((CXEC & 0xFF00) > (local_can_errors.CXEC_reg & 0xFF00)) {
+    local_can_errors.CXEC_reg &= 0x00FF;
+    local_can_errors.CXEC_reg += (CXEC & 0xFF00);
+  }
+
+  // Record the max RX counter
+  if ((CXEC & 0x00FF) > (local_can_errors.CXEC_reg & 0x00FF)) {
+    local_can_errors.CXEC_reg &= 0xFF00;
+    local_can_errors.CXEC_reg += (CXEC & 0x00FF);
+  }
+
 }
 
 
@@ -1292,6 +1314,7 @@ void ETMCanMasterClearDebug(void) {
   local_can_errors.rx_0_filt_1         = 0;
   local_can_errors.rx_1_filt_2         = 0;
   local_can_errors.isr_entered         = 0;
+  CXINTF = 0;
 
   local_can_errors.unknown_message_identifier  = 0;
   local_can_errors.invalid_index       = 0;
