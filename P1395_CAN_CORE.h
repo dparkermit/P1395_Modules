@@ -132,7 +132,7 @@ typedef struct {
   // Log Message 0x1
   unsigned int reset_count;
   ETMCanSelfTestRegister self_test_results;
-  unsigned int reserved_1; 
+  unsigned int reserved_1;   // This is the RCON register
   unsigned int reserved_0;
   // Log Message 0x2
   unsigned int debug_0;

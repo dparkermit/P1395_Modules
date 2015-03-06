@@ -142,15 +142,6 @@ void ETMCanMasterInitialize(void) {
   etm_can_sync_message.sync_2 = 2;
   etm_can_sync_message.sync_3 = 3;
   
-  _POR = 0;
-  _BOR = 0;
-  _SWR = 0;
-  _EXTR = 0;
-  _TRAPR = 0;
-  _WDTO = 0;
-  _IOPUWR = 0;
-
-
   local_debug_data.reset_count = etm_can_persistent_data.reset_count;
   local_can_errors.timeout = etm_can_persistent_data.can_timeout_count;
 
@@ -259,6 +250,12 @@ void ETMCanMasterDoCan(void) {
     local_can_errors.CXEC_reg &= 0xFF00;
     local_can_errors.CXEC_reg += (CXEC & 0x00FF);
   }
+  
+  // Record the RCON state
+  local_debug_data.reserved_1 = 0xC345;
+  local_debug_data.reserved_0 = 0xF123;
+  local_debug_data.i2c_bus_error_count = RCON;
+
 
   ETMCanMasterProcessMessage();
   ETMCanMasterTimedTransmit();
@@ -908,15 +905,10 @@ void ETMCanMasterProcessLogData(void) {
 
 	case ETM_CAN_DATA_LOG_REGISTER_MAGNETRON_MON_FAST_PREVIOUS_PULSE:
 	  // Update the high speed data table
-	  ptr_high_speed_data->magmon_readback_magnetron_high_energy_current = next_message.word2;
+	  ptr_high_speed_data->magmon_readback_magnetron_low_energy_current = next_message.word2;
 	  ptr_high_speed_data->magmon_readback_magnetron_high_energy_current = next_message.word1;
 	  if (next_message.word0) {
-	    // Set the arc this pulse bit
-	    // DPARKER - need to do better job of this
-	    ptr_high_speed_data->status_bits |= 0x0001; 
-	  } else {
-	    // Clear the arc this pulse bit
-	    ptr_high_speed_data->status_bits &= 0b1111111111111110;
+	    ptr_high_speed_data->status_bits.arc_this_pulse = 1;
 	  }
 	  break;
 
@@ -1007,6 +999,9 @@ void ETMCanMasterProcessLogData(void) {
 
 
 	case ETM_CAN_DATA_LOG_REGISTER_PULSE_SYNC_FAST_TRIGGER_DATA:
+	  ptr_high_speed_data->psync_readback_trigger_width_and_filtered_trigger_width = next_message.word2;
+	  ptr_high_speed_data->psync_readback_high_energy_grid_width_and_delay = next_message.word1;
+	  ptr_high_speed_data->psync_readback_low_energy_grid_width_and_delay = next_message.word0;
 	  break;
 
 	case ETM_CAN_DATA_LOG_REGISTER_PULSE_SYNC_SLOW_TIMING_DATA_0:
@@ -1056,15 +1051,62 @@ void __attribute__((interrupt(__save__(CORCON,SR)), no_auto_psv)) _CXInterrupt(v
 
       fast_log_buffer_index = etm_can_next_pulse_count & 0x000F;
       if (etm_can_next_pulse_count & 0x0010) {
+	high_speed_data_buffer_a[fast_log_buffer_index].hvlambda_readback_high_energy_lambda_program_voltage = 0;
+	high_speed_data_buffer_a[fast_log_buffer_index].hvlambda_readback_low_energy_lambda_program_voltage = 0;
+	high_speed_data_buffer_a[fast_log_buffer_index].hvlambda_readback_peak_lambda_voltage = 0;
+
+	high_speed_data_buffer_a[fast_log_buffer_index].afc_readback_current_position = 0;
+	high_speed_data_buffer_a[fast_log_buffer_index].afc_readback_target_position = 0;
+	high_speed_data_buffer_a[fast_log_buffer_index].afc_readback_a_input = 0;
+	high_speed_data_buffer_a[fast_log_buffer_index].afc_readback_b_input = 0;
+	high_speed_data_buffer_a[fast_log_buffer_index].afc_readback_filtered_error_reading = 0;
+
+	high_speed_data_buffer_a[fast_log_buffer_index].ionpump_readback_high_energy_target_current_reading = 0;
+	high_speed_data_buffer_a[fast_log_buffer_index].ionpump_readback_low_energy_target_current_reading = 0;
+
+	high_speed_data_buffer_a[fast_log_buffer_index].magmon_readback_magnetron_high_energy_current = 0;
+	high_speed_data_buffer_a[fast_log_buffer_index].magmon_readback_magnetron_low_energy_current = 0;
+
+	high_speed_data_buffer_a[fast_log_buffer_index].psync_readback_trigger_width_and_filtered_trigger_width = 0;
+	high_speed_data_buffer_a[fast_log_buffer_index].psync_readback_high_energy_grid_width_and_delay = 0;
+	high_speed_data_buffer_a[fast_log_buffer_index].psync_readback_low_energy_grid_width_and_delay = 0;
+
 	high_speed_data_buffer_a[fast_log_buffer_index].x_ray_on_seconds_lsw = global_data_A36507.time_seconds_now;
 	high_speed_data_buffer_a[fast_log_buffer_index].x_ray_on_milliseconds = global_data_A36507.millisecond_counter;
 	high_speed_data_buffer_a[fast_log_buffer_index].x_ray_on_milliseconds += TMR5>>10;  // Need to divide by 1250 to get milliseconds
 	high_speed_data_buffer_a[fast_log_buffer_index].pulse_count = etm_can_next_pulse_count;
+	if (etm_can_next_pulse_level) {
+	  high_speed_data_buffer_a[fast_log_buffer_index].status_bits.arc_this_pulse = 1;
+	}
       } else {
+	high_speed_data_buffer_b[fast_log_buffer_index].hvlambda_readback_high_energy_lambda_program_voltage = 0;
+	high_speed_data_buffer_b[fast_log_buffer_index].hvlambda_readback_low_energy_lambda_program_voltage = 0;
+	high_speed_data_buffer_b[fast_log_buffer_index].hvlambda_readback_peak_lambda_voltage = 0;
+
+	high_speed_data_buffer_b[fast_log_buffer_index].afc_readback_current_position = 0;
+	high_speed_data_buffer_b[fast_log_buffer_index].afc_readback_target_position = 0;
+	high_speed_data_buffer_b[fast_log_buffer_index].afc_readback_a_input = 0;
+	high_speed_data_buffer_b[fast_log_buffer_index].afc_readback_b_input = 0;
+	high_speed_data_buffer_b[fast_log_buffer_index].afc_readback_filtered_error_reading = 0;
+
+	high_speed_data_buffer_b[fast_log_buffer_index].ionpump_readback_high_energy_target_current_reading = 0;
+	high_speed_data_buffer_b[fast_log_buffer_index].ionpump_readback_low_energy_target_current_reading = 0;
+
+	high_speed_data_buffer_b[fast_log_buffer_index].magmon_readback_magnetron_high_energy_current = 0;
+	high_speed_data_buffer_b[fast_log_buffer_index].magmon_readback_magnetron_low_energy_current = 0;
+
+	high_speed_data_buffer_b[fast_log_buffer_index].psync_readback_trigger_width_and_filtered_trigger_width = 0;
+	high_speed_data_buffer_b[fast_log_buffer_index].psync_readback_high_energy_grid_width_and_delay = 0;
+	high_speed_data_buffer_b[fast_log_buffer_index].psync_readback_low_energy_grid_width_and_delay = 0;
+
+
 	high_speed_data_buffer_b[fast_log_buffer_index].x_ray_on_seconds_lsw = global_data_A36507.time_seconds_now;
 	high_speed_data_buffer_b[fast_log_buffer_index].x_ray_on_milliseconds = global_data_A36507.millisecond_counter;
 	high_speed_data_buffer_b[fast_log_buffer_index].x_ray_on_milliseconds += TMR5>>10;  // Need to divide by 1250 to get milliseconds
 	high_speed_data_buffer_b[fast_log_buffer_index].pulse_count = etm_can_next_pulse_count;
+	if (etm_can_next_pulse_level) {
+	  high_speed_data_buffer_b[fast_log_buffer_index].status_bits.arc_this_pulse = 1;
+	}
       }
     } else {
       // The commmand was received by Filter 1
@@ -1314,7 +1356,6 @@ void ETMCanMasterClearDebug(void) {
   local_can_errors.rx_0_filt_1         = 0;
   local_can_errors.rx_1_filt_2         = 0;
   local_can_errors.isr_entered         = 0;
-  CXINTF = 0;
 
   local_can_errors.unknown_message_identifier  = 0;
   local_can_errors.invalid_index       = 0;
@@ -1336,5 +1377,14 @@ void ETMCanMasterClearDebug(void) {
   global_data_A36507.no_connect_count_heater_magnet_board = 0;
   global_data_A36507.no_connect_count_gun_driver_board = 0;
 
-
+  CXINTF = 0;
+  _TRAPR = 0;
+  _IOPUWR = 0;
+  _EXTR = 0;
+  _WDTO = 0;
+  _SLEEP = 0;
+  _IDLE = 0;
+  _BOR = 0;
+  _POR = 0;
+  _SWR = 0;
 }

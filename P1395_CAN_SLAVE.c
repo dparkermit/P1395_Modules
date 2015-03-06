@@ -145,6 +145,11 @@ void ETMCanSlaveDoCan(void) {
     local_can_errors.CXEC_reg += (CXEC & 0x00FF);
   }
 
+  // Record the RCON state
+  local_debug_data.reserved_1 = 0xC345;
+  local_debug_data.reserved_0 = 0xF123;
+  local_debug_data.i2c_bus_error_count = RCON;
+
   ETMCanSlaveProcessMessage();
   ETMCanSlaveTimedTransmit();
   ETMCanSlaveCheckForTimeOut();
@@ -591,7 +596,15 @@ void ETMCanSlaveClearDebug(void) {
   local_can_errors.timeout             = 0;
 
   CXINTF = 0;
-
+  _TRAPR = 0;
+  _IOPUWR = 0;
+  _EXTR = 0;
+  _WDTO = 0;
+  _SLEEP = 0;
+  _IDLE = 0;
+  _BOR = 0;
+  _POR = 0;
+  _SWR = 0;
 }
 
 void ETMCanSlaveInitialize(void) {
@@ -602,15 +615,6 @@ void ETMCanSlaveInitialize(void) {
   etm_can_sync_message.sync_2 = 2;
   etm_can_sync_message.sync_3 = 3;
   
-  // Clear the processor reset flags
-  _POR = 0;
-  _BOR = 0;
-  _SWR = 0;
-  _EXTR = 0;
-  _TRAPR = 0;
-  _WDTO = 0;
-  _IOPUWR = 0;
-
   local_debug_data.reset_count = etm_can_persistent_data.reset_count;
   local_can_errors.timeout = etm_can_persistent_data.can_timeout_count;
 

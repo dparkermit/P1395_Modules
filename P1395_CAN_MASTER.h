@@ -4,9 +4,32 @@
 #include "P1395_CAN_CORE.h"
 #include "P1395_CAN_CORE_PRIVATE.h"
 
+
 typedef struct {
+  unsigned high_energy_pulse:1;
+  unsigned arc_this_pulse:1;
+  unsigned tbd_2:1;
+  unsigned tbd_3:1;
+
+  unsigned tbd_4:1;
+  unsigned tbd_5:1;
+  unsigned tbd_6:1;
+  unsigned tbd_7:1;
+
+  unsigned tbd_8:1;
+  unsigned tbd_9:1;
+  unsigned tbd_A:1;
+  unsigned tbd_B:1;
+
+  unsigned tbd_C:1;
+  unsigned tbd_D:1;
+  unsigned tbd_E:1;
+  unsigned tbd_F:1;
+} HighSpeedLogStatusBits;
+
+typedef struct {
+  HighSpeedLogStatusBits status_bits; //This will contain high_low_energy?, arc_this_pulse?, what else???
   unsigned int pulse_count;
-  unsigned int status_bits; //This will contain high_low_energy?, arc_this_pulse?, what else???
   
   unsigned int x_ray_on_seconds_lsw;  // This is the lsw of x_ray_on_seconds, when the ECB recieved the "next pulse level" command
   unsigned int x_ray_on_milliseconds; // This is a representation of the milliseconds, when the ECB recieved the "next pulse level" command
@@ -27,13 +50,9 @@ typedef struct {
   unsigned int magmon_readback_magnetron_high_energy_current;
   unsigned int magmon_readback_magnetron_low_energy_current;
 
-  unsigned char psync_readback_customer_trigger_width;
-  unsigned char psync_readback_filtered_customer_trigger_width;
-  unsigned char psync_readback_high_energy_grid_width;
-  unsigned char psync_readback_high_energy_grid_delay;
-  unsigned char psync_readback_low_energy_grid_width;
-  unsigned char psync_readback_low_energy_grid_delay;
-  
+  unsigned int psync_readback_trigger_width_and_filtered_trigger_width;
+  unsigned int psync_readback_high_energy_grid_width_and_delay;
+  unsigned int psync_readback_low_energy_grid_width_and_delay;
 } ETMCanHighSpeedData;
 // 19 words
 
@@ -365,7 +384,8 @@ extern ETMCanRamMirrorPulseSync         etm_can_pulse_sync_mirror;
 #define _PULSE_SYNC_CUSTOMER_XRAY_OFF      etm_can_pulse_sync_mirror.status_data.status_bits.status_1
 
 // PUBLIC Variables
-
+extern ETMCanHighSpeedData high_speed_data_buffer_a[16];
+extern ETMCanHighSpeedData high_speed_data_buffer_b[16];
 
 
 extern ETMCanHighSpeedData              etm_can_high_speed_data_test;
