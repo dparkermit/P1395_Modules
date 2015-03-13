@@ -161,15 +161,42 @@ void ETMCanSlaveExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
       psb_data.led_state = message_ptr->word0;
       break;
 #endif
-
-
+      
+      
 #ifdef __A36465
-      case ETM_CAN_REGISTER_AFC_SET_1_HOME_POSITION_AND_OFFSET:
-	
-	_CONTROL_NOT_CONFIGURED = 0;
+    case ETM_CAN_REGISTER_AFC_SET_1_HOME_POSITION_AND_OFFSET:
+      _CONTROL_NOT_CONFIGURED = 0;
+      break;
+      
+    case ETM_CAN_REGISTER_AFC_CMD_SELECT_AFC_MODE:
+      _STATUS_AFC_MODE_MANUAL_MODE = 0;
+      break;
+      
+    case ETM_CAN_REGISTER_AFC_CMD_SELECT_MANUAL_MODE:
+      _STATUS_AFC_MODE_MANUAL_MODE = 1;
+      break;
+      
+    case ETM_CAN_REGISTER_AFC_CMD_SET_MANUAL_TARGET_POSITION:
+      global_data_A36465.manual_target_position = message_ptr->word0;
       break;
 
-      
+    case ETM_CAN_REGISTER_AFC_CMD_RELATIVE_MOVE_MANUAL_TARGET:
+      if (message_ptr->word1) {
+	// decrease the target position;
+	if (global_data_A36465.manual_target_position > message_ptr->word0) {
+	  global_data_A36465.manual_target_position -= message_ptr->word0;
+	} else {
+	  global_data_A36465.manual_target_position = 0;
+	}
+      } else {
+	// increase the target position;
+	if ((0xFFFF - message_ptr->word0) > global_data_A36465.manual_target_position) {
+	  global_data_A36465.manual_target_position += message_ptr->word0;
+	} else {
+	  global_data_A36465.manual_target_position = 0xFFFF;
+	}
+      }
+      break;
 
 #endif      
 
@@ -268,9 +295,9 @@ void ETMCanSlaveLogCustomPacketC(void) {
 #ifdef __A36465
   ETMCanSlaveLogData(
 		     ETM_CAN_DATA_LOG_REGISTER_AFC_FAST_POSITION,
-		     0,
-		     0,
-		     0,
+		     etm_can_next_pulse_count,
+		     afc_motor.current_position,
+		     afc_motor.target_position,
 		     0
 		     );
 
@@ -374,7 +401,7 @@ void ETMCanSlaveLogCustomPacketD(void) {
 #ifdef __A36465
   ETMCanSlaveLogData(
 		     ETM_CAN_DATA_LOG_REGISTER_AFC_FAST_READINGS,
-		     0,
+		     etm_can_next_pulse_count,
 		     0,
 		     0,
 		     0
@@ -423,9 +450,9 @@ void ETMCanSlaveLogCustomPacketE(void) {
 #ifdef __A36465
   ETMCanSlaveLogData(
 		     ETM_CAN_DATA_LOG_REGISTER_AFC_SLOW_SETTINGS,
-		     0,
-		     0,
-		     0,
+		     afc_motor.home_position,
+		     0, // Dparker return the programed offset here
+		     afc_motor.current_position, 
 		     0
 		     );
 
