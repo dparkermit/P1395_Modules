@@ -428,7 +428,7 @@ void ETMCanMasterAFCUpdateHomeOffset(void) {
   ETMCanMessage can_message;
   can_message.identifier = (ETM_CAN_MSG_CMD_TX | (ETM_CAN_ADDR_AFC_CONTROL_BOARD << 3));
   can_message.word3 = ETM_CAN_REGISTER_AFC_SET_1_HOME_POSITION_AND_OFFSET;
-  can_message.word2 = 0;
+  can_message.word2 = etm_can_afc_mirror.aft_control_voltage;
   can_message.word1 = (unsigned int)etm_can_afc_mirror.afc_offset;
   can_message.word0 = etm_can_afc_mirror.afc_home_position;
   ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &can_message);
@@ -900,6 +900,7 @@ void ETMCanMasterProcessLogData(void) {
 	  etm_can_afc_mirror.afc_readback_home_position = next_message.word3;
 	  etm_can_afc_mirror.afc_readback_offset = next_message.word2;
 	  etm_can_afc_mirror.afc_readback_current_position = next_message.word1;
+	  etm_can_afc_mirror.readback_aft_control_voltage = next_message.word0;
 	  break;
 
 

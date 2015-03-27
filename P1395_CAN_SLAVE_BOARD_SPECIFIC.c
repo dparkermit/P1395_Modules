@@ -165,6 +165,9 @@ void ETMCanSlaveExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
       
 #ifdef __A36465
     case ETM_CAN_REGISTER_AFC_SET_1_HOME_POSITION_AND_OFFSET:
+      afc_motor.home_position = message_ptr->word0;
+      // unused offset
+      ETMAnalogSetOutput(&global_data_A36465.aft_control_voltage, message_ptr->word2);
       _CONTROL_NOT_CONFIGURED = 0;
       break;
       
@@ -453,7 +456,7 @@ void ETMCanSlaveLogCustomPacketE(void) {
 		     afc_motor.home_position,
 		     0, // Dparker return the programed offset here
 		     afc_motor.current_position, 
-		     0
+		     global_data_A36465.aft_control_voltage.set_point
 		     );
 
 #endif

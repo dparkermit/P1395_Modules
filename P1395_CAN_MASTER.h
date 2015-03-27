@@ -173,6 +173,8 @@ typedef struct {
   unsigned int afc_readback_filtered_error_reading;
   unsigned int afc_readback_target_position;
   
+  unsigned int aft_control_voltage;
+  unsigned int readback_aft_control_voltage;
   
 
 } ETMCanRamMirrorAFC;
