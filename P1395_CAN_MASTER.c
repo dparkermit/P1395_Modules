@@ -56,11 +56,8 @@ void ETMCanMasterProcessMessage(void);
 void ETMCanMasterCheckForTimeOut(void);
 
 
-ETMCanHighSpeedData high_speed_data_buffer_a[16];
-ETMCanHighSpeedData high_speed_data_buffer_b[16];
-unsigned int high_speed_data_buffer_a_full;
-unsigned int high_speed_data_buffer_b_full;
-
+ETMCanHighSpeedData high_speed_data_buffer_a[HIGH_SPEED_DATA_BUFFER_SIZE];
+ETMCanHighSpeedData high_speed_data_buffer_b[HIGH_SPEED_DATA_BUFFER_SIZE];
 
 
 

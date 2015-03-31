@@ -386,8 +386,9 @@ extern ETMCanRamMirrorPulseSync         etm_can_pulse_sync_mirror;
 #define _PULSE_SYNC_CUSTOMER_XRAY_OFF      etm_can_pulse_sync_mirror.status_data.status_bits.status_1
 
 // PUBLIC Variables
-extern ETMCanHighSpeedData high_speed_data_buffer_a[16];
-extern ETMCanHighSpeedData high_speed_data_buffer_b[16];
+#define HIGH_SPEED_DATA_BUFFER_SIZE   16
+extern ETMCanHighSpeedData high_speed_data_buffer_a[HIGH_SPEED_DATA_BUFFER_SIZE];
+extern ETMCanHighSpeedData high_speed_data_buffer_b[HIGH_SPEED_DATA_BUFFER_SIZE];
 
 
 extern ETMCanHighSpeedData              etm_can_high_speed_data_test;
