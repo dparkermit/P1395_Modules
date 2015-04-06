@@ -1049,6 +1049,23 @@ void __attribute__((interrupt(__save__(CORCON,SR)), no_auto_psv)) _CXInterrupt(v
 
       fast_log_buffer_index = etm_can_next_pulse_count & 0x000F;
       if (etm_can_next_pulse_count & 0x0010) {
+	// We are putting data into buffer A
+	global_data_A36507.buffer_a_ready_to_send = 0;
+	global_data_A36507.buffer_a_sent = 0;
+	if (fast_log_buffer_index >= 3) {
+	  global_data_A36507.buffer_b_ready_to_send = 1;
+	}
+
+
+	high_speed_data_buffer_a[fast_log_buffer_index].pulse_count = etm_can_next_pulse_count;
+	if (etm_can_next_pulse_level) {
+	  high_speed_data_buffer_a[fast_log_buffer_index].status_bits.arc_this_pulse = 1;
+	}
+       
+	high_speed_data_buffer_a[fast_log_buffer_index].x_ray_on_seconds_lsw = global_data_A36507.time_seconds_now;
+	high_speed_data_buffer_a[fast_log_buffer_index].x_ray_on_milliseconds = global_data_A36507.millisecond_counter;
+	high_speed_data_buffer_a[fast_log_buffer_index].x_ray_on_milliseconds += TMR5>>10;  // Need to divide by 1250 to get milliseconds
+
 	high_speed_data_buffer_a[fast_log_buffer_index].hvlambda_readback_high_energy_lambda_program_voltage = 0;
 	high_speed_data_buffer_a[fast_log_buffer_index].hvlambda_readback_low_energy_lambda_program_voltage = 0;
 	high_speed_data_buffer_a[fast_log_buffer_index].hvlambda_readback_peak_lambda_voltage = 0;
@@ -1068,15 +1085,29 @@ void __attribute__((interrupt(__save__(CORCON,SR)), no_auto_psv)) _CXInterrupt(v
 	high_speed_data_buffer_a[fast_log_buffer_index].psync_readback_trigger_width_and_filtered_trigger_width = 0;
 	high_speed_data_buffer_a[fast_log_buffer_index].psync_readback_high_energy_grid_width_and_delay = 0;
 	high_speed_data_buffer_a[fast_log_buffer_index].psync_readback_low_energy_grid_width_and_delay = 0;
-
-	high_speed_data_buffer_a[fast_log_buffer_index].x_ray_on_seconds_lsw = global_data_A36507.time_seconds_now;
-	high_speed_data_buffer_a[fast_log_buffer_index].x_ray_on_milliseconds = global_data_A36507.millisecond_counter;
-	high_speed_data_buffer_a[fast_log_buffer_index].x_ray_on_milliseconds += TMR5>>10;  // Need to divide by 1250 to get milliseconds
-	high_speed_data_buffer_a[fast_log_buffer_index].pulse_count = etm_can_next_pulse_count;
-	if (etm_can_next_pulse_level) {
-	  high_speed_data_buffer_a[fast_log_buffer_index].status_bits.arc_this_pulse = 1;
-	}
+	
       } else {
+	// We are putting data into buffer B
+	global_data_A36507.buffer_b_ready_to_send = 0;
+	global_data_A36507.buffer_b_sent = 0;
+	if (fast_log_buffer_index >= 3) {
+	  global_data_A36507.buffer_a_ready_to_send = 1;
+	}
+
+	if (fast_log_buffer_index >= 3) {
+	  global_data_A36507.buffer_a_ready_to_send;
+	}
+
+
+	high_speed_data_buffer_b[fast_log_buffer_index].pulse_count = etm_can_next_pulse_count;
+	if (etm_can_next_pulse_level) {
+	  high_speed_data_buffer_b[fast_log_buffer_index].status_bits.arc_this_pulse = 1;
+	}
+	
+	high_speed_data_buffer_b[fast_log_buffer_index].x_ray_on_seconds_lsw = global_data_A36507.time_seconds_now;
+	high_speed_data_buffer_b[fast_log_buffer_index].x_ray_on_milliseconds = global_data_A36507.millisecond_counter;
+	high_speed_data_buffer_b[fast_log_buffer_index].x_ray_on_milliseconds += TMR5>>10;  // Need to divide by 1250 to get milliseconds
+
 	high_speed_data_buffer_b[fast_log_buffer_index].hvlambda_readback_high_energy_lambda_program_voltage = 0;
 	high_speed_data_buffer_b[fast_log_buffer_index].hvlambda_readback_low_energy_lambda_program_voltage = 0;
 	high_speed_data_buffer_b[fast_log_buffer_index].hvlambda_readback_peak_lambda_voltage = 0;
@@ -1097,14 +1128,6 @@ void __attribute__((interrupt(__save__(CORCON,SR)), no_auto_psv)) _CXInterrupt(v
 	high_speed_data_buffer_b[fast_log_buffer_index].psync_readback_high_energy_grid_width_and_delay = 0;
 	high_speed_data_buffer_b[fast_log_buffer_index].psync_readback_low_energy_grid_width_and_delay = 0;
 
-
-	high_speed_data_buffer_b[fast_log_buffer_index].x_ray_on_seconds_lsw = global_data_A36507.time_seconds_now;
-	high_speed_data_buffer_b[fast_log_buffer_index].x_ray_on_milliseconds = global_data_A36507.millisecond_counter;
-	high_speed_data_buffer_b[fast_log_buffer_index].x_ray_on_milliseconds += TMR5>>10;  // Need to divide by 1250 to get milliseconds
-	high_speed_data_buffer_b[fast_log_buffer_index].pulse_count = etm_can_next_pulse_count;
-	if (etm_can_next_pulse_level) {
-	  high_speed_data_buffer_b[fast_log_buffer_index].status_bits.arc_this_pulse = 1;
-	}
       }
     } else {
       // The commmand was received by Filter 1
