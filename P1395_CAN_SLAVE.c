@@ -791,9 +791,9 @@ void ETMCanSlavePulseSyncSendNextPulseLevel(unsigned int next_pulse_level, unsig
   } else {
     message.word1    = 0;
   }
-
+  local_debug_data.debug_D = message.word1;
   ETMCanTXMessage(&message, &CXTX2CON);
   local_can_errors.tx_2++;
-  
+
 
 }

@@ -94,65 +94,65 @@ void ETMCanSlaveExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
 #ifdef __A36487     //A36487 PULSE SYNC BOARD
       unsigned int temp;
     case ETM_CAN_REGISTER_PULSE_SYNC_SET_1_HIGH_ENERGY_TIMING_REG_0:
-      temp = (message_ptr->word3 & 0xFF00) >> 8;
-      psb_params.grid_delay_high3 = temp;
-      temp = message_ptr->word3 & 0x00FF;
-      psb_params.grid_delay_high2 = temp;
       temp = (message_ptr->word2 & 0xFF00) >> 8;
-      psb_params.grid_delay_high1 = temp;
+      psb_params.grid_delay_high3 = temp;
       temp = message_ptr->word2 & 0x00FF;
-      psb_params.grid_delay_high0 = temp;
+      psb_params.grid_delay_high2 = temp;
       temp = (message_ptr->word1 & 0xFF00) >> 8;
-      psb_params.pfn_delay_high = temp;
+      psb_params.grid_delay_high1 = temp;
       temp = message_ptr->word1 & 0x00FF;
+      psb_params.grid_delay_high0 = temp;
+      temp = (message_ptr->word0 & 0xFF00) >> 8;
+      psb_params.pfn_delay_high = temp;
+      temp = message_ptr->word0 & 0x00FF;
       psb_params.rf_delay_high = temp;
       psb_data.counter_config_received |= 0b0001;
       break;
 
     case ETM_CAN_REGISTER_PULSE_SYNC_SET_1_HIGH_ENERGY_TIMING_REG_1:
-      temp = (message_ptr->word3 & 0xFF00) >> 8;
-      psb_params.grid_width_high3 = temp;
-      temp = message_ptr->word3 & 0x00FF;
-      psb_params.grid_width_high2 = temp;
       temp = (message_ptr->word2 & 0xFF00) >> 8;
-      psb_params.grid_width_high1 = temp;
+      psb_params.grid_width_high3 = temp;
       temp = message_ptr->word2 & 0x00FF;
-      psb_params.grid_width_high0 = temp;
+      psb_params.grid_width_high2 = temp;
       temp = (message_ptr->word1 & 0xFF00) >> 8;
-      psb_params.afc_delay_high = temp;
+      psb_params.grid_width_high1 = temp;
       temp = message_ptr->word1 & 0x00FF;
+      psb_params.grid_width_high0 = temp;
+      temp = (message_ptr->word0 & 0xFF00) >> 8;
+      psb_params.afc_delay_high = temp;
+      temp = message_ptr->word0 & 0x00FF;
       psb_params.spare_delay_high = temp;
       psb_data.counter_config_received |=0b0010;
       break;
 
     case ETM_CAN_REGISTER_PULSE_SYNC_SET_1_LOW_ENERGY_TIMING_REG_0:
-      temp = (message_ptr->word3 & 0xFF00) >> 8;
-      psb_params.grid_delay_low3 = temp;
-      temp = message_ptr->word3 & 0x00FF;
-      psb_params.grid_delay_low2 = temp;
       temp = (message_ptr->word2 & 0xFF00) >> 8;
-      psb_params.grid_delay_low1 = temp;
+      psb_params.grid_delay_low3 = temp;
       temp = message_ptr->word2 & 0x00FF;
-      psb_params.grid_delay_low0 = temp;
+      psb_params.grid_delay_low2 = temp;
       temp = (message_ptr->word1 & 0xFF00) >> 8;
-      psb_params.pfn_delay_low = temp;
+      psb_params.grid_delay_low1 = temp;
       temp = message_ptr->word1 & 0x00FF;
+      psb_params.grid_delay_low0 = temp;
+      temp = (message_ptr->word0 & 0xFF00) >> 8;
+      psb_params.pfn_delay_low = temp;
+      temp = message_ptr->word0 & 0x00FF;
       psb_params.rf_delay_low = temp;
       psb_data.counter_config_received |= 0b0100;
       break;
 
     case ETM_CAN_REGISTER_PULSE_SYNC_SET_1_LOW_ENERGY_TIMING_REG_1:
-      temp = (message_ptr->word3 & 0xFF00) >> 8;
-      psb_params.grid_width_low3 = temp;
-      temp = message_ptr->word3 & 0x00FF;
-      psb_params.grid_width_low2 = temp;
       temp = (message_ptr->word2 & 0xFF00) >> 8;
-      psb_params.grid_width_low1 = temp;
+      psb_params.grid_width_low3 = temp;
       temp = message_ptr->word2 & 0x00FF;
-      psb_params.grid_width_low0 = temp;
+      psb_params.grid_width_low2 = temp;
       temp = (message_ptr->word1 & 0xFF00) >> 8;
-      psb_params.afc_delay_low = temp;
+      psb_params.grid_width_low1 = temp;
       temp = message_ptr->word1 & 0x00FF;
+      psb_params.grid_width_low0 = temp;
+      temp = (message_ptr->word0 & 0xFF00) >> 8;
+      psb_params.afc_delay_low = temp;
+      temp = message_ptr->word0 & 0x00FF;
       psb_params.spare_delay_low = temp;
       psb_data.counter_config_received |= 0b1000;
       break;
@@ -279,9 +279,9 @@ void ETMCanSlaveLogCustomPacketC(void) {
 #ifdef __A36487
   ETMCanSlaveLogData(ETM_CAN_DATA_LOG_REGISTER_PULSE_SYNC_FAST_TRIGGER_DATA,
 		     psb_data.pulses_on,
-		     (psb_data.trigger_input << 8) & psb_data.trigger_filtered,
-		     (psb_data.grid_width << 8) & psb_data.grid_delay,
-		     0);
+		     7,//(psb_data.trigger_input << 8) & psb_data.trigger_filtered,
+		     8,//(psb_data.grid_width << 8) & psb_data.grid_delay,
+		     9);
 #endif
 
 
@@ -405,9 +405,9 @@ void ETMCanSlaveLogCustomPacketD(void) {
   ETMCanSlaveLogData(
 		     ETM_CAN_DATA_LOG_REGISTER_AFC_FAST_READINGS,
 		     etm_can_next_pulse_count,
-		     0,
-		     0,
-		     0
+		     1,//global_data_A36465.aft_A_sample.reading_scaled_and_calibrated,
+		     35,//global_data_A36465.aft_B_sample.reading_scaled_and_calibrated,
+		     17//global_data_A36465.aft_filtered_error_for_client
 		     );
 
 #endif
@@ -487,7 +487,7 @@ void ETMCanSlaveLogCustomPacketF(void) {
   // There is no F packet for HV Lamdba, leave blank
   
 #ifdef __A36487
-  ETMCanSlaveLogData(ETM_CAN_DATA_LOG_REGISTER_PULSE_SYNC_SLOW_TIMING_DATA_1,
+  ETMCanSlaveLogData(ETM_CAN_DATA_LOG_REGISTER_PULSE_SYNC_SLOW_TIMING_DATA_2,
 		     (psb_params.pfn_delay_low << 8) & psb_params.rf_delay_low,
 		     (psb_params.grid_width_low3 << 8) & psb_params.grid_width_low2,
 		     (psb_params.grid_width_low1 << 8) & psb_params.grid_width_low0,

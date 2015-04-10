@@ -470,9 +470,9 @@ void ETMCanMasterPulseSyncUpdateHighRegZero(void) {
   ETMCanMessage can_message;
   can_message.identifier = (ETM_CAN_MSG_CMD_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
   can_message.word3 = ETM_CAN_REGISTER_PULSE_SYNC_SET_1_HIGH_ENERGY_TIMING_REG_0;
-  can_message.word2 = 0;
-  can_message.word1 = 0;
-  can_message.word0 = 0;
+  can_message.word2 = *(unsigned int*)&etm_can_pulse_sync_mirror.psync_grid_delay_high_intensity_3;
+  can_message.word1 = *(unsigned int*)&etm_can_pulse_sync_mirror.psync_grid_delay_high_intensity_1;
+  can_message.word0 = *(unsigned int*)&etm_can_pulse_sync_mirror.psync_pfn_delay_high;
   ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &can_message);
   MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
 }
@@ -481,9 +481,9 @@ void ETMCanMasterPulseSyncUpdateHighRegOne(void) {
   ETMCanMessage can_message;
   can_message.identifier = (ETM_CAN_MSG_CMD_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
   can_message.word3 = ETM_CAN_REGISTER_PULSE_SYNC_SET_1_HIGH_ENERGY_TIMING_REG_1;
-  can_message.word2 = 0;
-  can_message.word1 = 0;
-  can_message.word0 = 0;
+  can_message.word2 = *(unsigned int*)&etm_can_pulse_sync_mirror.psync_grid_width_high_intensity_3;
+  can_message.word1 = *(unsigned int*)&etm_can_pulse_sync_mirror.psync_grid_width_high_intensity_1;
+  can_message.word0 = *(unsigned int*)&etm_can_pulse_sync_mirror.psync_afc_delay_high;
   ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &can_message);
   MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
 }
@@ -492,9 +492,10 @@ void ETMCanMasterPulseSyncUpdateLowRegZero(void) {
   ETMCanMessage can_message;
   can_message.identifier = (ETM_CAN_MSG_CMD_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
   can_message.word3 = ETM_CAN_REGISTER_PULSE_SYNC_SET_1_LOW_ENERGY_TIMING_REG_0;
-  can_message.word2 = 0;
-  can_message.word1 = 0;
-  can_message.word0 = 0;
+  can_message.word2 = *(unsigned int*)&etm_can_pulse_sync_mirror.psync_grid_delay_low_intensity_3;
+  can_message.word1 = *(unsigned int*)&etm_can_pulse_sync_mirror.psync_grid_delay_low_intensity_1;
+  can_message.word0 = *(unsigned int*)&etm_can_pulse_sync_mirror.psync_pfn_delay_low;
+
   ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &can_message);
   MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
 }
@@ -503,9 +504,9 @@ void ETMCanMasterPulseSyncUpdateLowRegOne(void) {
   ETMCanMessage can_message;
   can_message.identifier = (ETM_CAN_MSG_CMD_TX | (ETM_CAN_ADDR_PULSE_SYNC_BOARD << 3));
   can_message.word3 = ETM_CAN_REGISTER_PULSE_SYNC_SET_1_LOW_ENERGY_TIMING_REG_1;
-  can_message.word2 = 0;
-  can_message.word1 = 0;
-  can_message.word0 = 0;
+  can_message.word2 = *(unsigned int*)&etm_can_pulse_sync_mirror.psync_grid_width_low_intensity_3;
+  can_message.word1 = *(unsigned int*)&etm_can_pulse_sync_mirror.psync_grid_width_low_intensity_1;
+  can_message.word0 = *(unsigned int*)&etm_can_pulse_sync_mirror.psync_afc_delay_low;
   ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &can_message);
   MacroETMCanCheckTXBuffer();  // DPARKER - Figure out how to build this into ETMCanAddMessageToBuffer()
 }
@@ -881,16 +882,14 @@ void ETMCanMasterProcessLogData(void) {
 
 
 	case ETM_CAN_DATA_LOG_REGISTER_AFC_FAST_POSITION:
-	  //etm_can_high_speed_data_test.pulse_count = next_message.word3;
-	  //etm_can_high_speed_data_test.afc_readback_current_position = next_message.word2;
-	  //etm_can_high_speed_data_test.afc_readback_target_position = next_message.word1;
+	  ptr_high_speed_data->afc_readback_current_position = next_message.word2;
+	  ptr_high_speed_data->afc_readback_target_position = next_message.word1;
 	  break;
 
 	case ETM_CAN_DATA_LOG_REGISTER_AFC_FAST_READINGS:
-	  //etm_can_high_speed_data_test.pulse_count = next_message.word3;
-	  //etm_can_high_speed_data_test.afc_readback_a_input = next_message.word2;
-	  //etm_can_high_speed_data_test.afc_readback_b_input = next_message.word1;
-	  //etm_can_high_speed_data_test.afc_readback_filtered_error_reading = next_message.word0;
+	  ptr_high_speed_data->afc_readback_a_input = next_message.word2;
+	  ptr_high_speed_data->afc_readback_b_input = next_message.word1;
+	  ptr_high_speed_data->afc_readback_filtered_error_reading = next_message.word0;
 	  break;
 
 	case ETM_CAN_DATA_LOG_REGISTER_AFC_SLOW_SETTINGS:
@@ -1030,11 +1029,20 @@ void ETMCanMasterProcessLogData(void) {
 void __attribute__((interrupt(__save__(CORCON,SR)), no_auto_psv)) _CXInterrupt(void) {
   ETMCanMessage can_message;
   unsigned int fast_log_buffer_index;
-  
+  unsigned int pulse_time;
+
   _CXIF = 0;
   //local_can_errors.isr_entered++;
   local_can_errors.isr_entered |= CXINTF;
   
+  pulse_time = global_data_A36507.millisecond_counter;
+  pulse_time += ETMScaleFactor2((TMR5>>11),MACRO_DEC_TO_CAL_FACTOR_2(.8192),0);
+  if (_T5IF) {
+    pulse_time += 10;
+  }
+
+
+
   if(CXRX0CONbits.RXFUL) {
     /*
       A message has been received in Buffer Zero
@@ -1047,87 +1055,91 @@ void __attribute__((interrupt(__save__(CORCON,SR)), no_auto_psv)) _CXInterrupt(v
       etm_can_next_pulse_level = can_message.word1;
       etm_can_next_pulse_count = can_message.word0;
 
-      fast_log_buffer_index = etm_can_next_pulse_count & 0x000F;
-      if (etm_can_next_pulse_count & 0x0010) {
-	// We are putting data into buffer A
-	global_data_A36507.buffer_a_ready_to_send = 0;
-	global_data_A36507.buffer_a_sent = 0;
-	if (fast_log_buffer_index >= 3) {
-	  global_data_A36507.buffer_b_ready_to_send = 1;
+
+      if (_SYNC_CONTROL_HIGH_SPEED_LOGGING) {
+	// Prepare the buffer to store the data
+	fast_log_buffer_index = etm_can_next_pulse_count & 0x000F;
+	if (etm_can_next_pulse_count & 0x0010) {
+	  // We are putting data into buffer A
+	  global_data_A36507.buffer_a_ready_to_send = 0;
+	  global_data_A36507.buffer_a_sent = 0;
+	  if (fast_log_buffer_index >= 3) {
+	    global_data_A36507.buffer_b_ready_to_send = 1;
+	  }
+	  
+	  *(unsigned int*)&high_speed_data_buffer_a[fast_log_buffer_index].status_bits = 0; // clear the status bits register
+	  high_speed_data_buffer_a[fast_log_buffer_index].pulse_count = etm_can_next_pulse_count;
+	  if (etm_can_next_pulse_level) {
+	    high_speed_data_buffer_a[fast_log_buffer_index].status_bits.high_energy_pulse = 1;
+	  }
+
+	  high_speed_data_buffer_a[fast_log_buffer_index].x_ray_on_seconds_lsw = global_data_A36507.time_seconds_now;
+	  high_speed_data_buffer_a[fast_log_buffer_index].x_ray_on_milliseconds = pulse_time;
+	  
+	  high_speed_data_buffer_a[fast_log_buffer_index].hvlambda_readback_high_energy_lambda_program_voltage = 0;
+	  high_speed_data_buffer_a[fast_log_buffer_index].hvlambda_readback_low_energy_lambda_program_voltage = 0;
+	  high_speed_data_buffer_a[fast_log_buffer_index].hvlambda_readback_peak_lambda_voltage = 0;
+	  
+	  high_speed_data_buffer_a[fast_log_buffer_index].afc_readback_current_position = 0;
+	  high_speed_data_buffer_a[fast_log_buffer_index].afc_readback_target_position = 0;
+	  high_speed_data_buffer_a[fast_log_buffer_index].afc_readback_a_input = 0;
+	  high_speed_data_buffer_a[fast_log_buffer_index].afc_readback_b_input = 0;
+	  high_speed_data_buffer_a[fast_log_buffer_index].afc_readback_filtered_error_reading = 0;
+	  
+	  high_speed_data_buffer_a[fast_log_buffer_index].ionpump_readback_high_energy_target_current_reading = 0;
+	  high_speed_data_buffer_a[fast_log_buffer_index].ionpump_readback_low_energy_target_current_reading = 0;
+	  
+	  high_speed_data_buffer_a[fast_log_buffer_index].magmon_readback_magnetron_high_energy_current = 0;
+	  high_speed_data_buffer_a[fast_log_buffer_index].magmon_readback_magnetron_low_energy_current = 0;
+	  
+	  high_speed_data_buffer_a[fast_log_buffer_index].psync_readback_trigger_width_and_filtered_trigger_width = 0;
+	  high_speed_data_buffer_a[fast_log_buffer_index].psync_readback_high_energy_grid_width_and_delay = 0;
+	  high_speed_data_buffer_a[fast_log_buffer_index].psync_readback_low_energy_grid_width_and_delay = 0;
+	  
+
+
+	  high_speed_data_buffer_a[fast_log_buffer_index].ionpump_readback_high_energy_target_current_reading = etm_can_next_pulse_level;
+
+	} else {
+	  // We are putting data into buffer B
+	  global_data_A36507.buffer_b_ready_to_send = 0;
+	  global_data_A36507.buffer_b_sent = 0;
+	  if (fast_log_buffer_index >= 3) {
+	    global_data_A36507.buffer_a_ready_to_send = 1;
+	  }
+	  
+	  *(unsigned int*)&high_speed_data_buffer_b[fast_log_buffer_index].status_bits = 0; // Clear the status bits register
+	  high_speed_data_buffer_b[fast_log_buffer_index].pulse_count = etm_can_next_pulse_count;
+	  if (etm_can_next_pulse_level) {
+	    high_speed_data_buffer_b[fast_log_buffer_index].status_bits.high_energy_pulse = 1;
+	  }
+	  
+	  high_speed_data_buffer_b[fast_log_buffer_index].x_ray_on_seconds_lsw = global_data_A36507.time_seconds_now;
+	  high_speed_data_buffer_b[fast_log_buffer_index].x_ray_on_milliseconds = pulse_time;
+	  
+	  high_speed_data_buffer_b[fast_log_buffer_index].hvlambda_readback_high_energy_lambda_program_voltage = 0;
+	  high_speed_data_buffer_b[fast_log_buffer_index].hvlambda_readback_low_energy_lambda_program_voltage = 0;
+	  high_speed_data_buffer_b[fast_log_buffer_index].hvlambda_readback_peak_lambda_voltage = 0;
+	  
+	  high_speed_data_buffer_b[fast_log_buffer_index].afc_readback_current_position = 0;
+	  high_speed_data_buffer_b[fast_log_buffer_index].afc_readback_target_position = 0;
+	  high_speed_data_buffer_b[fast_log_buffer_index].afc_readback_a_input = 0;
+	  high_speed_data_buffer_b[fast_log_buffer_index].afc_readback_b_input = 0;
+	  high_speed_data_buffer_b[fast_log_buffer_index].afc_readback_filtered_error_reading = 0;
+	  
+	  high_speed_data_buffer_b[fast_log_buffer_index].ionpump_readback_high_energy_target_current_reading = 0;
+	  high_speed_data_buffer_b[fast_log_buffer_index].ionpump_readback_low_energy_target_current_reading = 0;
+	  
+	  high_speed_data_buffer_b[fast_log_buffer_index].magmon_readback_magnetron_high_energy_current = 0;
+	  high_speed_data_buffer_b[fast_log_buffer_index].magmon_readback_magnetron_low_energy_current = 0;
+	  
+	  high_speed_data_buffer_b[fast_log_buffer_index].psync_readback_trigger_width_and_filtered_trigger_width = 0;
+	  high_speed_data_buffer_b[fast_log_buffer_index].psync_readback_high_energy_grid_width_and_delay = 0;
+	  high_speed_data_buffer_b[fast_log_buffer_index].psync_readback_low_energy_grid_width_and_delay = 0;
+
+
+	  high_speed_data_buffer_b[fast_log_buffer_index].ionpump_readback_high_energy_target_current_reading = etm_can_next_pulse_level;
 	}
-
-
-	high_speed_data_buffer_a[fast_log_buffer_index].pulse_count = etm_can_next_pulse_count;
-	if (etm_can_next_pulse_level) {
-	  high_speed_data_buffer_a[fast_log_buffer_index].status_bits.arc_this_pulse = 1;
-	}
-       
-	high_speed_data_buffer_a[fast_log_buffer_index].x_ray_on_seconds_lsw = global_data_A36507.time_seconds_now;
-	high_speed_data_buffer_a[fast_log_buffer_index].x_ray_on_milliseconds = global_data_A36507.millisecond_counter;
-	high_speed_data_buffer_a[fast_log_buffer_index].x_ray_on_milliseconds += TMR5>>10;  // Need to divide by 1250 to get milliseconds
-
-	high_speed_data_buffer_a[fast_log_buffer_index].hvlambda_readback_high_energy_lambda_program_voltage = 0;
-	high_speed_data_buffer_a[fast_log_buffer_index].hvlambda_readback_low_energy_lambda_program_voltage = 0;
-	high_speed_data_buffer_a[fast_log_buffer_index].hvlambda_readback_peak_lambda_voltage = 0;
-
-	high_speed_data_buffer_a[fast_log_buffer_index].afc_readback_current_position = 0;
-	high_speed_data_buffer_a[fast_log_buffer_index].afc_readback_target_position = 0;
-	high_speed_data_buffer_a[fast_log_buffer_index].afc_readback_a_input = 0;
-	high_speed_data_buffer_a[fast_log_buffer_index].afc_readback_b_input = 0;
-	high_speed_data_buffer_a[fast_log_buffer_index].afc_readback_filtered_error_reading = 0;
-
-	high_speed_data_buffer_a[fast_log_buffer_index].ionpump_readback_high_energy_target_current_reading = 0;
-	high_speed_data_buffer_a[fast_log_buffer_index].ionpump_readback_low_energy_target_current_reading = 0;
-
-	high_speed_data_buffer_a[fast_log_buffer_index].magmon_readback_magnetron_high_energy_current = 0;
-	high_speed_data_buffer_a[fast_log_buffer_index].magmon_readback_magnetron_low_energy_current = 0;
-
-	high_speed_data_buffer_a[fast_log_buffer_index].psync_readback_trigger_width_and_filtered_trigger_width = 0;
-	high_speed_data_buffer_a[fast_log_buffer_index].psync_readback_high_energy_grid_width_and_delay = 0;
-	high_speed_data_buffer_a[fast_log_buffer_index].psync_readback_low_energy_grid_width_and_delay = 0;
-	
-      } else {
-	// We are putting data into buffer B
-	global_data_A36507.buffer_b_ready_to_send = 0;
-	global_data_A36507.buffer_b_sent = 0;
-	if (fast_log_buffer_index >= 3) {
-	  global_data_A36507.buffer_a_ready_to_send = 1;
-	}
-
-	if (fast_log_buffer_index >= 3) {
-	  global_data_A36507.buffer_a_ready_to_send;
-	}
-
-
-	high_speed_data_buffer_b[fast_log_buffer_index].pulse_count = etm_can_next_pulse_count;
-	if (etm_can_next_pulse_level) {
-	  high_speed_data_buffer_b[fast_log_buffer_index].status_bits.arc_this_pulse = 1;
-	}
-	
-	high_speed_data_buffer_b[fast_log_buffer_index].x_ray_on_seconds_lsw = global_data_A36507.time_seconds_now;
-	high_speed_data_buffer_b[fast_log_buffer_index].x_ray_on_milliseconds = global_data_A36507.millisecond_counter;
-	high_speed_data_buffer_b[fast_log_buffer_index].x_ray_on_milliseconds += TMR5>>10;  // Need to divide by 1250 to get milliseconds
-
-	high_speed_data_buffer_b[fast_log_buffer_index].hvlambda_readback_high_energy_lambda_program_voltage = 0;
-	high_speed_data_buffer_b[fast_log_buffer_index].hvlambda_readback_low_energy_lambda_program_voltage = 0;
-	high_speed_data_buffer_b[fast_log_buffer_index].hvlambda_readback_peak_lambda_voltage = 0;
-
-	high_speed_data_buffer_b[fast_log_buffer_index].afc_readback_current_position = 0;
-	high_speed_data_buffer_b[fast_log_buffer_index].afc_readback_target_position = 0;
-	high_speed_data_buffer_b[fast_log_buffer_index].afc_readback_a_input = 0;
-	high_speed_data_buffer_b[fast_log_buffer_index].afc_readback_b_input = 0;
-	high_speed_data_buffer_b[fast_log_buffer_index].afc_readback_filtered_error_reading = 0;
-
-	high_speed_data_buffer_b[fast_log_buffer_index].ionpump_readback_high_energy_target_current_reading = 0;
-	high_speed_data_buffer_b[fast_log_buffer_index].ionpump_readback_low_energy_target_current_reading = 0;
-
-	high_speed_data_buffer_b[fast_log_buffer_index].magmon_readback_magnetron_high_energy_current = 0;
-	high_speed_data_buffer_b[fast_log_buffer_index].magmon_readback_magnetron_low_energy_current = 0;
-
-	high_speed_data_buffer_b[fast_log_buffer_index].psync_readback_trigger_width_and_filtered_trigger_width = 0;
-	high_speed_data_buffer_b[fast_log_buffer_index].psync_readback_high_energy_grid_width_and_delay = 0;
-	high_speed_data_buffer_b[fast_log_buffer_index].psync_readback_low_energy_grid_width_and_delay = 0;
-
       }
     } else {
       // The commmand was received by Filter 1
