@@ -81,7 +81,7 @@ typedef struct {
   unsigned int           unused_2; //software_pulse_enable;
   unsigned int           unused_3; //pulse_sync_disable_requested; // This is used by the CAN interrupt to signal that we need to send a pulse_sync_disable message
   unsigned int           unused_4; //status_connected_boards;   // This register indicates which boards are connected.
-//  unsigned int           unused_array[14];
+  unsigned int           unused_array[14];
 } ETMCanRamMirrorEthernetBoard;
 
 extern ETMCanRamMirrorEthernetBoard     etm_can_ethernet_board_data;
@@ -112,7 +112,7 @@ typedef struct {
 
   //unsigned int high_vprog;
   //unsigned int low_vprog;
-//  unsigned int           unused_array[23];
+  unsigned int           unused_array[23];
 
 } ETMCanRamMirrorHVLambda;
 
@@ -140,7 +140,7 @@ typedef struct {
   unsigned int ionpump_readback_filtered_high_energy_target_current;
   unsigned int ionpump_readback_filtered_low_energy_target_current;
 
-//  unsigned int           unused_array[28];
+  unsigned int           unused_array[28];
 
 } ETMCanRamMirrorIonPump;
 
@@ -175,7 +175,7 @@ typedef struct {
   
   unsigned int aft_control_voltage;
   unsigned int readback_aft_control_voltage;
-//  unsigned int           unused_array[23];  
+  unsigned int           unused_array[21];  
 
 } ETMCanRamMirrorAFC;
 
@@ -209,7 +209,7 @@ typedef struct {
   unsigned int cool_readback_linac_temperature;
   unsigned int cool_readback_spare_word_0;
   unsigned int cool_readback_spare_word_1;
-//  unsigned int           unused_array[20];  
+  unsigned int           unused_array[20];  
 
 } ETMCanRamMirrorCooling;
 
@@ -246,7 +246,7 @@ typedef struct {
   // Additional Control/Interface data
   unsigned int htrmag_heater_current_set_point_scaled;//htrmag_heater_enable;
   unsigned int unused_0;  //htrmag_magnet_enable;
-//  unsigned int           unused_array[20];  
+  unsigned int           unused_array[20];  
 
 } ETMCanRamMirrorHeaterMagnet;
 
@@ -291,7 +291,7 @@ typedef struct {
   unsigned int gun_readback_analog_fault_status;
   unsigned int gun_readback_system_logic_state;
   unsigned int gun_readback_bias_voltage_mon;
-//  unsigned int           unused_array[12];  
+  unsigned int           unused_array[12];  
 
 } ETMCanRamMirrorGunDriver;
 
@@ -325,7 +325,7 @@ typedef struct {
   unsigned long magmon_arcs_lifetime;
   unsigned long magmon_pulses_this_hv_on;
   unsigned long long magmon_pulses_lifetime;
-//  unsigned int           unused_array[20];  
+  unsigned int           unused_array[20];  
 
 } ETMCanRamMirrorMagnetronCurrent;
 
@@ -377,7 +377,7 @@ typedef struct {
 
   // "SLOW" Data that the Ethernet control board reads back
   // NONE!!!!!!
-//  unsigned int           unused_array[19];  
+  unsigned int           unused_array[19];  
 
 } ETMCanRamMirrorPulseSync;
 
