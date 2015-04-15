@@ -539,11 +539,20 @@ void ETMCanMasterSet2FromSlave(ETMCanMessage* message_ptr) {
 }
 
 void ETMCanMasterUpdateTargetCurrent(unsigned int pulse_id, unsigned int high_energy_reading, unsigned int low_energy_reading) {
+  unsigned int           fast_log_buffer_index;
+  ETMCanHighSpeedData*   ptr_high_speed_data;
+
   // Place files into log file 
   // DPARKER eventually this needs to be stored in RAM so that it can be used to control something
-  data_log_index = pulse_id;
-  data_log_index >>= 3;
-  data_log_index &= 0x00FF;
+
+  fast_log_buffer_index = pulse_id & 0x000F;
+  if (pulse_id & 0x0010) {
+    ptr_high_speed_data = &high_speed_data_buffer_a[fast_log_buffer_index];
+  } else {
+    ptr_high_speed_data = &high_speed_data_buffer_b[fast_log_buffer_index];
+  }
+  ptr_high_speed_data->ionpump_readback_high_energy_target_current_reading = high_energy_reading;
+  ptr_high_speed_data->ionpump_readback_low_energy_target_current_reading  = low_energy_reading;
   
 }
 
