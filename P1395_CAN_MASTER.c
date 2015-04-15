@@ -1000,6 +1000,13 @@ void ETMCanMasterProcessLogData(void) {
 	  break;
 
 
+	case ETM_CAN_DATA_LOG_REGISTER_GUN_DRIVER_FPGA_DATA:
+	  etm_can_gun_driver_mirror.gun_readback_fpga_asdr_register = next_message.word3;
+	  etm_can_gun_driver_mirror.gun_readback_analog_fault_status = next_message.word2;
+	  etm_can_gun_driver_mirror.gun_readback_system_logic_state = next_message.word1;
+	  etm_can_gun_driver_mirror.gun_readback_bias_voltage_mon = next_message.word0;
+	  break;
+
 	case ETM_CAN_DATA_LOG_REGISTER_PULSE_SYNC_FAST_TRIGGER_DATA:
 	  ptr_high_speed_data->psync_readback_trigger_width_and_filtered_trigger_width = next_message.word2;
 	  ptr_high_speed_data->psync_readback_high_energy_grid_width_and_delay = next_message.word1;
