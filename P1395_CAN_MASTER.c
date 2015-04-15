@@ -29,16 +29,16 @@ unsigned int etm_can_next_pulse_count;
 
 
 
-//#define etm_can_status_register   etm_can_ethernet_board_data.status_data
-//#define local_debug_data          etm_can_ethernet_board_data.debug_data
-//#define local_can_errors          etm_can_ethernet_board_data.can_status
-//#define etm_can_my_configuration  etm_can_ethernet_board_data.configuration
+#define etm_can_status_register   etm_can_ethernet_board_data.status_data
+#define local_debug_data          etm_can_ethernet_board_data.debug_data
+#define local_can_errors          etm_can_ethernet_board_data.can_status
+#define etm_can_my_configuration  etm_can_ethernet_board_data.configuration
 
 // Public Debug and Status registers
-ETMCanSystemDebugData local_debug_data;
-ETMCanStatusRegister  etm_can_status_register;
-ETMCanAgileConfig     etm_can_my_configuration;
-ETMCanCanStatus       local_can_errors;
+//ETMCanSystemDebugData local_debug_data;
+//ETMCanStatusRegister  etm_can_status_register;
+//ETMCanAgileConfig     etm_can_my_configuration;
+//ETMCanCanStatus       local_can_errors;
 ETMCanSyncMessage     etm_can_sync_message;
 
 
