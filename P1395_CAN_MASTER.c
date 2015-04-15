@@ -530,12 +530,22 @@ void ETMCanMasterSet2FromSlave(ETMCanMessage* message_ptr) {
   if ((index_word >= 0x0100) & (index_word < 0x0200)) {
     // This is Calibration data that was read from the slave EEPROM
     SendCalibrationData(message_ptr->word3, message_ptr->word1, message_ptr->word0);
+  } else if (index_word == ETM_CAN_REGISTER_ECB_SET_2_TARGET_CURRENT_MON) {
+    ETMCanMasterUpdateTargetCurrent(message_ptr->word2, message_ptr->word1, message_ptr->word0);
   } else {
     // It was not a set value index 
     local_can_errors.invalid_index++;
   }
 }
 
+void ETMCanMasterUpdateTargetCurrent(unsigned int pulse_id, unsigned int high_energy_reading, unsigned int low_energy_reading) {
+  // Place files into log file 
+  // DPARKER eventually this needs to be stored in RAM so that it can be used to control something
+  data_log_index = pulse_id;
+  data_log_index >>= 3;
+  data_log_index &= 0x00FF;
+  
+}
 
 void ETMCanMasterUpdateSlaveStatus(ETMCanMessage* message_ptr) {
   ETMCanStatusRegister status_message;

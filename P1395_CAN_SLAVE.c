@@ -797,3 +797,12 @@ void ETMCanSlavePulseSyncSendNextPulseLevel(unsigned int next_pulse_level, unsig
 
 
 }
+
+void ETMCanSlaveIonPumpSendTargetCurrentReading(unsigned int target_current_reading_high, unsigned int target_current_reading_low, unsigned int pulse_id) {
+  ETMCanMessage message;
+  message.identifier = ETM_CAN_MSG_SET_2_TX | (ETM_CAN_MY_ADDRESS << 3); 
+  message.word3      = ETM_CAN_REGISTER_ECB_SET_2_TARGET_CURRENT_MON;
+  message.word2      = pulse_id;
+  message.word1      = target_current_reading_high;
+  message.word0      = target_current_reading_low;
+}

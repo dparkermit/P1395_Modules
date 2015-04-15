@@ -1,6 +1,9 @@
 #include "P1395_CAN_SLAVE.h"
 #include "P1395_CAN_CORE_PRIVATE.h"
 
+//DPARKER, all the places where you use etm_can_next_pulse_count - This is a potential error.  They should use a latched version of the pulse_id that is stored when the event happens.  etm_can_next_pulse_count could be updated asynchronously before this code is called 
+
+
 #ifdef __A36224_500
 #include "A36224_500.h"
 #endif
