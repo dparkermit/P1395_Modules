@@ -28,6 +28,12 @@ unsigned int etm_can_next_pulse_level;
 unsigned int etm_can_next_pulse_count;
 
 
+
+//#define etm_can_status_register   etm_can_ethernet_board_data.status_data
+//#define local_debug_data          etm_can_ethernet_board_data.debug_data
+//#define local_can_errors          etm_can_ethernet_board_data.can_status
+//#define etm_can_my_configuration  etm_can_ethernet_board_data.configuration
+
 // Public Debug and Status registers
 ETMCanSystemDebugData local_debug_data;
 ETMCanStatusRegister  etm_can_status_register;
@@ -69,7 +75,6 @@ ETMCanRamMirrorHeaterMagnet      etm_can_heater_magnet_mirror;
 ETMCanRamMirrorGunDriver         etm_can_gun_driver_mirror;
 ETMCanRamMirrorMagnetronCurrent  etm_can_magnetron_current_mirror;
 ETMCanRamMirrorPulseSync         etm_can_pulse_sync_mirror;
-
 ETMCanRamMirrorEthernetBoard     etm_can_ethernet_board_data;
 
 void ETMCanSetValueCalibrationUpload(ETMCanMessage* message_ptr) {
@@ -201,10 +206,10 @@ void ETMCanMasterInitialize(void) {
   while(CXCTRLbits.OPMODE != 0);
   
   // Set up data structure for ethernet board
-  etm_can_ethernet_board_data.can_status    = &local_can_errors;
-  etm_can_ethernet_board_data.debug_data    = &local_debug_data;
-  etm_can_ethernet_board_data.configuration = &etm_can_my_configuration;
-  etm_can_ethernet_board_data.status_data   = &etm_can_status_register;
+  //etm_can_ethernet_board_data.can_status    = &local_can_errors;
+  //etm_can_ethernet_board_data.debug_data    = &local_debug_data;
+  //etm_can_ethernet_board_data.configuration = &etm_can_my_configuration;
+  //etm_can_ethernet_board_data.status_data   = &etm_can_status_register;
 
 
   etm_can_ethernet_board_data.status_received_register = 0x0000;

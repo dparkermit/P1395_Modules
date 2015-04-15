@@ -348,28 +348,28 @@ typedef struct {
   unsigned char psync_grid_delay_high_intensity_1;
   unsigned char psync_grid_delay_high_intensity_0;
   unsigned char psync_pfn_delay_high;
-  unsigned char psync_rf_delay_high;
+  unsigned char psync_dose_sample_delay_high;
 
   unsigned char psync_grid_width_high_intensity_3;
   unsigned char psync_grid_width_high_intensity_2;
   unsigned char psync_grid_width_high_intensity_1;
   unsigned char psync_grid_width_high_intensity_0;
   unsigned char psync_afc_delay_high;
-  unsigned char psync_spare_delay_high;
+  unsigned char psync_magnetron_current_sample_delay_high;
 
   unsigned char psync_grid_delay_low_intensity_3;
   unsigned char psync_grid_delay_low_intensity_2;
   unsigned char psync_grid_delay_low_intensity_1;
   unsigned char psync_grid_delay_low_intensity_0;
   unsigned char psync_pfn_delay_low;
-  unsigned char psync_rf_delay_low;
+  unsigned char psync_dose_sample_delay_low;
  
   unsigned char psync_grid_width_low_intensity_3;
   unsigned char psync_grid_width_low_intensity_2;
   unsigned char psync_grid_width_low_intensity_1;
   unsigned char psync_grid_width_low_intensity_0;
   unsigned char psync_afc_delay_low;
-  unsigned char psync_spare_delay_low;
+  unsigned char psync_magnetron_current_sample_delay_low;
 
   unsigned int  psync_customer_led;
 

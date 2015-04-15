@@ -105,7 +105,7 @@ void ETMCanSlaveExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
       temp = (message_ptr->word0 & 0xFF00) >> 8;
       psb_params.pfn_delay_high = temp;
       temp = message_ptr->word0 & 0x00FF;
-      psb_params.rf_delay_high = temp;
+      psb_params.dose_sample_delay_high = temp;
       psb_data.counter_config_received |= 0b0001;
       break;
 
@@ -121,7 +121,7 @@ void ETMCanSlaveExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
       temp = (message_ptr->word0 & 0xFF00) >> 8;
       psb_params.afc_delay_high = temp;
       temp = message_ptr->word0 & 0x00FF;
-      psb_params.spare_delay_high = temp;
+      psb_params.magnetron_current_sample_delay_high = temp;
       psb_data.counter_config_received |=0b0010;
       break;
 
@@ -137,7 +137,7 @@ void ETMCanSlaveExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
       temp = (message_ptr->word0 & 0xFF00) >> 8;
       psb_params.pfn_delay_low = temp;
       temp = message_ptr->word0 & 0x00FF;
-      psb_params.rf_delay_low = temp;
+      psb_params.dose_sample_delay_low = temp;
       psb_data.counter_config_received |= 0b0100;
       break;
 
@@ -153,7 +153,7 @@ void ETMCanSlaveExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
       temp = (message_ptr->word0 & 0xFF00) >> 8;
       psb_params.afc_delay_low = temp;
       temp = message_ptr->word0 & 0x00FF;
-      psb_params.spare_delay_low = temp;
+      psb_params.magnetron_current_sample_delay_low = temp;
       psb_data.counter_config_received |= 0b1000;
       break;
 
@@ -372,7 +372,7 @@ void ETMCanSlaveLogCustomPacketD(void) {
   ETMCanSlaveLogData(ETM_CAN_DATA_LOG_REGISTER_PULSE_SYNC_SLOW_TIMING_DATA_0,
 		     (psb_params.grid_delay_high3 << 8) & psb_params.grid_delay_high2,
 		     (psb_params.grid_delay_high1 << 8) &  psb_params.grid_delay_high0,
-		     (psb_params.pfn_delay_high << 8) & psb_params.rf_delay_high,
+		     (psb_params.pfn_delay_high << 8) & psb_params.dose_sample_delay_high,
 		     (psb_params.grid_width_high3 << 8) & psb_params.grid_width_high2);
 #endif
 
@@ -382,8 +382,8 @@ void ETMCanSlaveLogCustomPacketD(void) {
 		     ETM_CAN_DATA_LOG_REGISTER_MAGNETRON_MON_SLOW_FILTERED_PULSE,
 		     0,
 		     global_data_A36582.arc_this_hv_on,
-		     global_data_A36582.filt_int_adc_low,
-		     global_data_A36582.filt_int_adc_high
+		     global_data_A36582.filt_ext_adc_low,
+		     global_data_A36582.filt_ext_adc_high
 		     );
 #endif
 
@@ -434,7 +434,7 @@ void ETMCanSlaveLogCustomPacketE(void) {
 #ifdef __A36487
   ETMCanSlaveLogData(ETM_CAN_DATA_LOG_REGISTER_PULSE_SYNC_SLOW_TIMING_DATA_1,
 		     (psb_params.grid_width_high1 << 8) & psb_params.grid_width_high0,
-		     (psb_params.afc_delay_high << 8) & psb_params.spare_delay_high,
+		     (psb_params.afc_delay_high << 8) & psb_params.magnetron_current_sample_delay_high,
 		     (psb_params.grid_delay_low3 << 8) & psb_params.grid_delay_low2,
 		     (psb_params.grid_delay_low1 << 8) & psb_params.grid_delay_low0);
 #endif
@@ -488,10 +488,10 @@ void ETMCanSlaveLogCustomPacketF(void) {
   
 #ifdef __A36487
   ETMCanSlaveLogData(ETM_CAN_DATA_LOG_REGISTER_PULSE_SYNC_SLOW_TIMING_DATA_2,
-		     (psb_params.pfn_delay_low << 8) & psb_params.rf_delay_low,
+		     (psb_params.pfn_delay_low << 8) & psb_params.dose_sample_delay_low,
 		     (psb_params.grid_width_low3 << 8) & psb_params.grid_width_low2,
 		     (psb_params.grid_width_low1 << 8) & psb_params.grid_width_low0,
-		     (psb_params.afc_delay_low << 8) & psb_params.spare_delay_low);
+		     (psb_params.afc_delay_low << 8) & psb_params.magnetron_current_sample_delay_low);
 #endif
   
   
