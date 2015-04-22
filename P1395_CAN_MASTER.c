@@ -1259,27 +1259,35 @@ void ETMCanMasterCheckForTimeOut(void) {
 
     if (!board_status_received.ion_pump_board) {
       global_data_A36507.no_connect_count_ion_pump_board++;
+      SendToEventLog(LOG_ID_NOT_CONNECTED_ION_PUMP_BOARD, 0);
     }
     if (!board_status_received.magnetron_current_board) {
       global_data_A36507.no_connect_count_magnetron_current_board++;
+      SendToEventLog(LOG_ID_NOT_CONNECTED_MAGNETRON_CURRENT_BOARD, 0);
     }
     if (!board_status_received.pulse_sync_board) {
       global_data_A36507.no_connect_count_pulse_sync_board++;
+      SendToEventLog(LOG_ID_NOT_CONNECTED_PULSE_SYNC_BOARD, 0);
     }
     if (!board_status_received.hv_lambda_board) {
       global_data_A36507.no_connect_count_hv_lambda_board++;
+      SendToEventLog(LOG_ID_NOT_CONNECTED_HV_LAMBDA_BOARD, 0);
     }
     if (!board_status_received.afc_board) {
       global_data_A36507.no_connect_count_afc_board++;
+      SendToEventLog(LOG_ID_NOT_CONNECTED_AFC_BOARD, 0);
     }
     if (!board_status_received.cooling_interface_board) {
       global_data_A36507.no_connect_count_cooling_interface_board++;
+      SendToEventLog(LOG_ID_NOT_CONNECTED_COOLING_INTERFACE_BOARD, 0);
     }
     if (!board_status_received.heater_magnet_board) {
       global_data_A36507.no_connect_count_heater_magnet_board++;
+      SendToEventLog(LOG_ID_NOT_CONNECTED_HEATER_MAGNET_BOARD, 0);
     }
     if (!board_status_received.gun_driver_board) {
       global_data_A36507.no_connect_count_gun_driver_board++;
+      SendToEventLog(LOG_ID_NOT_CONNECTED_GUN_DRIVER, 0);
     }
     
 
@@ -1432,4 +1440,16 @@ void ETMCanMasterClearDebug(void) {
   _BOR = 0;
   _POR = 0;
   _SWR = 0;
+}
+
+TYPE_EVENT event_array[256];
+
+void SendToEventLog(unsigned int log_id, unsigned int data) {
+  unsigned int index;
+  index = global_data_A36507.event_log_counter;
+  index &= 0x7F;
+  event_array[index].event_number = global_data_A36507.event_log_counter;
+  event_array[index].event_time   = global_data_A36507.time_seconds_now;
+  event_array[index].event_id     = log_id;
+  global_data_A36507.event_log_counter++;
 }

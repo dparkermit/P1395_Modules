@@ -289,6 +289,18 @@ unsigned long RTCDateToSeconds(RTC_TIME* ptr_time) {
   unsigned long temp;
   unsigned int  temp_int;
   
+  /*
+    Could also be expressed as 
+    Years * 31622400 +
+    month *  2678400 +
+    Date  *    86400 +
+    hour  *     3600 +
+    minute*       60 +
+    Second*        1
+   */
+
+
+
   temp      = ptr_time->year;
   temp     *= 366;
   
@@ -309,6 +321,39 @@ unsigned long RTCDateToSeconds(RTC_TIME* ptr_time) {
 
   return temp;
 }
+
+void RTCSecondsToDate(unsigned long sudo_seconds, RTC_TIME* ptr_time) {
+  unsigned long int_part;
+
+  // year calculation
+  int_part = sudo_seconds / 31622400;
+  sudo_seconds = sudo_seconds % 31622400;
+  ptr_time->year = int_part;
+
+  //month_calculation
+  int_part = sudo_seconds / 2678400;
+  sudo_seconds = sudo_seconds % 2678400;
+  ptr_time->month = int_part;
+
+  //date_calculation
+  int_part = sudo_seconds / 86400;
+  sudo_seconds = sudo_seconds % 86400;
+  ptr_time->date = int_part;
+
+  //hour_calculation
+  int_part = sudo_seconds / 3600;
+  sudo_seconds = sudo_seconds % 3600;
+  ptr_time->hour = int_part;
+
+  //minute_calculation
+  int_part = sudo_seconds / 60;
+  sudo_seconds = sudo_seconds % 60;
+  ptr_time->minute = int_part;
+  ptr_time->second = sudo_seconds;
+
+}
+
+
 
 /*
 unsigned int ReadRTCTimeDifference(RTC_TIME* ptr_rtc_old, RTC_TIME* ptr_rtc_new) {

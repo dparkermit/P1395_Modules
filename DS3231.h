@@ -192,6 +192,9 @@ unsigned long RTCDateToSeconds(RTC_TIME* ptr_time);
 //
 
 
+void RTCSecondsToDate(unsigned long sudo_seconds, RTC_TIME* ptr_time);
+
+
 //These are the data addresses of the RTC module
 #define SECONDS_ADDRESS 0x00
 #define MINUTES_ADDRESS 0x01
@@ -204,5 +207,6 @@ unsigned long RTCDateToSeconds(RTC_TIME* ptr_time);
 #define STATUS_ADDRESS 0x0F
 #define TEMPERATURE_ADDRESS_MSB 0x11 //(sign = MSB, the rest is integer data)
 #define TEMPERATURE_ADDRESS_LSB 0x12 //(fractional is MSB and MSB-1, the rest is 0)
+
 
 #endif

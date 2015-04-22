@@ -420,6 +420,86 @@ void SendSlaveLoadDefaultEEpromData(unsigned int board_id);
 
 void SendSlaveReset(unsigned int board_id);
 
+void SendToEventLog(unsigned int log_id, unsigned int data);
 
+
+
+#define LOG_ID_ENTERED_STATE_STARTUP                                          0x0010
+#define LOG_ID_ENTERED_STATE_WAIT_FOR_PERSONALITY_FROM_PULSE_SYNC             0x0011
+#define LOG_ID_PERSONALITY_RECEIVED                                           0x0012
+#define LOG_ID_PERSONALITY_ERROR_6_4                                          0x0013
+#define LOG_ID_PERSONALITY_ERROR_2_5                                          0x0014
+#define LOG_ID_ENTERED_STATE_WAITING_FOR_INITIALIZATION                       0x0015
+#define LOG_ID_ALL_MODULES_CONFIGURED                                         0x0016
+#define LOG_ID_ENTERED_STATE_WARMUP                                           0x0017
+#define LOG_ID_WARMUP_DONE                                                    0x0018
+#define LOG_ID_ENTERED_STATE_STANDBY                                          0x0019
+#define LOG_ID_CUSTOMER_HV_ON                                                 0x001A
+#define LOG_ID_ENTERED_STATE_DRIVE_UP                                         0x001B
+#define LOG_ID_DRIVEUP_COMPLETE                                               0x001C
+#define LOG_ID_CUSTOMER_HV_OFF                                                0x001D
+#define LOG_ID_DRIVE_UP_TIMEOUT                                               0x001E
+#define LOG_ID_ENTERED_STATE_READY                                            0x001F
+#define LOG_ID_CUSTOMER_XRAY_ON                                               0x0020
+
+#define LOG_ID_ENTERED_STATE_XRAY_ON                                          0x0022
+#define LOG_ID_CUSTOMER_XRAY_OFF                                              0x0023
+
+#define LOG_ID_ENTERED_STATE_FAULT_HOLD                                       0x0025
+
+#define LOG_ID_ENTERED_STATE_FAULT_RESET                                      0x0027
+#define LOG_ID_HV_OFF_FAULTS_CLEAR                                            0x0028
+#define LOG_ID_ENTERED_STATE_FAULT_SYSTEM                                     0x0029
+#define LOG_ID_FAULT_HTR_MAG_BOARD                                            0x002A
+#define LOG_ID_FAULT_HTR_MAG_HEATER_OVER_CURRENT_ABSOLUTE                     0x002B
+#define LOG_ID_FAULT_HTR_MAG_HEATER_UNDER_CURRENT_ABSOLUTE                    0x002C
+#define LOG_ID_FAULT_HTR_MAG_HEATER_OVER_CURRENT_RELATIVE                     0x002D
+#define LOG_ID_FAULT_HTR_MAG_HEATER_UNDER_CURRENT_RELATIVE                    0x002E
+#define LOG_ID_FAULT_HTR_MAG_HEATER_OVER_VOLTAGE_ABSOLUTE                     0x002F
+#define LOG_ID_FAULT_HTR_MAG_HEATER_UNDER_VOTLAGE_RELATIVE                    0x0030
+#define LOG_ID_FAULT_HTR_MAG_MAGNET_OVER_CURRENT_ABSOLUTE                     0x0031
+#define LOG_ID_FAULT_HTR_MAG_MAGNET_UNDER_CURRENT_ABSOLUTE                    0x0032
+#define LOG_ID_FAULT_HTR_MAG_MAGNET_OVER_CURRENT_RELATIVE                     0x0033
+#define LOG_ID_FAULT_HTR_MAG_MAGNET_UNDER_CURRENT_RELATIVE                    0x0034
+#define LOG_ID_FAULT_HTR_MAG_MAGNET_OVER_VOLTAGE_ABSOLUTE                     0x0035
+#define LOG_ID_FAULT_HTR_MAG_MAGNET_UNDER_VOTLAGE_RELATIVE                    0x0036
+#define LOG_ID_FAULT_HTR_MAG_HW_HEATER_OVER_VOLTAGE                           0x0037
+#define LOG_ID_FAULT_HTR_MAG_HW_TEMPERATURE_SWITCH                            0x0038
+#define LOG_ID_FAULT_HTR_MAG_COOLANT_FAULT                                    0x0039
+#define LOG_ID_FAULT_HTR_MAG_CAN_COMMUNICATION_LATCHED                        0x003A
+#define LOG_ID_FAULT_GUN_DRIVER_BOARD_HV_OFF                                  0x003B
+#define LOG_ID_FAULT_HV_LAMBDA_BOARD                                          0x003C
+#define LOG_ID_FAULT_ION_PUMP_BOARD                                           0x003D
+#define LOG_ID_FAULT_AFC_BOARD                                                0x003E
+#define LOG_ID_FAULT_COOING_INTERFACE_BOARD                                   0x003F
+#define LOG_ID_FAULT_GUN_DRIVER_BOARD_GENERAL                                 0x0040
+#define LOG_ID_FAULT_PULSE_MONITOR_BOARD                                      0x0041
+#define LOG_ID_FAULT_PULSE_SYNC_BOARD                                         0x0042
+
+#define LOG_ID_NOT_CONNECTED_ION_PUMP_BOARD                                   0x0043
+#define LOG_ID_NOT_CONNECTED_MAGNETRON_CURRENT_BOARD                          0x0044
+#define LOG_ID_NOT_CONNECTED_PULSE_SYNC_BOARD                                 0x0045
+#define LOG_ID_NOT_CONNECTED_HV_LAMBDA_BOARD                                  0x0046
+#define LOG_ID_NOT_CONNECTED_AFC_BOARD                                        0x0047
+#define LOG_ID_NOT_CONNECTED_COOLING_INTERFACE_BOARD                          0x0048
+#define LOG_ID_NOT_CONNECTED_GUN_DRIVER                                       0x0049
+#define LOG_ID_FAULT_MODULE_NOT_CONFIGURED                                    0x004A
+#define LOG_ID_NOT_CONNECTED_HEATER_MAGNET_BOARD                              0x004B
+
+
+
+
+typedef struct {
+  unsigned int event_number:14; // this resets to zero at power up
+  unsigned long event_time;   // this is the custom time format
+  unsigned int  event_id;     // This tells what the event was
+
+  // In the future we may add more data to the event;
+} TYPE_EVENT;
+
+extern TYPE_EVENT event_array[256];
+extern unsigned int event_array_write_pointer;
+extern unsigned int event_array_gui_pointer;
+extern unsigned int event_array_eeprom_pointer;
 
 #endif
