@@ -490,7 +490,7 @@ void SendToEventLog(unsigned int log_id, unsigned int data);
 
 
 typedef struct {
-  unsigned int event_number:14; // this resets to zero at power up
+  unsigned int  event_number; // this resets to zero at power up
   unsigned long event_time;   // this is the custom time format
   unsigned int  event_id;     // This tells what the event was
 
