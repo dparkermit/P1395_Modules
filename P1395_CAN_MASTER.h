@@ -497,7 +497,9 @@ typedef struct {
   // In the future we may add more data to the event;
 } TYPE_EVENT;
 
-extern TYPE_EVENT event_array[256];
+#define EVENT_ENTRIES    128
+
+extern TYPE_EVENT event_array[EVENT_ENTRIES];
 extern unsigned int event_array_write_pointer;
 extern unsigned int event_array_gui_pointer;
 extern unsigned int event_array_eeprom_pointer;

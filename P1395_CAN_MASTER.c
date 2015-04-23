@@ -1442,14 +1442,25 @@ void ETMCanMasterClearDebug(void) {
   _SWR = 0;
 }
 
-TYPE_EVENT event_array[256];
+TYPE_EVENT event_array[EVENT_ENTRIES];
+unsigned int event_array_gui_pointer;
 
 void SendToEventLog(unsigned int log_id, unsigned int data) {
   unsigned int index;
   index = global_data_A36507.event_log_counter;
-  index &= 0x7F;
+ #if EVENT_ENTRIES == 256
+  index &= 0xFF;
+ #else
+  index &= 0x7F;   // default 128 entries
+ #endif
   event_array[index].event_number = global_data_A36507.event_log_counter;
   event_array[index].event_time   = global_data_A36507.time_seconds_now;
   event_array[index].event_id     = log_id;
-  global_data_A36507.event_log_counter++;
+  
+ #if EVENT_ENTRIES == 256
+  global_data_A36507.event_log_counter = (index + 1) & 0xff;
+ #else
+  global_data_A36507.event_log_counter = (index + 1) & 0x7f;
+ #endif
+  
 }
