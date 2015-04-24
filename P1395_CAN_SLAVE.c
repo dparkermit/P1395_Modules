@@ -6,18 +6,18 @@
 #include "ETM_EEPROM.h"
 #include "ETM_ANALOG.h"
 
-// ----------- Can Timers T2 & T3 Configuration ----------- //
-// DPARKER ADD Description of what T2 and T3 are used for
-#define T2_FREQUENCY_HZ          10  // This is 100mS rate
-#define T3_FREQUENCY_HZ          4   // This is 250ms rate
+// ----------- Can Timers T4 & T5 Configuration ----------- //
+// DPARKER ADD Description of what T4 and T5 are used for
+#define T4_FREQUENCY_HZ          10  // This is 100mS rate
+#define T5_FREQUENCY_HZ          4   // This is 250ms rate
 
 // DPARKER remove the need for timers.h here
-#define T2CON_VALUE              (T2_OFF & T2_IDLE_CON & T2_GATE_OFF & T2_PS_1_256 & T2_32BIT_MODE_OFF & T2_SOURCE_INT)
-#define PR2_VALUE                (unsigned int)(FCY_CLK/256/T2_FREQUENCY_HZ)
+#define T4CON_VALUE              (T4_OFF & T4_IDLE_CON & T4_GATE_OFF & T4_PS_1_256 & T4_32BIT_MODE_OFF & T4_SOURCE_INT)
+#define PR4_VALUE                (unsigned int)(FCY_CLK/256/T4_FREQUENCY_HZ)
 
-// DPARKER consider moving T3 to 
-#define T3CON_VALUE              (T3_OFF & T3_IDLE_CON & T3_GATE_OFF & T3_PS_1_256 & T3_SOURCE_INT)
-#define PR3_VALUE                (unsigned int)(FCY_CLK/256/T3_FREQUENCY_HZ)
+// DPARKER consider moving T5 to 
+#define T5CON_VALUE              (T5_OFF & T5_IDLE_CON & T5_GATE_OFF & T5_PS_1_256 & T5_SOURCE_INT)
+#define PR5_VALUE                (unsigned int)(FCY_CLK/256/T5_FREQUENCY_HZ)
 
 
 
@@ -57,8 +57,8 @@ void ETMCanSlaveReturnCalibrationPair(ETMCanMessage* message_ptr);
 
 void ETMCanSlaveTimedTransmit(void);
 /*
-  This uses TMR2 to schedule transmissions from the Slave to the Master
-  TMR2 is set to expire at 100ms Interval
+  This uses TMR4 to schedule transmissions from the Slave to the Master
+  TMR4 is set to expire at 100ms Interval
   Every 100ms a status message is set and 1 (of the 16) data log messages is sent
 */
 
@@ -322,9 +322,9 @@ void ETMCanSlaveLoadDefaultEEpromValues(void) {
 
 void ETMCanSlaveTimedTransmit(void) {
   // Sends the debug information up as log data  
-  if (_T2IF) {
+  if (_T4IF) {
     // should be true once every 100mS
-    _T2IF = 0;
+    _T4IF = 0;
     
     slave_data_log_index++;
     slave_data_log_index &= 0xF;
@@ -488,8 +488,8 @@ void ETMCanSlaveLogData(unsigned int packet_id, unsigned int word3, unsigned int
 }
 
 void ETMCanSlaveCheckForTimeOut(void) {
-  if (_T3IF) {
-    _T3IF = 0;
+  if (_T5IF) {
+    _T5IF = 0;
     local_can_errors.timeout++;
     etm_can_persistent_data.can_timeout_count = local_can_errors.timeout;
     _CONTROL_CAN_COM_LOSS = 1;
@@ -523,7 +523,7 @@ void ETMCanSlaveDoSync(ETMCanMessage* message_ptr) {
   ClrWdt();
   _CONTROL_CAN_COM_LOSS = 0;
   
-  TMR3 = 0;
+  TMR5 = 0;
 
 #ifdef __A36487
   // The Pulse Sync Board needs to see if it needs to inhibit X_RAYs
@@ -678,20 +678,20 @@ void ETMCanSlaveInitialize(void) {
   // Enable Can interrupt
   _CXIE = 1;
 
-  // Configure T2
-  T2CON = T2CON_VALUE;
-  PR2 = PR2_VALUE;  
-  TMR2 = 0;
-  _T2IF = 0;
-  _T2IE = 0;
-  T2CONbits.TON = 1;
+  // Configure T4
+  T4CON = T4CON_VALUE;
+  PR4 = PR4_VALUE;  
+  TMR4 = 0;
+  _T4IF = 0;
+  _T4IE = 0;
+  T4CONbits.TON = 1;
 
-  // Configure T3
-  T3CON = T3CON_VALUE;
-  PR3 = PR3_VALUE;
-  _T3IF = 0;
-  _T3IE = 0;
-  T3CONbits.TON = 1;
+  // Configure T5
+  T5CON = T5CON_VALUE;
+  PR5 = PR5_VALUE;
+  _T5IF = 0;
+  _T5IE = 0;
+  T5CONbits.TON = 1;
 
   etm_can_my_configuration.agile_number_high_word = ETM_CAN_AGILE_ID_HIGH;
   etm_can_my_configuration.agile_number_low_word  = ETM_CAN_AGILE_ID_LOW;
@@ -794,6 +794,4 @@ void ETMCanSlavePulseSyncSendNextPulseLevel(unsigned int next_pulse_level, unsig
   local_debug_data.debug_D = message.word1;
   ETMCanTXMessage(&message, &CXTX2CON);
   local_can_errors.tx_2++;
-
-
 }
