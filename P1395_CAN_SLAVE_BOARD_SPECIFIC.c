@@ -17,6 +17,14 @@
 #include "A36224_000.h"
 #endif
 
+#ifdef __A36417
+#include "A36417.h"
+#endif
+
+#ifdef __A36507
+#include "A36507.h"
+#endif
+
 #ifdef __A36487
 #include "A36487.h"
 #endif
@@ -224,6 +232,15 @@ void ETMCanSlaveLogCustomPacketC(void) {
 		     global_data_A36224_500.analog_input_electromagnet_current.reading_scaled_and_calibrated,
 		     global_data_A36224_500.analog_input_electromagnet_voltage.reading_scaled_and_calibrated
 		     );
+#endif
+#ifdef __A36417
+  ETMCanSlaveLogData(
+                ETM_CAN_DATA_LOG_REGISTER_ION_PUMP_SLOW_MONITORS,
+                global_data_A36417_000.analog_input_ion_pump_voltage.reading_scaled_and_calibrated,
+                global_data_A36417_000.analog_input_ion_pump_current.reading_scaled_and_calibrated,
+                global_data_A36417_000.target_current_high,
+                global_data_A36417_000.target_current_low
+                );
 #endif
 
 #ifdef __A36444_500
