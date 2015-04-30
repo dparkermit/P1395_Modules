@@ -1,6 +1,10 @@
 #include "P1395_CAN_SLAVE.h"
 #include "P1395_CAN_CORE_PRIVATE.h"
 
+#ifdef __A36746
+#include "A36746.h"
+#endif
+
 #ifdef __A36224_500
 #include "A36224_500.h"
 #endif
@@ -237,6 +241,16 @@ void ETMCanSlaveLogCustomPacketC(void) {
      This will get executed once per update cycle (1.6 seconds) and will be spaced out in time from the other log data
   */
 
+
+#ifdef __A36746
+  ETMCanSlaveLogData(ETM_CAN_DATA_LOG_REGISTER_COOLING_SLOW_FLOW_0,
+		     global_data_A36746.flow_hvps,
+		     global_data_A36746.flow_magnetron,
+		     global_data_A36746.flow_linac,
+		     global_data_A36746.flow_circulator
+		     );
+#endif
+
 #ifdef __A36224
   ETMCanSlaveLogData(ETM_CAN_DATA_LOG_REGISTER_COOLING_SLOW_FLOW_0,
 		     global_data_A36224_000.analog_input_flow_1.reading_scaled_and_calibrated,     //HVPS flow
@@ -328,12 +342,21 @@ void ETMCanSlaveLogCustomPacketD(void) {
      This will get executed once per update cycle (1.6 seconds) and will be spaced out in time from the other log data
   */
 
+#ifdef __A36746
+  ETMCanSlaveLogData(ETM_CAN_DATA_LOG_REGISTER_COOLING_SLOW_FLOW_1,
+		     global_data_A36746.SF6_bottle_pulses_remaining,
+		     global_data_A36746.SF6_pulses_available,
+		     global_data_A36746.flow_hv_tank,
+		     global_data_A36746.flow_spare
+		     );
+#endif
+
 #ifdef __A36224
   ETMCanSlaveLogData(ETM_CAN_DATA_LOG_REGISTER_COOLING_SLOW_FLOW_1,
-		     0,   //Coolant spare word 1
-		     0,      //Coolant spare word 0
-		     0,  //HX coolant flow
-		     0  //coolant Flow (unused)
+		     0,
+		     0,   //Coolant spare word 0
+		     0,   //HVPS coolant flow
+		     0    //coolant Flow (unused)
 		     );
 #endif
 
@@ -420,6 +443,18 @@ void ETMCanSlaveLogCustomPacketE(void) {
      Use this to log Board specific data packet
      This will get executed once per update cycle (1.6 seconds) and will be spaced out in time from the other log data
   */
+
+#ifdef __A36746
+  ETMCanSlaveLogData(
+		     ETM_CAN_DATA_LOG_REGISTER_COOLING_SLOW_ANALOG_READINGS,
+		     global_data_A36746.coolant_temperature_kelvin,
+		     global_data_A36746.analog_input_SF6_pressure.reading_scaled_and_calibrated,
+		     global_data_A36746.cabinet_temperature_kelvin,
+		     0
+		     );
+#endif
+
+
 #ifdef __A36224
   ETMCanSlaveLogData(
 		     ETM_CAN_DATA_LOG_REGISTER_COOLING_SLOW_ANALOG_READINGS,
