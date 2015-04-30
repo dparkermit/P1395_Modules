@@ -53,6 +53,20 @@ void ETMCanSlaveExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
 	Place all board specific commands here
       */
       
+#ifdef __A36746
+    case ETM_CAN_REGISTER_COOLING_CMD_SF6_PULSE_LIMIT_OVERRIDE:
+      global_data_A36746.SF6_pulses_available = 25;
+      break;
+      
+    case ETM_CAN_REGISTER_COOLING_CMD_RESET_BOTTLE_COUNT:
+      global_data_A36746.SF6_bottle_pulses_remaining = message_ptr->word0;
+      break;
+      
+    case ETM_CAN_REGISTER_COOLING_CMD_SF6_LEAK_LIMIT_OVERRIDE:
+      global_data_A36746.SF6_low_pressure_override_counter = message_ptr->word0;
+      break;
+#endif
+
 #ifdef __A36224
     case ETM_CAN_REGISTER_COOLING_CMD_SF6_PULSE_LIMIT_OVERRIDE:
       OverrideSF6PulseLimit();
