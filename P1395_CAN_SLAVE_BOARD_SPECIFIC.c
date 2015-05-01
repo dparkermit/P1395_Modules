@@ -56,10 +56,12 @@ void ETMCanSlaveExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
 #ifdef __A36746
     case ETM_CAN_REGISTER_COOLING_CMD_SF6_PULSE_LIMIT_OVERRIDE:
       global_data_A36746.SF6_pulses_available = 25;
+      ETMEEPromWritePage(ETM_EEPROM_PAGE_COOLING_INTERFACE, 2, &global_data_A36746.SF6_pulses_available);
       break;
       
     case ETM_CAN_REGISTER_COOLING_CMD_RESET_BOTTLE_COUNT:
       global_data_A36746.SF6_bottle_pulses_remaining = message_ptr->word0;
+      ETMEEPromWritePage(ETM_EEPROM_PAGE_COOLING_INTERFACE, 2, &global_data_A36746.SF6_pulses_available);
       break;
       
     case ETM_CAN_REGISTER_COOLING_CMD_SF6_LEAK_LIMIT_OVERRIDE:
