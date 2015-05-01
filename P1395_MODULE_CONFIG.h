@@ -92,12 +92,13 @@
 #define ETM_CAN_SERIAL_NUMBER               100 // DPARKER need to figure out how to set this in FLASH when programming
 #define __IGNORE_ION_PUMP_MODULE
 #define __IGNORE_AFC_MODULE
-#define __IGNORE_GUN_DRIVER_MODULE
+//#define __IGNORE_GUN_DRIVER_MODULE
 #define __IGNORE_COOLING_INTERFACE_MODULE
 #define __IGNORE_HEATER_MAGNET_MODULE
 #define __IGNORE_HV_LAMBDA_MODULE
-//#define __IGNORE_PULSE_CURRENT_MODULE
+#define __IGNORE_PULSE_CURRENT_MODULE
 #define __IGNORE_PULSE_SYNC_MODULE
+//#define __IGNORE_TCU
 #endif
 
 
