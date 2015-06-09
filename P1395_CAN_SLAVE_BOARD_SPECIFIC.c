@@ -11,6 +11,7 @@
 
 #ifdef __A36444
 #include "A36444.h"
+#include "A36444_SETTINGS.h"
 #endif
 
 #ifdef __A36224
@@ -284,13 +285,42 @@ void ETMCanSlaveLogCustomPacketC(void) {
 #endif
 
 #ifdef __A36444
+
+  global_data_A36444.vmon_store_1 <<= 4;
+  global_data_A36444.vmon_store_2 <<= 4;
+  global_data_A36444.vmon_store_3 <<= 4;
+
+
+  global_data_A36444.vmon_store_1 = ETMScaleFactor16(global_data_A36444.vmon_store_1, MACRO_DEC_TO_SCALE_FACTOR_16(VMON_SCALE_FACTOR), OFFSET_ZERO);
+  global_data_A36444.vmon_store_2 = ETMScaleFactor16(global_data_A36444.vmon_store_2, MACRO_DEC_TO_SCALE_FACTOR_16(VMON_SCALE_FACTOR), OFFSET_ZERO);
+  global_data_A36444.vmon_store_3 = ETMScaleFactor16(global_data_A36444.vmon_store_3, MACRO_DEC_TO_SCALE_FACTOR_16(VMON_SCALE_FACTOR), OFFSET_ZERO);
+
+  if (global_data_A36444.vmon_store_1 <= 500) {
+    global_data_A36444.vmon_store_1 = 500;
+  }
+  if (global_data_A36444.vmon_store_2 <= 500) {
+    global_data_A36444.vmon_store_2 = 500;
+  }
+  if (global_data_A36444.vmon_store_3 <=500) {
+    global_data_A36444.vmon_store_3 = 500;
+  }
+  
+
+
+
   ETMCanSlaveLogData(
 		     ETM_CAN_DATA_LOG_REGISTER_HV_LAMBDA_FAST_PROGRAM_VOLTAGE,
 		     etm_can_next_pulse_count,
-		     global_data_A36444.analog_output_high_energy_vprog.set_point,
-		     global_data_A36444.analog_output_low_energy_vprog.set_point,
-		     global_data_A36444.analog_input_lambda_vpeak.reading_scaled_and_calibrated
+		     //global_data_A36444.analog_output_high_energy_vprog.set_point,
+		     //global_data_A36444.analog_output_low_energy_vprog.set_point,
+		     //global_data_A36444.analog_input_lambda_vpeak.reading_scaled_and_calibrated
+		     global_data_A36444.vmon_store_1,
+		     global_data_A36444.vmon_store_2,
+		     global_data_A36444.vmon_store_3
 		     );
+  global_data_A36444.vmon_store_1 = 0x0FFF;
+  global_data_A36444.vmon_store_2 = 0x0FFF;
+  global_data_A36444.vmon_store_3 = 0x0FFF;
 #endif
 
 #ifdef __A36487
